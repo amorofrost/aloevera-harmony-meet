@@ -81,6 +81,26 @@ const translations = {
     'welcome.subtitle': 'Знакомства для фанатов музыки',
     'welcome.description': 'Находите единомышленников, влюбляйтесь под любимые мелодии и создавайте гармонию в отношениях.',
     'welcome.getStarted': 'Начать знакомства',
+    
+    // Auth
+    'auth.email': 'Email',
+    'auth.password': 'Пароль',
+    'auth.signIn': 'Войти',
+    'auth.createAccount': 'Создать аккаунт',
+    'auth.noAccount': 'Нет аккаунта? Создать',
+    'auth.hasAccount': 'Уже есть аккаунт? Войти',
+    'auth.age': 'Возраст',
+    'auth.gender': 'Пол',
+    'auth.location': 'Местоположение',
+    'auth.bio': 'О себе',
+    'auth.enterEmail': 'Введите ваш email',
+    'auth.enterPassword': 'Введите пароль',
+    'auth.createPassword': 'Создайте пароль',
+    'auth.cityCountry': 'Город, Страна',
+    'auth.aboutYourself': 'Расскажите о себе...',
+    'auth.male': 'Мужской',
+    'auth.female': 'Женский',
+    'auth.other': 'Другой',
   },
   en: {
     // Navigation
@@ -144,6 +164,26 @@ const translations = {
     'welcome.subtitle': 'Dating for Music Lovers',
     'welcome.description': 'Find like-minded people, fall in love to your favorite melodies, and create harmony in relationships.',
     'welcome.getStarted': 'Start Dating',
+    
+    // Auth
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.signIn': 'Sign In',
+    'auth.createAccount': 'Create Account',
+    'auth.noAccount': 'Don\'t have an account? Create one',
+    'auth.hasAccount': 'Already have an account? Sign in',
+    'auth.age': 'Age',
+    'auth.gender': 'Gender',
+    'auth.location': 'Location',
+    'auth.bio': 'Bio',
+    'auth.enterEmail': 'Enter your email',
+    'auth.enterPassword': 'Enter your password',
+    'auth.createPassword': 'Create a password',
+    'auth.cityCountry': 'City, Country',
+    'auth.aboutYourself': 'Tell us about yourself...',
+    'auth.male': 'Male',
+    'auth.female': 'Female',
+    'auth.other': 'Other',
   },
 };
 

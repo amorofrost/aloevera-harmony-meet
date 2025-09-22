@@ -77,12 +77,12 @@ const Welcome = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white font-medium">
-                    Email
+                    {t('auth.email')}
                   </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t('auth.enterEmail')}
                     value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
@@ -90,12 +90,12 @@ const Welcome = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-white font-medium">
-                    Password
+                    {t('auth.password')}
                   </Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t('auth.enterPassword')}
                     value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
@@ -108,7 +108,7 @@ const Welcome = () => {
                 size="lg"
                 className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
               >
-                Sign In
+                {t('auth.signIn')}
               </Button>
               
               <div className="text-center">
@@ -116,7 +116,7 @@ const Welcome = () => {
                   onClick={() => setShowRegister(true)}
                   className="text-white/80 hover:text-white underline text-sm"
                 >
-                  Don't have an account? Create one
+                  {t('auth.noAccount')}
                 </button>
               </div>
             </div>
@@ -126,12 +126,12 @@ const Welcome = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="reg-email" className="text-white font-medium">
-                    Email
+                    {t('auth.email')}
                   </Label>
                   <Input
                     id="reg-email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t('auth.enterEmail')}
                     value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
@@ -140,12 +140,12 @@ const Welcome = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="reg-password" className="text-white font-medium">
-                    Password
+                    {t('auth.password')}
                   </Label>
                   <Input
                     id="reg-password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder={t('auth.createPassword')}
                     value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
@@ -155,12 +155,12 @@ const Welcome = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="age" className="text-white font-medium">
-                      Age
+                      {t('auth.age')}
                     </Label>
                     <Input
                       id="age"
                       type="number"
-                      placeholder="Age"
+                      placeholder={t('auth.age')}
                       value={registerData.age}
                       onChange={(e) => setRegisterData({ ...registerData, age: e.target.value })}
                       className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
@@ -169,16 +169,16 @@ const Welcome = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="gender" className="text-white font-medium">
-                      Gender
+                      {t('auth.gender')}
                     </Label>
                     <Select value={registerData.gender} onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}>
                       <SelectTrigger className="bg-white/20 border-white/30 text-white">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="male">{t('auth.male')}</SelectItem>
+                        <SelectItem value="female">{t('auth.female')}</SelectItem>
+                        <SelectItem value="other">{t('auth.other')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -186,11 +186,11 @@ const Welcome = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="location" className="text-white font-medium">
-                    Location
+                    {t('auth.location')}
                   </Label>
                   <Input
                     id="location"
-                    placeholder="City, Country"
+                    placeholder={t('auth.cityCountry')}
                     value={registerData.location}
                     onChange={(e) => setRegisterData({ ...registerData, location: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
@@ -199,11 +199,11 @@ const Welcome = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="bio" className="text-white font-medium">
-                    Bio
+                    {t('auth.bio')}
                   </Label>
                   <Textarea
                     id="bio"
-                    placeholder="Tell us about yourself..."
+                    placeholder={t('auth.aboutYourself')}
                     value={registerData.bio}
                     onChange={(e) => setRegisterData({ ...registerData, bio: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px]"
@@ -216,7 +216,7 @@ const Welcome = () => {
                 size="lg"
                 className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
               >
-                Create Account
+                {t('auth.createAccount')}
               </Button>
               
               <div className="text-center">
@@ -224,7 +224,7 @@ const Welcome = () => {
                   onClick={() => setShowRegister(false)}
                   className="text-white/80 hover:text-white underline text-sm"
                 >
-                  Already have an account? Sign in
+                  {t('auth.hasAccount')}
                 </button>
               </div>
             </div>
