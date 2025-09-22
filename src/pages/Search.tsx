@@ -233,6 +233,7 @@ const Search = () => {
         <SwipeCard
           onSwipeLeft={handlePass}
           onSwipeRight={handleLike}
+          onTap={toggleDetails}
           className="w-full max-w-sm mx-auto"
         >
           <Card className="profile-card aspect-[3/4] relative overflow-hidden">
@@ -240,7 +241,6 @@ const Search = () => {
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${currentUser.profileImage})` }}
-              onClick={toggleDetails}
             >
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />

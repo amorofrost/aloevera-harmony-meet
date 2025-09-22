@@ -5,6 +5,7 @@ interface SwipeCardProps {
   children: React.ReactNode;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
+  onTap?: () => void;
   className?: string;
 }
 
@@ -12,16 +13,19 @@ const SwipeCard: React.FC<SwipeCardProps> = ({
   children,
   onSwipeLeft,
   onSwipeRight,
+  onTap,
   className
 }) => {
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [hasMoved, setHasMoved] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleStart = (clientX: number, clientY: number) => {
     setDragStart({ x: clientX, y: clientY });
     setIsDragging(true);
+    setHasMoved(false);
   };
 
   const handleMove = (clientX: number, clientY: number) => {
@@ -29,6 +33,11 @@ const SwipeCard: React.FC<SwipeCardProps> = ({
 
     const deltaX = clientX - dragStart.x;
     const deltaY = clientY - dragStart.y;
+    
+    // If moved more than 5px, consider it a drag
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      setHasMoved(true);
+    }
     
     setDragOffset({ x: deltaX, y: deltaY });
   };
@@ -45,17 +54,20 @@ const SwipeCard: React.FC<SwipeCardProps> = ({
       } else {
         onSwipeLeft();
       }
+    } else if (!hasMoved && onTap) {
+      // If no significant movement occurred, treat as a tap
+      onTap();
     }
 
     // Reset
     setDragStart(null);
     setDragOffset({ x: 0, y: 0 });
     setIsDragging(false);
+    setHasMoved(false);
   };
 
   // Mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
     handleStart(e.clientX, e.clientY);
   };
 
