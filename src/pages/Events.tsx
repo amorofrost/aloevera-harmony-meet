@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Users, Music, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,6 +54,7 @@ const mockEvents: Event[] = [
 
 const Events = () => {
   const [joinedEvents, setJoinedEvents] = useState<string[]>(['2']);
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
   const handleJoinEvent = (eventId: string) => {
@@ -112,7 +114,11 @@ const Events = () => {
           const isJoined = joinedEvents.includes(event.id);
           
           return (
-            <Card key={event.id} className="profile-card overflow-hidden">
+            <Card 
+              key={event.id} 
+              className="profile-card overflow-hidden cursor-pointer"
+              onClick={() => navigate(`/events/${event.id}`)}
+            >
               {/* Event Image */}
               <div 
                 className="h-48 bg-cover bg-center relative"
@@ -178,7 +184,10 @@ const Events = () => {
 
                 {/* Join Button */}
                 <Button
-                  onClick={() => handleJoinEvent(event.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleJoinEvent(event.id);
+                  }}
                   className={`w-full ${isJoined ? 'btn-match' : 'btn-like'}`}
                   variant={isJoined ? "secondary" : "default"}
                 >

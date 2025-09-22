@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { MessageCircle, Users, Send, ArrowLeft, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { MessageCircle, Users, Send, ArrowLeft, MoreVertical, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -110,7 +111,27 @@ const Chats = () => {
   const [activeTab, setActiveTab] = useState('private');
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const eventId = searchParams.get('eventId');
+    
+    if (tab === 'group') {
+      setActiveTab('group');
+    }
+    
+    // If eventId is provided, scroll to that event's chat
+    if (eventId) {
+      setTimeout(() => {
+        const element = document.getElementById(`event-chat-${eventId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [searchParams]);
 
   const formatTime = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
@@ -152,7 +173,11 @@ const Chats = () => {
   };
 
   const ChatListItem = ({ chat, onClick }: { chat: any; onClick: () => void }) => (
-    <Card className="profile-card mb-3 cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+    <Card 
+      id={chat.id}
+      className="profile-card mb-3 cursor-pointer hover:shadow-md transition-shadow" 
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -167,7 +192,7 @@ const Chats = () => {
               </>
             ) : (
               <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
+                {chat.isEventChat ? <Calendar className="w-6 h-6 text-white" /> : <Users className="w-6 h-6 text-white" />}
               </div>
             )}
           </div>
@@ -366,7 +391,10 @@ const Chats = () => {
                 {mockGroupChats.map((chat) => (
                   <ChatListItem
                     key={chat.id}
-                    chat={chat}
+                    chat={{
+                      ...chat,
+                      id: chat.isEventChat && chat.eventId ? `event-chat-${chat.eventId}` : chat.id
+                    }}
                     onClick={() => handleChatSelect(chat.id)}
                   />
                 ))}

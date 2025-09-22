@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Heart, X, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Heart, X, Info, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import SwipeCard from '@/components/ui/swipe-card';
@@ -56,18 +57,35 @@ const mockUsers: User[] = [
 const Search = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { t } = useLanguage();
+  
+  const specificUserId = searchParams.get('userId');
+  const isViewingSpecificUser = Boolean(specificUserId);
 
-  const currentUser = mockUsers[currentUserIndex];
+  const currentUser = specificUserId 
+    ? mockUsers.find(user => user.id === specificUserId) 
+    : mockUsers[currentUserIndex];
+
+  useEffect(() => {
+    if (specificUserId) {
+      setShowDetails(true);
+    }
+  }, [specificUserId]);
 
   const handleLike = () => {
     console.log('Liked user:', currentUser?.name);
-    nextUser();
+    if (!isViewingSpecificUser) {
+      nextUser();
+    }
   };
 
   const handlePass = () => {
     console.log('Passed user:', currentUser?.name);
-    nextUser();
+    if (!isViewingSpecificUser) {
+      nextUser();
+    }
   };
 
   const nextUser = () => {
@@ -79,7 +97,32 @@ const Search = () => {
     setShowDetails(!showDetails);
   };
 
-  if (currentUserIndex >= mockUsers.length) {
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
+          <div className="mb-8">
+            <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Пользователь не найден
+            </h2>
+            <p className="text-muted-foreground">
+              Этот профиль недоступен
+            </p>
+            <Button 
+              onClick={() => navigate('/search')} 
+              className="mt-4"
+            >
+              Вернуться к поиску
+            </Button>
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  if (!isViewingSpecificUser && currentUserIndex >= mockUsers.length) {
     return (
       <div className="min-h-screen bg-background pb-20">
         <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
@@ -103,17 +146,29 @@ const Search = () => {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
         <div className="flex items-center justify-between p-4">
-          <h1 className="text-2xl font-bold text-foreground">
-            {t('search.title')}
+          {isViewingSpecificUser && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="p-2 mr-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
+          <h1 className="text-2xl font-bold text-foreground flex-1">
+            {isViewingSpecificUser ? currentUser.name : t('search.title')}
           </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleDetails}
-            className="text-muted-foreground"
-          >
-            <Info className="w-5 h-5" />
-          </Button>
+          {!isViewingSpecificUser && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleDetails}
+              className="text-muted-foreground"
+            >
+              <Info className="w-5 h-5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -179,9 +234,11 @@ const Search = () => {
         </SwipeCard>
 
         {/* Instructions */}
-        <p className="text-center text-muted-foreground text-sm mt-4">
-          {t('search.swipeInstructions')}
-        </p>
+        {!isViewingSpecificUser && (
+          <p className="text-center text-muted-foreground text-sm mt-4">
+            {t('search.swipeInstructions')}
+          </p>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-6 mt-8">

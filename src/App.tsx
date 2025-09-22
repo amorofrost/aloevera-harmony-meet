@@ -8,6 +8,7 @@ import Welcome from "./pages/Welcome";
 import Search from "./pages/Search";
 import Profile from "./pages/Profile";
 import Events from "./pages/Events";
+import EventDetails from "./pages/EventDetails";
 import Likes from "./pages/Likes";
 import Chats from "./pages/Chats";
 import Advice from "./pages/Advice";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/events/:eventId" element={<EventDetails />} />
             <Route path="/likes" element={<Likes />} />
             <Route path="/chats" element={<Chats />} />
             <Route path="/advice" element={<Advice />} />
