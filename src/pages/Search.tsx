@@ -51,6 +51,62 @@ const mockUsers: User[] = [
     isOnline: true,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  },
+  {
+    id: '4',
+    name: 'Мария',
+    age: 23,
+    bio: 'Поэтесса и меломан. AloeVera вдохновляет меня на стихи',
+    location: 'Москва',
+    gender: 'female',
+    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: true,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  },
+  {
+    id: '5',
+    name: 'Александр',
+    age: 26,
+    bio: 'Фотограф и фанат AloeVera. Ищу музу и вторую половинку',
+    location: 'Москва', 
+    gender: 'male',
+    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: false,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  },
+  {
+    id: '6',
+    name: 'София',
+    age: 24,
+    bio: 'Художница, рисую под музыку AloeVera. Творческая душа ищет понимание',
+    location: 'Москва',
+    gender: 'female', 
+    profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: true,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  },
+  {
+    id: '7',
+    name: 'Максим',
+    age: 27,
+    bio: 'Барабанщик, мечтаю сыграть на одной сцене с AloeVera',
+    location: 'Москва',
+    gender: 'male',
+    profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: false,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   }
 ];
 
