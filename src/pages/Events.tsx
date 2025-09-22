@@ -217,7 +217,12 @@ const Events = () => {
                 )}
                 {/* Event Postmark */}
                 <div className="absolute bottom-4 right-4">
-                  <EventPostmark location={event.location} date={event.date} />
+                  <EventPostmark 
+                    location={event.location} 
+                    date={event.date} 
+                    title={event.title}
+                    category={event.category}
+                  />
                 </div>
               </div>
 
@@ -312,7 +317,12 @@ const Events = () => {
                 )}
                 {/* Event Postmark - grayscale effect */}
                 <div className="absolute bottom-4 right-4 transition-all duration-300 group-hover:grayscale-0 grayscale">
-                  <EventPostmark location={event.location} date={event.date} />
+                  <EventPostmark 
+                    location={event.location} 
+                    date={event.date} 
+                    title={event.title}
+                    category={event.category}
+                  />
                 </div>
               </div>
 
