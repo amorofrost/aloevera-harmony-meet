@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Heart, Send, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,12 +9,13 @@ import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Match, Like } from '@/types/user';
 
-// Mock data
-const mockMatches: (Match & { otherUser: User })[] = [
+// Mock data with read status
+const mockMatches: (Match & { otherUser: User; isRead: boolean })[] = [
   {
     id: '1',
     users: ['current-user', '1'],
     createdAt: new Date('2024-02-20'),
+    isRead: false,
     otherUser: {
       id: '1',
       name: 'Анна',
@@ -25,6 +27,26 @@ const mockMatches: (Match & { otherUser: User })[] = [
       images: [],
       lastSeen: new Date(),
       isOnline: true,
+      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    }
+  },
+  {
+    id: '4',
+    users: ['current-user', '4'],
+    createdAt: new Date('2024-02-22'),
+    isRead: true,
+    otherUser: {
+      id: '4',
+      name: 'Мария',
+      age: 26,
+      bio: 'Фотограф, люблю AloeVera',
+      location: 'Москва',
+      gender: 'female',
+      profileImage: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop&crop=face',
+      images: [],
+      lastSeen: new Date(),
+      isOnline: false,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
       settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
     }
@@ -55,13 +77,14 @@ const mockSentLikes: (Like & { toUser: User })[] = [
   }
 ];
 
-const mockReceivedLikes: (Like & { fromUser: User })[] = [
+const mockReceivedLikes: (Like & { fromUser: User; isRead: boolean })[] = [
   {
     id: '3',
     fromUserId: '3',
     toUserId: 'current-user',
     createdAt: new Date('2024-02-19'),
     isMatch: false,
+    isRead: false,
     fromUser: {
       id: '3',
       name: 'Елена',
@@ -76,6 +99,28 @@ const mockReceivedLikes: (Like & { fromUser: User })[] = [
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
       settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
     }
+  },
+  {
+    id: '5',
+    fromUserId: '5',
+    toUserId: 'current-user',
+    createdAt: new Date('2024-02-18'),
+    isMatch: false,
+    isRead: true,
+    fromUser: {
+      id: '5',
+      name: 'Алексей',
+      age: 30,
+      bio: 'Музыкант AloeVera cover band',
+      location: 'Екатеринбург',
+      gender: 'male',
+      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop&crop=face',
+      images: [],
+      lastSeen: new Date(),
+      isOnline: false,
+      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    }
   }
 ];
 
@@ -83,6 +128,10 @@ const Likes = () => {
   const [activeTab, setActiveTab] = useState('matches');
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  // Count unread items
+  const unreadMatches = mockMatches.filter(match => !match.isRead).length;
+  const unreadReceivedLikes = mockReceivedLikes.filter(like => !like.isRead).length;
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
@@ -151,9 +200,36 @@ const Likes = () => {
       <div className="p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="matches">{t('likes.matches')}</TabsTrigger>
-            <TabsTrigger value="sent">{t('likes.sent')}</TabsTrigger>
-            <TabsTrigger value="received">{t('likes.received')}</TabsTrigger>
+            <TabsTrigger value="matches" className="relative">
+              <div className="flex items-center gap-2">
+                <span>{t('likes.matches')}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {mockMatches.length}
+                </Badge>
+                {unreadMatches > 0 && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
+                )}
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="sent" className="relative">
+              <div className="flex items-center gap-2">
+                <span>{t('likes.sent')}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {mockSentLikes.length}
+                </Badge>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="received" className="relative">
+              <div className="flex items-center gap-2">
+                <span>{t('likes.received')}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {mockReceivedLikes.length}
+                </Badge>
+                {unreadReceivedLikes > 0 && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
+                )}
+              </div>
+            </TabsTrigger>
           </TabsList>
 
           {/* Matches Tab */}
