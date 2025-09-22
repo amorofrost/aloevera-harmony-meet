@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Heart, Send, ArrowLeft, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -81,6 +82,7 @@ const mockReceivedLikes: (Like & { fromUser: User })[] = [
 const Likes = () => {
   const [activeTab, setActiveTab] = useState('matches');
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
@@ -90,8 +92,8 @@ const Likes = () => {
   };
 
   const handleChatWithMatch = (matchId: string) => {
-    console.log('Open chat with match:', matchId);
-    // Navigate to chat
+    // Navigate to chats page with the specific chat
+    navigate('/chats');
   };
 
   const handleLikeBack = (userId: string) => {

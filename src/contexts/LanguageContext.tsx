@@ -25,6 +25,7 @@ const translations = {
     'nav.search': 'Поиск',
     'nav.events': 'События',
     'nav.likes': 'Лайки',
+    'nav.chats': 'Чаты',
     'nav.advice': 'Советы',
 
     // Common
@@ -66,6 +67,15 @@ const translations = {
     'likes.noSent': 'Вы пока никого не лайкнули',
     'likes.noReceived': 'Пока никто вас не лайкнул',
 
+    // Chats
+    'chats.private': 'Личные чаты',
+    'chats.group': 'Групповые чаты',
+    'chats.noPrivateChats': 'Пока нет личных чатов',
+    'chats.noGroupChats': 'Пока нет групповых чатов',
+    'chats.startChatting': 'Начните общаться с вашими совпадениями',
+    'chats.typeMessage': 'Введите сообщение...',
+    'chats.send': 'Отправить',
+
     // Welcome
     'welcome.title': 'Добро пожаловать в мир AloeVera',
     'welcome.subtitle': 'Знакомства для фанатов музыки',
@@ -78,6 +88,7 @@ const translations = {
     'nav.search': 'Search',
     'nav.events': 'Events',
     'nav.likes': 'Likes',
+    'nav.chats': 'Chats',
     'nav.advice': 'Advice',
 
     // Common
@@ -118,6 +129,15 @@ const translations = {
     'likes.noMatches': 'No matches yet',
     'likes.noSent': 'No likes sent yet',
     'likes.noReceived': 'No likes received yet',
+
+    // Chats
+    'chats.private': 'Private Chats',
+    'chats.group': 'Group Chats',
+    'chats.noPrivateChats': 'No private chats yet',
+    'chats.noGroupChats': 'No group chats yet',
+    'chats.startChatting': 'Start chatting with your matches',
+    'chats.typeMessage': 'Type a message...',
+    'chats.send': 'Send',
 
     // Welcome
     'welcome.title': 'Welcome to AloeVera World',

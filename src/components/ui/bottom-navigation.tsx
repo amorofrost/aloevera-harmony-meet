@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User, Search, Calendar, Heart, Lightbulb } from 'lucide-react';
+import { User, Search, Calendar, Heart, MessageCircle, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -32,6 +32,12 @@ const BottomNavigation = () => {
       label: t('nav.likes'),
       href: '/likes',
       path: '/likes'
+    },
+    {
+      icon: MessageCircle,
+      label: t('nav.chats'),
+      href: '/chats',
+      path: '/chats'
     },
     {
       icon: Lightbulb,
