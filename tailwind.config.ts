@@ -47,6 +47,18 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // AloeVera Brand Colors
+        aloe: {
+          gold: "hsl(var(--aloe-gold))",
+          "gold-light": "hsl(var(--aloe-gold-light))",
+          flame: "hsl(var(--aloe-flame))",
+          "flame-deep": "hsl(var(--aloe-flame-deep))",
+          ocean: "hsl(var(--aloe-ocean))",
+          "ocean-deep": "hsl(var(--aloe-ocean-deep))",
+          coral: "hsl(var(--aloe-coral))",
+          lavender: "hsl(var(--aloe-lavender))",
+          sage: "hsl(var(--aloe-sage))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

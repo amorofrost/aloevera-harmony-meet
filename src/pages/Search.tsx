@@ -1,0 +1,210 @@
+import React, { useState } from 'react';
+import { Heart, X, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import SwipeCard from '@/components/ui/swipe-card';
+import BottomNavigation from '@/components/ui/bottom-navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { User } from '@/types/user';
+
+// Mock data
+const mockUsers: User[] = [
+  {
+    id: '1',
+    name: 'Анна',
+    age: 25,
+    bio: 'Обожаю музыку AloeVera и концерты под открытым небом. Ищу того, с кем можно петь любимые песни ❤️',
+    location: 'Москва',
+    gender: 'female',
+    profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: true,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  },
+  {
+    id: '2',
+    name: 'Дмитрий',
+    age: 28,
+    bio: 'Музыкант, фанат AloeVera с первого альбома. Играю на гитаре и пишу песни. Давайте создадим дуэт! 🎸',
+    location: 'Санкт-Петербург',
+    gender: 'male',
+    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: false,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  },
+  {
+    id: '3',
+    name: 'Елена',
+    age: 22,
+    bio: 'Танцую под AloeVera, хожу на все концерты. Ищу романтика, который разделит мою страсть к музыке 💃',
+    location: 'Новосибирск',
+    gender: 'female',
+    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
+    images: [],
+    lastSeen: new Date(),
+    isOnline: true,
+    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  }
+];
+
+const Search = () => {
+  const [currentUserIndex, setCurrentUserIndex] = useState(0);
+  const [showDetails, setShowDetails] = useState(false);
+  const { t } = useLanguage();
+
+  const currentUser = mockUsers[currentUserIndex];
+
+  const handleLike = () => {
+    console.log('Liked user:', currentUser?.name);
+    nextUser();
+  };
+
+  const handlePass = () => {
+    console.log('Passed user:', currentUser?.name);
+    nextUser();
+  };
+
+  const nextUser = () => {
+    setShowDetails(false);
+    setCurrentUserIndex((prev) => prev + 1);
+  };
+
+  const toggleDetails = () => {
+    setShowDetails(!showDetails);
+  };
+
+  if (currentUserIndex >= mockUsers.length) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
+          <div className="mb-8">
+            <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              {t('search.noMoreProfiles')}
+            </h2>
+            <p className="text-muted-foreground">
+              Загляните позже или расширьте настройки поиска
+            </p>
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+        <div className="flex items-center justify-between p-4">
+          <h1 className="text-2xl font-bold text-foreground">
+            {t('search.title')}
+          </h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleDetails}
+            className="text-muted-foreground"
+          >
+            <Info className="w-5 h-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Profile Card */}
+      <div className="relative p-4 flex-1">
+        <SwipeCard
+          onSwipeLeft={handlePass}
+          onSwipeRight={handleLike}
+          className="w-full max-w-sm mx-auto"
+        >
+          <Card className="profile-card aspect-[3/4] relative overflow-hidden">
+            {/* Profile Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${currentUser.profileImage})` }}
+              onClick={toggleDetails}
+            >
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
+              
+              {/* Basic Info */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-3 h-3 rounded-full ${currentUser.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
+                  <span className="text-sm opacity-90">
+                    {currentUser.isOnline ? 'Онлайн' : 'Недавно была'}
+                  </span>
+                </div>
+                <h2 className="text-2xl font-bold mb-1">
+                  {currentUser.name}, {currentUser.age}
+                </h2>
+                <p className="text-sm opacity-90 mb-2">{currentUser.location}</p>
+                {!showDetails && (
+                  <p className="text-sm opacity-75 line-clamp-2">
+                    {currentUser.bio}
+                  </p>
+                )}
+              </div>
+
+              {/* Detailed Info Overlay */}
+              {showDetails && (
+                <div className="absolute inset-0 bg-black/80 p-6 flex flex-col justify-end">
+                  <div className="text-white space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">О себе</h3>
+                      <p className="text-sm leading-relaxed">{currentUser.bio}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="opacity-75">Возраст:</span>
+                        <div>{currentUser.age}</div>
+                      </div>
+                      <div>
+                        <span className="opacity-75">Пол:</span>
+                        <div>{currentUser.gender === 'male' ? 'Мужской' : 'Женский'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </SwipeCard>
+
+        {/* Instructions */}
+        <p className="text-center text-muted-foreground text-sm mt-4">
+          {t('search.swipeInstructions')}
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-6 mt-8">
+          <Button
+            size="lg"
+            onClick={handlePass}
+            className="btn-pass w-16 h-16 rounded-full p-0"
+          >
+            <X className="w-8 h-8" />
+          </Button>
+          <Button
+            size="lg"
+            onClick={handleLike}
+            className="btn-like w-16 h-16 rounded-full p-0"
+          >
+            <Heart className="w-8 h-8" />
+          </Button>
+        </div>
+      </div>
+
+      <BottomNavigation />
+    </div>
+  );
+};
+
+export default Search;

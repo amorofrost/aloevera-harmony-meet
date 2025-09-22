@@ -8,6 +8,18 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* AloeVera Brand Colors - Inspired by vibrant artistic style */
+    --aloe-gold: 45 96% 53%;
+    --aloe-gold-light: 48 100% 67%;
+    --aloe-flame: 14 91% 60%;
+    --aloe-flame-deep: 9 83% 47%;
+    --aloe-ocean: 204 64% 44%;
+    --aloe-ocean-deep: 210 75% 35%;
+    --aloe-coral: 343 87% 70%;
+    --aloe-lavender: 259 34% 62%;
+    --aloe-sage: 159 25% 52%;
+
+    /* Semantic Color System */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -17,26 +29,40 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: var(--aloe-flame);
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: var(--aloe-gold);
+    --secondary-foreground: 222.2 84% 4.9%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: var(--aloe-coral);
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: var(--aloe-flame);
 
-    --radius: 0.5rem;
+    /* Dating App Specific Colors */
+    --like-gradient: linear-gradient(135deg, hsl(var(--aloe-coral)), hsl(var(--aloe-flame)));
+    --pass-gradient: linear-gradient(135deg, hsl(210 20% 70%), hsl(210 15% 60%));
+    --match-gradient: linear-gradient(135deg, hsl(var(--aloe-gold)), hsl(var(--aloe-gold-light)));
+    
+    /* Backgrounds */
+    --hero-gradient: linear-gradient(135deg, hsl(var(--aloe-gold)) 0%, hsl(var(--aloe-flame)) 50%, hsl(var(--aloe-ocean)) 100%);
+    --card-gradient: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 20px hsl(var(--aloe-flame) / 0.1);
+    --shadow-glow: 0 0 30px hsl(var(--aloe-gold) / 0.3);
+    --shadow-card: 0 8px 32px hsl(210 10% 23% / 0.12);
+
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -65,24 +91,32 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: var(--aloe-flame-deep);
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: var(--aloe-gold);
+    --secondary-foreground: 222.2 84% 4.9%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: var(--aloe-coral);
+    --accent-foreground: 222.2 84% 4.9%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: var(--aloe-flame);
+
+    /* Dark mode gradients */
+    --hero-gradient: linear-gradient(135deg, hsl(var(--aloe-ocean-deep)) 0%, hsl(var(--aloe-flame-deep)) 50%, hsl(var(--aloe-gold)) 100%);
+    --card-gradient: linear-gradient(145deg, hsl(217.2 32.6% 17.5%) 0%, hsl(217.2 32.6% 20%) 100%);
+    
+    --shadow-soft: 0 4px 20px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 30px hsl(var(--aloe-gold) / 0.2);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -100,6 +134,68 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  }
+}
+
+@layer components {
+  /* Hero Styles */
+  .hero-gradient {
+    background: var(--hero-gradient);
+  }
+  
+  .card-gradient {
+    background: var(--card-gradient);
+  }
+
+  /* Dating App Buttons */
+  .btn-like {
+    background: var(--like-gradient);
+    @apply text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
+  }
+  
+  .btn-pass {
+    background: var(--pass-gradient);
+    @apply text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
+  }
+  
+  .btn-match {
+    background: var(--match-gradient);
+    @apply text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
+  }
+
+  /* Profile Cards */
+  .profile-card {
+    background: var(--card-gradient);
+    box-shadow: var(--shadow-card);
+    @apply rounded-3xl border-0 overflow-hidden transition-all duration-300 hover:shadow-2xl;
+  }
+
+  /* Mobile Touch Interactions */
+  .swipe-card {
+    @apply touch-pan-y select-none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Floating Elements */
+  .floating {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Glow Effects */
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Navigation */
+  .nav-active {
+    @apply text-primary;
+    filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.4));
   }
 }
