@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
@@ -8,8 +12,24 @@ import appIcon from '@/assets/app-icon.jpg';
 const Welcome = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [showRegister, setShowRegister] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [registerData, setRegisterData] = useState({
+    email: '',
+    password: '',
+    bio: '',
+    location: '',
+    age: '',
+    gender: ''
+  });
 
-  const handleGetStarted = () => {
+  const handleLogin = () => {
+    // For now, navigate to search regardless of credentials
+    navigate('/search');
+  };
+
+  const handleRegister = () => {
+    // For now, navigate to search regardless of form data
     navigate('/search');
   };
 
@@ -49,15 +69,166 @@ const Welcome = () => {
           </p>
         </div>
 
-        {/* CTA Button */}
-        <div className="mt-12">
-          <Button
-            onClick={handleGetStarted}
-            size="lg"
-            className="btn-like text-lg px-8 py-4 rounded-2xl font-semibold shadow-2xl"
-          >
-            {t('welcome.getStarted')}
-          </Button>
+        {/* Login/Register Forms */}
+        <div className="mt-12 w-full max-w-md">
+          {!showRegister ? (
+            // Login Form
+            <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-white font-medium">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-white font-medium">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  />
+                </div>
+              </div>
+              
+              <Button
+                onClick={handleLogin}
+                size="lg"
+                className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
+              >
+                Sign In
+              </Button>
+              
+              <div className="text-center">
+                <button
+                  onClick={() => setShowRegister(true)}
+                  className="text-white/80 hover:text-white underline text-sm"
+                >
+                  Don't have an account? Create one
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Registration Form
+            <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reg-email" className="text-white font-medium">
+                    Email
+                  </Label>
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="reg-password" className="text-white font-medium">
+                    Password
+                  </Label>
+                  <Input
+                    id="reg-password"
+                    type="password"
+                    placeholder="Create a password"
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="age" className="text-white font-medium">
+                      Age
+                    </Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      placeholder="Age"
+                      value={registerData.age}
+                      onChange={(e) => setRegisterData({ ...registerData, age: e.target.value })}
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="gender" className="text-white font-medium">
+                      Gender
+                    </Label>
+                    <Select value={registerData.gender} onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}>
+                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-white font-medium">
+                    Location
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder="City, Country"
+                    value={registerData.location}
+                    onChange={(e) => setRegisterData({ ...registerData, location: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bio" className="text-white font-medium">
+                    Bio
+                  </Label>
+                  <Textarea
+                    id="bio"
+                    placeholder="Tell us about yourself..."
+                    value={registerData.bio}
+                    onChange={(e) => setRegisterData({ ...registerData, bio: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px]"
+                  />
+                </div>
+              </div>
+              
+              <Button
+                onClick={handleRegister}
+                size="lg"
+                className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
+              >
+                Create Account
+              </Button>
+              
+              <div className="text-center">
+                <button
+                  onClick={() => setShowRegister(false)}
+                  className="text-white/80 hover:text-white underline text-sm"
+                >
+                  Already have an account? Sign in
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Music Notes Animation */}
