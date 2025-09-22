@@ -87,11 +87,11 @@ const mockGroupChats: GroupChat[] = [
   {
     id: 'group-2',
     type: 'group',
-    name: 'Концерт AloeVera - Москва',
-    description: 'Чат для участников концерта',
-    participants: ['current-user', '1'],
+    name: 'Фан-встреча: Поэзия и музыка',
+    description: 'Чат для участников встречи',
+    participants: ['current-user', '4', '5', '6', '7'],
     isEventChat: true,
-    eventId: 'event-1',
+    eventId: '2',
     adminIds: ['admin-1'],
     createdAt: new Date('2024-02-18'),
     updatedAt: new Date('2024-02-21'),
@@ -117,9 +117,16 @@ const Chats = () => {
   useEffect(() => {
     const tab = searchParams.get('tab');
     const eventId = searchParams.get('eventId');
+    const chatId = searchParams.get('chatId');
     
     if (tab === 'group') {
       setActiveTab('group');
+    }
+    
+    // If chatId is provided, directly open that chat
+    if (chatId) {
+      setSelectedChat(chatId);
+      return;
     }
     
     // If eventId is provided, scroll to that event's chat

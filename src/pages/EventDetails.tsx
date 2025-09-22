@@ -52,6 +52,22 @@ const mockEvents: Event[] = [
   }
 ];
 
+// Mock group chats to find event-specific chats
+const mockGroupChats = [
+  {
+    id: 'group-2',
+    type: 'group' as const,
+    name: 'Фан-встреча: Поэзия и музыка',
+    description: 'Чат для участников встречи',
+    participants: ['current-user', '4', '5', '6', '7'],
+    isEventChat: true,
+    eventId: '2',
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-02-18'),
+    updatedAt: new Date('2024-02-21')
+  }
+];
+
 const mockUsers: User[] = [
   {
     id: '1',
@@ -159,7 +175,17 @@ const EventDetails = () => {
   };
 
   const handleGroupChatClick = () => {
-    navigate(`/chats?tab=group&eventId=${eventId}`);
+    // Find the group chat for this specific event
+    const eventGroupChat = mockGroupChats.find(chat => 
+      chat.isEventChat && chat.eventId === eventId
+    );
+    
+    if (eventGroupChat) {
+      navigate(`/chats?chatId=${eventGroupChat.id}`);
+    } else {
+      // Fallback to group chats list if specific chat not found
+      navigate(`/chats?tab=group&eventId=${eventId}`);
+    }
   };
 
   return (
