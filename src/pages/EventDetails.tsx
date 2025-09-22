@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Event, User } from '@/types/user';
 
@@ -225,6 +226,15 @@ const EventDetails = () => {
                 <span className="text-sm font-semibold">{event.price}₽</span>
               </div>
             )}
+            {/* Event Postmark */}
+            <div className="absolute bottom-4 right-4">
+              <EventPostmark 
+                location={event.location} 
+                date={event.date} 
+                title={event.title}
+                category={event.category}
+              />
+            </div>
           </div>
 
           <CardContent className="p-6 space-y-4">
