@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Settings, Edit3, Camera, LogOut, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +29,7 @@ const mockUser: User = {
 };
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User>(mockUser);
   const [isEditing, setIsEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -45,8 +47,8 @@ const Profile = () => {
   };
 
   const handleSignOut = () => {
-    // Handle sign out
-    console.log('Sign out');
+    // Navigate back to welcome page
+    navigate('/');
   };
 
   return (
