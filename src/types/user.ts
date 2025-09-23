@@ -9,6 +9,7 @@ export interface User {
   images: string[];
   lastSeen: Date;
   isOnline: boolean;
+  eventsAttended?: Event[];
   preferences: {
     ageRange: [number, number];
     maxDistance: number;

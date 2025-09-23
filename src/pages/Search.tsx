@@ -1,12 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, Info, ArrowLeft } from 'lucide-react';
+import { Heart, X, Info, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import SwipeCard from '@/components/ui/swipe-card';
+import EventPostmark from '@/components/ui/event-postmark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User } from '@/types/user';
+import { User, Event } from '@/types/user';
+
+// Mock events data
+const mockEvents: Event[] = [
+  {
+    id: '1',
+    title: 'AloeVera: Новые Горизонты',
+    description: 'Большой концерт в поддержку нового альбома',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
+    date: new Date('2023-06-15'),
+    location: 'Крокус Сити Холл, Москва',
+    capacity: 7000,
+    attendees: ['1', '2'],
+    category: 'concert',
+    price: 3500,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '2',
+    title: 'Акустический вечер: Близко к сердцу',
+    description: 'Камерное выступление с акустическими версиями любимых песен',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
+    date: new Date('2024-03-20'),
+    location: 'Театр Эстрады, Санкт-Петербург',
+    capacity: 500,
+    attendees: ['1', '3'],
+    category: 'concert',
+    price: 2500,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '3',
+    title: 'AloeVera Summer Fest',
+    description: 'Летний фестиваль под открытым небом',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
+    date: new Date('2024-07-10'),
+    location: 'Парк Сокольники, Москва',
+    capacity: 10000,
+    attendees: ['2', '3', '4'],
+    category: 'festival',
+    price: 4000,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '4',
+    title: 'Фан-встреча: Музыка и Общение',
+    description: 'Неформальная встреча поклонников группы',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
+    date: new Date('2024-05-12'),
+    location: 'Клуб Plan B, Москва',
+    capacity: 200,
+    attendees: ['1', '4', '5'],
+    category: 'meetup',
+    organizer: 'AloeVera Fan Club'
+  },
+  {
+    id: '5',
+    title: 'Новогодний концерт 2024',
+    description: 'Празднование Нового года с любимой группой',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
+    date: new Date('2023-12-31'),
+    location: 'Олимпийский, Москва',
+    capacity: 15000,
+    attendees: ['5', '6', '7'],
+    category: 'party',
+    price: 5000,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '6',
+    title: 'Винтажный вечер: Ретро-хиты',
+    description: 'Вечер старых хитов группы в камерной обстановке',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
+    date: new Date('2024-02-14'),
+    location: 'Клуб Космонавт, Санкт-Петербург',
+    capacity: 300,
+    attendees: ['2', '6', '7'],
+    category: 'party',
+    price: 2000,
+    organizer: 'AloeVera Official'
+  }
+];
 
 // Mock data
 const mockUsers: User[] = [
@@ -21,6 +103,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: true,
+    eventsAttended: [mockEvents[0], mockEvents[1], mockEvents[3]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -35,6 +118,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: false,
+    eventsAttended: [mockEvents[0], mockEvents[2], mockEvents[5]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -49,6 +133,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: true,
+    eventsAttended: [mockEvents[1], mockEvents[2], mockEvents[4], mockEvents[5], mockEvents[0], mockEvents[3]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -63,6 +148,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: true,
+    eventsAttended: [mockEvents[2], mockEvents[3]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -77,6 +163,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: false,
+    eventsAttended: [mockEvents[3], mockEvents[4]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -91,6 +178,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: true,
+    eventsAttended: [mockEvents[4], mockEvents[5]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -105,6 +193,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: false,
+    eventsAttended: [mockEvents[4], mockEvents[5]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   }
@@ -116,6 +205,7 @@ const Search = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const specificUserId = searchParams.get('userId');
   const isViewingSpecificUser = Boolean(specificUserId);
@@ -151,6 +241,21 @@ const Search = () => {
 
   const toggleDetails = () => {
     setShowDetails(!showDetails);
+  };
+
+  const scrollEvents = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 100;
+      const currentScroll = scrollContainerRef.current.scrollLeft;
+      const newScroll = direction === 'left' 
+        ? currentScroll - scrollAmount 
+        : currentScroll + scrollAmount;
+      
+      scrollContainerRef.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
   };
 
   if (!currentUser) {
@@ -282,6 +387,48 @@ const Search = () => {
                         <div>{currentUser.gender === 'male' ? 'Мужской' : 'Женский'}</div>
                       </div>
                     </div>
+                    
+                    {/* Events Attended */}
+                    {currentUser.eventsAttended && currentUser.eventsAttended.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Посещённые события</h3>
+                        <div className="relative">
+                          {currentUser.eventsAttended.length > 4 && (
+                            <>
+                              <button
+                                onClick={() => scrollEvents('left')}
+                                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-1 opacity-80 hover:opacity-100 transition-opacity"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => scrollEvents('right')}
+                                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/50 text-white rounded-full p-1 opacity-80 hover:opacity-100 transition-opacity"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          <div 
+                            ref={scrollContainerRef}
+                            className="flex gap-2 overflow-x-auto scrollbar-hide"
+                            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                          >
+                            {currentUser.eventsAttended.map((event) => (
+                              <div key={event.id} className="flex-shrink-0">
+                                <EventPostmark
+                                  location={event.location}
+                                  date={event.date}
+                                  title={event.title}
+                                  category={event.category}
+                                  className="w-12 h-12"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
