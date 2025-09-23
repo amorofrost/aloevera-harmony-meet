@@ -115,7 +115,7 @@ const Advice = () => {
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">
-            Советы любви
+            Советы
           </h1>
           <Lightbulb className="w-6 h-6 text-primary" />
         </div>
