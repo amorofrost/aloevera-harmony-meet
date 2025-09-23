@@ -306,10 +306,12 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, ca
               <div className="absolute inset-1 border border-white/30 rounded-md border-dashed"></div>
               
               {/* Corner postal marks */}
+              {/*
               <div className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-white rounded-full border border-gray-300 shadow-sm"></div>
               <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full border border-gray-300 shadow-sm"></div>
               <div className="absolute -bottom-0.5 -left-0.5 w-2 h-2 bg-white rounded-full border border-gray-300 shadow-sm"></div>
               <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-white rounded-full border border-gray-300 shadow-sm"></div>
+              */}
               
               {/* Artistic illustration */}
               <div className="absolute inset-2 flex items-center justify-center">
