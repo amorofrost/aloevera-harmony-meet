@@ -50,6 +50,105 @@ const mockEvents: Event[] = [
     category: 'festival',
     price: 5000,
     organizer: 'AloeVera Official'
+  },
+  {
+    id: '4',
+    title: 'AloeVera: Летние ночи',
+    description: 'Романтический концерт под звездами с живыми инструментами. Идеальное место для новых знакомств!',
+    imageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop',
+    date: new Date('2023-08-10T20:00:00'),
+    endDate: new Date('2023-08-15T23:30:00'),
+    location: 'Гребной канал, Санкт-Петербург',
+    capacity: 15000,
+    attendees: ['1', '5', '6', '7', '8'],
+    category: 'concert',
+    price: 3000,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '5',
+    title: 'AloeVera: Акустический вечер',
+    description: 'Камерное выступление группы в уютной атмосфере. Возможность пообщаться с музыкантами лично!',
+    imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop',
+    date: new Date('2023-10-07T19:00:00'),
+    endDate: new Date('2023-10-12T22:00:00'),
+    location: 'Клуб "Вечность", Москва',
+    capacity: 200,
+    attendees: ['1', '2', '3'],
+    category: 'concert',
+    price: 1500,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '6',
+    title: 'Новогодняя вечеринка с AloeVera',
+    description: 'Встречайте Новый год с любимой группой! Живая музыка, танцы и праздничная атмосфера!',
+    imageUrl: 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=800&h=400&fit=crop',
+    date: new Date('2023-12-31T22:00:00'),
+    endDate: new Date('2023-01-01T02:00:00'),
+    location: 'Дворец культуры, Москва',
+    capacity: 800,
+    attendees: ['1', '2', '3', '4'],
+    category: 'party',
+    price: 2000,
+    organizer: 'Фан-клуб AloeVera'
+  },
+  {
+    id: '7',
+    title: 'AloeVera Summer Fest',
+    description: 'Двухдневный летний фестиваль с группой AloeVera и приглашенными музыкантами под открытым небом!',
+    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=400&fit=crop',
+    date: new Date('2022-07-15T15:00:00'),
+    endDate: new Date('2022-07-16T23:00:00'),
+    location: 'Парк Горького, Москва',
+    capacity: 25000,
+    attendees: ['1', '4', '5', '6', '7'],
+    category: 'festival',
+    price: 4000,
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '8',
+    title: 'AloeVera: Джазовые импровизации',
+    description: 'Эксклюзивное выступление группы в джазовом стиле. Ограниченное количество мест!',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop',
+    date: new Date('2023-03-20T19:00:00'),
+    endDate: new Date('2023-03-25T23:30:00'),
+    location: 'Клуб "Джаз", Санкт-Петербург',
+    capacity: 300,
+    attendees: ['1', '2', '3'],
+    category: 'party',
+    price: 1800,
+    organizer: 'Фан-клуб AloeVera'
+  },
+  {
+    id: '9',
+    title: 'Яхтинг в Автралии 2026',
+    description: 'Олег. Австралия. Только для тех, кто знает.',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=400&fit=crop',
+    date: new Date('2026-04-15T10:00:00'),
+    endDate: new Date('2026-04-22T18:00:00'),
+    location: 'Сидней, Австралия',
+    capacity: 30,
+    attendees: ['1', '13', '14', '15'],
+    category: 'yachting',
+    price: 25000,
+    organizer: 'Veter Veter',
+    isSecret: true
+  },
+  {
+    id: '10',
+    title: 'АлоэЯхтинг 2025',
+    description: 'Юбилейный пятый яхтинг в Греции!',
+    imageUrl: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=400&fit=crop',
+    date: new Date('2025-08-10T09:00:00'),
+    endDate: new Date('2025-08-17T19:00:00'),
+    location: 'Кос, Греция',
+    capacity: 40,
+    attendees: ['1', '2', '3', '4', '5'],
+    category: 'yachting',
+    price: 22000,
+    organizer: 'Mediterranean Sailing'
   }
 ];
 
@@ -153,6 +252,7 @@ const EventDetails = () => {
       meetup: 'Встреча',
       festival: 'Фестиваль',
       party: 'Вечеринка',
+      yachting: 'Яхтинг',
       other: 'Другое'
     };
     return labels[category as keyof typeof labels] || 'Событие';
@@ -164,6 +264,7 @@ const EventDetails = () => {
       meetup: 'bg-aloe-gold text-white',
       festival: 'bg-aloe-coral text-white',
       party: 'bg-aloe-lavender text-white',
+      yachting: 'bg-blue-600 text-white',
       other: 'bg-aloe-sage text-white'
     };
     return colors[category as keyof typeof colors] || 'bg-gray-500 text-white';
@@ -216,10 +317,15 @@ const EventDetails = () => {
             style={{ backgroundImage: `url(${event.imageUrl})` }}
           >
             <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute top-4 left-4">
+            <div className="absolute top-4 left-4 flex gap-2">
               <Badge className={getCategoryColor(event.category)}>
                 {getCategoryLabel(event.category)}
               </Badge>
+              {event.isSecret && (
+                <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">
+                  Секретный
+                </Badge>
+              )}
             </div>
             {event.price && (
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
