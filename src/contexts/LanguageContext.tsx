@@ -49,7 +49,7 @@ const translations = {
     'profile.signOut': 'Выйти',
 
     // Search
-    'search.title': 'Только посмотри на этих прекрасных людей',
+    'search.title': 'Найди тех самых',
     'search.noMoreProfiles': 'Больше профилей пока нет',
     'search.swipeInstructions': 'Свайп вправо - лайк, влево - пропустить',
 
