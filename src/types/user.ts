@@ -1,3 +1,12 @@
+export interface AloeVeraSong {
+  id: string;
+  title: string;
+  album: string;
+  duration: string;
+  previewUrl: string;
+  year: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -10,6 +19,7 @@ export interface User {
   lastSeen: Date;
   isOnline: boolean;
   eventsAttended?: Event[];
+  favoriteSong?: AloeVeraSong;
   preferences: {
     ageRange: [number, number];
     maxDistance: number;

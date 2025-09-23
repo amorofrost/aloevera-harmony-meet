@@ -11,8 +11,52 @@ import { Switch } from '@/components/ui/switch';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User, Event } from '@/types/user';
+import { User, Event, AloeVeraSong } from '@/types/user';
 import heroBg from '@/assets/hero-bg.jpg';
+
+// Mock AloeVera songs data
+const mockSongs: AloeVeraSong[] = [
+  {
+    id: '1',
+    title: 'Звездное небо',
+    album: 'Первый альбом',
+    duration: '3:45',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2018
+  },
+  {
+    id: '2', 
+    title: 'Летний ветер',
+    album: 'Первый альбом',
+    duration: '4:12',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2018
+  },
+  {
+    id: '3',
+    title: 'Новые горизонты',
+    album: 'Второй альбом', 
+    duration: '3:28',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2020
+  },
+  {
+    id: '4',
+    title: 'В объятиях тишины',
+    album: 'Второй альбом',
+    duration: '4:55',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2020
+  },
+  {
+    id: '5',
+    title: 'Дыхание города',
+    album: 'Третий альбом',
+    duration: '3:33',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2022
+  }
+];
 
 // Mock events data for attended events
 const attendedEvents: Event[] = [
@@ -87,6 +131,7 @@ const mockUser: User = {
   lastSeen: new Date(),
   isOnline: true,
   eventsAttended: attendedEvents,
+  favoriteSong: mockSongs[0],
   preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
   settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
 };
@@ -274,6 +319,60 @@ const Profile = () => {
                 >
                   {t('common.cancel')}
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Favorite Song */}
+        <Card className="profile-card">
+          <CardHeader>
+            <CardTitle>Любимая песня AloeVera</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="favoriteSong">Выберите любимую песню</Label>
+              <Select 
+                value={user.favoriteSong?.id || ''} 
+                onValueChange={(value) => {
+                  const selectedSong = mockSongs.find(song => song.id === value);
+                  setUser({...user, favoriteSong: selectedSong});
+                }}
+                disabled={!isEditing}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Выберите песню..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockSongs.map((song) => (
+                    <SelectItem key={song.id} value={song.id}>
+                      {song.title} - {song.album} ({song.year})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {user.favoriteSong && (
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">{user.favoriteSong.title}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {user.favoriteSong.album} • {user.favoriteSong.duration} • {user.favoriteSong.year}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const audio = new Audio(user.favoriteSong!.previewUrl);
+                      audio.play();
+                    }}
+                  >
+                    ▶️ Воспроизвести
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

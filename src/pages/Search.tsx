@@ -7,8 +7,52 @@ import SwipeCard from '@/components/ui/swipe-card';
 import EventPostmark from '@/components/ui/event-postmark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User, Event } from '@/types/user';
+import { User, Event, AloeVeraSong } from '@/types/user';
 import heroBg from '@/assets/hero-bg.jpg';
+
+// Mock AloeVera songs data
+const mockSongs: AloeVeraSong[] = [
+  {
+    id: '1',
+    title: 'Звездное небо',
+    album: 'Первый альбом',
+    duration: '3:45',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2018
+  },
+  {
+    id: '2', 
+    title: 'Летний ветер',
+    album: 'Первый альбом',
+    duration: '4:12',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2018
+  },
+  {
+    id: '3',
+    title: 'Новые горизонты',
+    album: 'Второй альбом', 
+    duration: '3:28',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2020
+  },
+  {
+    id: '4',
+    title: 'В объятиях тишины',
+    album: 'Второй альбом',
+    duration: '4:55',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2020
+  },
+  {
+    id: '5',
+    title: 'Дыхание города',
+    album: 'Третий альбом',
+    duration: '3:33',
+    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
+    year: 2022
+  }
+];
 
 // Mock events data
 const mockEvents: Event[] = [
@@ -105,6 +149,7 @@ const mockUsers: User[] = [
     lastSeen: new Date(),
     isOnline: true,
     eventsAttended: [mockEvents[0]],
+    favoriteSong: mockSongs[0],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -135,6 +180,7 @@ const mockUsers: User[] = [
     lastSeen: new Date(),
     isOnline: true,
     eventsAttended: [mockEvents[1], mockEvents[2], mockEvents[4], mockEvents[5], mockEvents[0], mockEvents[3]],
+    favoriteSong: mockSongs[2],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -436,6 +482,30 @@ const Search = () => {
                               </div>
                             ))}
                           </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Favorite Song */}
+                    {currentUser.favoriteSong && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Любимая песня</h3>
+                        <div className="bg-white/10 rounded-lg p-3 flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{currentUser.favoriteSong.title}</div>
+                            <div className="text-xs opacity-75">{currentUser.favoriteSong.album} • {currentUser.favoriteSong.duration}</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const audio = new Audio(currentUser.favoriteSong!.previewUrl);
+                              audio.play();
+                            }}
+                            className="ml-3 bg-white/20 text-white rounded-full p-2 hover:bg-white/30 transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     )}
