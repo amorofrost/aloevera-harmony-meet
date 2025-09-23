@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Edit3, Camera, LogOut, Globe } from 'lucide-react';
+import { Settings, Edit3, Camera, LogOut, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,69 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import BottomNavigation from '@/components/ui/bottom-navigation';
+import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User } from '@/types/user';
+import { User, Event } from '@/types/user';
+
+// Mock events data for attended events
+const attendedEvents: Event[] = [
+  {
+    id: '4',
+    title: 'AloeVera Summer Tour 2023',
+    description: 'Летний тур группы AloeVera по России',
+    imageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop',
+    date: new Date('2023-08-15T20:00:00'),
+    location: 'Гребной канал, Санкт-Петербург',
+    attendees: ['1'],
+    category: 'concert',
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '6',
+    title: 'Новогодний бал фанатов',
+    description: 'Праздничная встреча фанатов группы',
+    imageUrl: 'https://images.unsplash.com/photo-1482575832494-771f77fd8ba2?w=800&h=400&fit=crop',
+    date: new Date('2022-12-30T21:00:00'),
+    location: 'Дворец культуры, Москва',
+    attendees: ['1'],
+    category: 'party',
+    organizer: 'Фан-клуб AloeVera'
+  },
+  {
+    id: '7',
+    title: 'AloeVera Fest 2022',
+    description: 'Первый большой фестиваль группы',
+    imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=400&fit=crop',
+    date: new Date('2022-07-15T14:00:00'),
+    location: 'Парк Горького, Москва',
+    attendees: ['1'],
+    category: 'festival',
+    organizer: 'AloeVera Official'
+  },
+  {
+    id: '9',
+    title: 'Yachting 2026',
+    description: 'Невероятная неделя яхтинга у берегов Австралии',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=400&fit=crop',
+    date: new Date('2026-04-15T10:00:00'),
+    location: 'Золотое побережье, Австралия',
+    attendees: ['1'],
+    category: 'yachting',
+    organizer: 'Oceanic Adventures',
+    isSecret: true
+  },
+  {
+    id: '10',
+    title: 'Yachting 2025',
+    description: 'Магическая неделя яхтинга среди греческих островов',
+    imageUrl: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=400&fit=crop',
+    date: new Date('2025-08-10T09:00:00'),
+    location: 'Миконос, Греция',
+    attendees: ['1'],
+    category: 'yachting',
+    organizer: 'Mediterranean Sailing'
+  }
+];
 
 // Mock user data
 const mockUser: User = {
@@ -24,6 +85,7 @@ const mockUser: User = {
   images: [],
   lastSeen: new Date(),
   isOnline: true,
+  eventsAttended: attendedEvents,
   preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
   settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
 };
@@ -33,7 +95,21 @@ const Profile = () => {
   const [user, setUser] = useState<User>(mockUser);
   const [isEditing, setIsEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [eventsScrollPosition, setEventsScrollPosition] = useState(0);
   const { t, language, setLanguage } = useLanguage();
+
+  const scrollEvents = (direction: 'left' | 'right') => {
+    const container = document.getElementById('events-scroll-container');
+    if (container) {
+      const scrollAmount = 150;
+      const newPosition = direction === 'left' 
+        ? Math.max(0, eventsScrollPosition - scrollAmount)
+        : eventsScrollPosition + scrollAmount;
+      
+      container.scrollTo({ left: newPosition, behavior: 'smooth' });
+      setEventsScrollPosition(newPosition);
+    }
+  };
 
   const handleSave = () => {
     setIsEditing(false);
@@ -191,6 +267,63 @@ const Profile = () => {
                   {t('common.cancel')}
                 </Button>
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Events Attended */}
+        <Card className="profile-card">
+          <CardHeader>
+            <CardTitle>События, которые я посетил</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {user.eventsAttended && user.eventsAttended.length > 0 ? (
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => scrollEvents('left')}
+                    className="h-8 w-8 p-0 rounded-full flex-shrink-0"
+                    disabled={eventsScrollPosition === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <div 
+                    id="events-scroll-container"
+                    className="flex gap-3 overflow-x-auto scrollbar-hide flex-1"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    {user.eventsAttended.map((event) => (
+                      <div key={event.id} className="flex-shrink-0">
+                        <EventPostmark
+                          location={event.location}
+                          date={event.date}
+                          title={event.title}
+                          category={event.category}
+                          className="w-12 h-12"
+                          showEventName={true}
+                          onClick={() => navigate(`/events/${event.id}`)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => scrollEvents('right')}
+                    className="h-8 w-8 p-0 rounded-full flex-shrink-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                Вы еще не посетили ни одного события
+              </p>
             )}
           </CardContent>
         </Card>
