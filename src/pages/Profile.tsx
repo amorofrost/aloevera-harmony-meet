@@ -531,6 +531,15 @@ const Profile = () => {
                 
                 {/* API Test Section */}
                 <div className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open('https://20.153.164.3:5002', '_blank')}
+                    className="w-full mb-2"
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Accept Certificate
+                  </Button>
+                  
                   <div className="flex items-center justify-between">
                     <Button 
                       variant="outline" 
