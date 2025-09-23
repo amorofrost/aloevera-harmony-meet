@@ -49,14 +49,14 @@ const translations = {
     'profile.signOut': 'Выйти',
 
     // Search
-    'search.title': 'Найти любовь',
+    'search.title': 'Только посмотри на этих прекрасных людей',
     'search.noMoreProfiles': 'Больше профилей пока нет',
     'search.swipeInstructions': 'Свайп вправо - лайк, влево - пропустить',
 
     // Events
-    'events.title': 'События AloeVera',
+    'events.title': 'События АлоэВера',
     'events.join': 'Присоединиться',
-    'events.joined': 'Вы участвуете',
+    'events.joined': 'Ты участвуешь',
     'events.attendees': 'участников',
 
     // Likes
@@ -64,21 +64,21 @@ const translations = {
     'likes.sent': 'Отправленные',
     'likes.received': 'Полученные',
     'likes.noMatches': 'Пока нет взаимных лайков',
-    'likes.noSent': 'Вы пока никого не лайкнули',
-    'likes.noReceived': 'Пока никто вас не лайкнул',
+    'likes.noSent': 'Ты пока никого не лайкнул',
+    'likes.noReceived': 'Пока нет лайков',
 
     // Chats
     'chats.private': 'Личные чаты',
     'chats.group': 'Групповые чаты',
     'chats.noPrivateChats': 'Пока нет личных чатов',
     'chats.noGroupChats': 'Пока нет групповых чатов',
-    'chats.startChatting': 'Начните общаться с вашими совпадениями',
-    'chats.typeMessage': 'Введите сообщение...',
+    'chats.startChatting': 'Начни общаться',
+    'chats.typeMessage': 'Введи сообщение...',
     'chats.send': 'Отправить',
 
     // Welcome
-    'welcome.title': 'Добро пожаловать в мир AloeVera',
-    'welcome.subtitle': 'Знакомства для фанатов музыки',
+    'welcome.title': 'Добро пожаловать в мир АлоэВера',
+    'welcome.subtitle': 'Знакомства для тех, кто на одной волне',
     'welcome.description': 'Находите единомышленников, влюбляйтесь под любимые мелодии и создавайте гармонию в отношениях.',
     'welcome.getStarted': 'Начать знакомства',
     
@@ -93,11 +93,11 @@ const translations = {
     'auth.gender': 'Пол',
     'auth.location': 'Местоположение',
     'auth.bio': 'О себе',
-    'auth.enterEmail': 'Введите ваш email',
-    'auth.enterPassword': 'Введите пароль',
-    'auth.createPassword': 'Создайте пароль',
+    'auth.enterEmail': 'Введи свой email',
+    'auth.enterPassword': 'Введи пароль',
+    'auth.createPassword': 'Создай пароль',
     'auth.cityCountry': 'Город, Страна',
-    'auth.aboutYourself': 'Расскажите о себе...',
+    'auth.aboutYourself': 'Расскажи о себе...',
     'auth.male': 'Мужской',
     'auth.female': 'Женский',
     'auth.other': 'Другой',
