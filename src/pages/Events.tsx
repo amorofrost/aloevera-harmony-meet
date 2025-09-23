@@ -53,8 +53,8 @@ const mockEvents: Event[] = [
   },
   {
     id: '9',
-    title: 'Yachting 2026',
-    description: 'Невероятная неделя яхтинга у берегов Австралии. Знакомства на воде, романтические закаты и морские приключения!',
+    title: 'Яхтинг в Автралии 2026',
+    description: 'Олег. Австралия. Только для тех, кто знает.',
     imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=400&fit=crop',
     date: new Date('2026-04-15T10:00:00'),
     endDate: new Date('2026-04-22T18:00:00'),
@@ -63,7 +63,7 @@ const mockEvents: Event[] = [
     attendees: ['1', '13', '14', '15'],
     category: 'yachting',
     price: 25000,
-    organizer: 'Oceanic Adventures',
+    organizer: 'Veter Veter',
     isSecret: true
   }
 ];
@@ -79,7 +79,7 @@ const pastEvents: Event[] = [
     endDate: new Date('2023-08-15T23:30:00'),
     location: 'Гребной канал, Санкт-Петербург',
     capacity: 15000,
-    attendees: ['1', '15', '16', '17', '18'],
+    attendees: ['1', '5', '6', '7', '8'],
     category: 'concert',
     price: 3000,
     organizer: 'AloeVera Official'
@@ -93,7 +93,7 @@ const pastEvents: Event[] = [
     endDate: new Date('2023-10-12T22:00:00'),
     location: 'Клуб "Вечность", Москва',
     capacity: 200,
-    attendees: ['1', '19', '20'],
+    attendees: ['1', '2', '3'],
     category: 'concert',
     price: 1500,
     organizer: 'AloeVera Official'
@@ -107,7 +107,7 @@ const pastEvents: Event[] = [
     endDate: new Date('2023-01-01T02:00:00'),
     location: 'Дворец культуры, Москва',
     capacity: 800,
-    attendees: ['1', '21', '22', '23'],
+    attendees: ['1', '2', '3', '4'],
     category: 'party',
     price: 2000,
     organizer: 'Фан-клуб AloeVera'
@@ -121,7 +121,7 @@ const pastEvents: Event[] = [
     endDate: new Date('2022-07-16T23:00:00'),
     location: 'Парк Горького, Москва',
     capacity: 25000,
-    attendees: ['1', '24', '25', '26', '27'],
+    attendees: ['1', '4', '5', '6', '7'],
     category: 'festival',
     price: 4000,
     organizer: 'AloeVera Official'
@@ -135,21 +135,21 @@ const pastEvents: Event[] = [
     endDate: new Date('2023-03-25T23:30:00'),
     location: 'Клуб "Джаз", Санкт-Петербург',
     capacity: 300,
-    attendees: ['1', '28', '29'],
+    attendees: ['1', '2', '3'],
     category: 'party',
     price: 1800,
     organizer: 'Фан-клуб AloeVera'
   },
   {
     id: '10',
-    title: 'Yachting 2025',
-    description: 'Магическая неделя яхтинга среди греческих островов. Лазурные воды, белоснежные яхты и новые романтические знакомства!',
+    title: 'АлоэЯхтинг 2025',
+    description: 'Юбилейный пятый яхтинг в Греции!',
     imageUrl: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=400&fit=crop',
     date: new Date('2025-08-10T09:00:00'),
     endDate: new Date('2025-08-17T19:00:00'),
-    location: 'Миконос, Греция',
+    location: 'Кос, Греция',
     capacity: 40,
-    attendees: ['1', '30', '31', '32', '33'],
+    attendees: ['1', '2', '3', '4', '5'],
     category: 'yachting',
     price: 22000,
     organizer: 'Mediterranean Sailing'
@@ -242,7 +242,7 @@ const Events = () => {
                   </Badge>
                   {event.isSecret && (
                     <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">
-                      секрет
+                      Секретный
                     </Badge>
                   )}
                 </div>
