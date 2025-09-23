@@ -50,6 +50,20 @@ const mockEvents: Event[] = [
     category: 'festival',
     price: 5000,
     organizer: 'AloeVera Official'
+  },
+  {
+    id: '9',
+    title: 'Yachting 2026',
+    description: 'Невероятная неделя яхтинга у берегов Австралии. Знакомства на воде, романтические закаты и морские приключения!',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=400&fit=crop',
+    date: new Date('2026-04-15T10:00:00'),
+    endDate: new Date('2026-04-22T18:00:00'),
+    location: 'Золотое побережье, Австралия',
+    capacity: 50,
+    attendees: ['13', '14', '15'],
+    category: 'yachting',
+    price: 25000,
+    organizer: 'Oceanic Adventures'
   }
 ];
 
@@ -124,6 +138,20 @@ const pastEvents: Event[] = [
     category: 'party',
     price: 1800,
     organizer: 'Фан-клуб AloeVera'
+  },
+  {
+    id: '10',
+    title: 'Yachting 2025',
+    description: 'Магическая неделя яхтинга среди греческих островов. Лазурные воды, белоснежные яхты и новые романтические знакомства!',
+    imageUrl: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=400&fit=crop',
+    date: new Date('2025-08-10T09:00:00'),
+    endDate: new Date('2025-08-17T19:00:00'),
+    location: 'Миконос, Греция',
+    capacity: 40,
+    attendees: ['1', '30', '31', '32', '33'],
+    category: 'yachting',
+    price: 22000,
+    organizer: 'Mediterranean Sailing'
   }
 ];
 
@@ -158,6 +186,7 @@ const Events = () => {
       meetup: 'Встреча',
       festival: 'Фестиваль',
       party: 'Вечеринка',
+      yachting: 'Яхтинг',
       other: 'Другое'
     };
     return labels[category as keyof typeof labels] || 'Событие';
@@ -169,6 +198,7 @@ const Events = () => {
       meetup: 'bg-aloe-gold text-white',
       festival: 'bg-aloe-coral text-white',
       party: 'bg-aloe-lavender text-white',
+      yachting: 'bg-blue-500 text-white',
       other: 'bg-aloe-sage text-white'
     };
     return colors[category as keyof typeof colors] || 'bg-gray-500 text-white';

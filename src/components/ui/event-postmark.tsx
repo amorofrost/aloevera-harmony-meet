@@ -200,6 +200,76 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, ca
       }
     }
     
+    // Yachting designs
+    if (category === 'yachting') {
+      const isAustralia = location.toLowerCase().includes('австрали');
+      const isGreece = location.toLowerCase().includes('греци') || location.toLowerCase().includes('миконос');
+      
+      if (isAustralia) {
+        return {
+          bgColor: 'from-orange-400 via-red-400 to-yellow-500',
+          illustration: (
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Australian yacht with flag elements */}
+              <div className="relative">
+                {/* Yacht sail */}
+                <div className="w-4 h-5 bg-white rounded-t-lg transform -rotate-12 relative">
+                  <div className="absolute top-1 left-1 w-2 h-1 bg-red-400 rounded"></div>
+                  <div className="absolute bottom-1 right-1 w-1 h-2 bg-blue-400 rounded"></div>
+                </div>
+                {/* Yacht hull */}
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-5 h-1 bg-white rounded-full"></div>
+                {/* Australian elements - sun and waves */}
+                <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
+                <div className="absolute -bottom-0.5 -left-2 w-3 h-0.5 bg-orange-300 rounded-full"></div>
+              </div>
+            </div>
+          )
+        };
+      }
+      
+      if (isGreece) {
+        return {
+          bgColor: 'from-blue-400 via-cyan-400 to-white',
+          illustration: (
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Greek yacht with island elements */}
+              <div className="relative">
+                {/* Yacht sail */}
+                <div className="w-4 h-5 bg-white rounded-t-lg transform -rotate-12 relative">
+                  <div className="absolute top-1 left-1 w-2 h-1 bg-blue-500 rounded"></div>
+                  <div className="absolute bottom-1 right-1 w-1 h-1 bg-blue-500 rounded"></div>
+                </div>
+                {/* Yacht hull */}
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-5 h-1 bg-white rounded-full"></div>
+                {/* Greek elements - island and waves */}
+                <div className="absolute -top-1 -right-1 w-2 h-1 bg-white rounded-full"></div>
+                <div className="absolute -bottom-0.5 -left-2 w-3 h-0.5 bg-cyan-300 rounded-full"></div>
+              </div>
+            </div>
+          )
+        };
+      }
+      
+      // Default yachting design
+      return {
+        bgColor: 'from-blue-500 via-teal-500 to-cyan-500',
+        illustration: (
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Generic yacht */}
+            <div className="relative">
+              {/* Yacht sail */}
+              <div className="w-4 h-5 bg-white rounded-t-lg transform -rotate-12"></div>
+              {/* Yacht hull */}
+              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-5 h-1 bg-white rounded-full"></div>
+              {/* Waves */}
+              <div className="absolute -bottom-0.5 -left-2 w-4 h-0.5 bg-cyan-300 rounded-full"></div>
+            </div>
+          </div>
+        )
+      };
+    }
+    
     // Default design for unmatched events
     return {
       bgColor: 'from-emerald-400 via-teal-400 to-cyan-400',

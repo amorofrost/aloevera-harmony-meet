@@ -57,7 +57,7 @@ export interface Event {
   location: string;
   capacity?: number;
   attendees: string[];
-  category: 'concert' | 'meetup' | 'party' | 'festival' | 'other';
+  category: 'concert' | 'meetup' | 'party' | 'festival' | 'yachting' | 'other';
   price?: number;
   organizer: string;
 }
