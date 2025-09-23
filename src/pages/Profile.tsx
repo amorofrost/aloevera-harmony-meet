@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Edit3, Camera, LogOut, Globe, ChevronLeft, ChevronRight, Wifi } from 'lucide-react';
+import { Settings, Edit3, Camera, LogOut, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useHealthCheck } from '@/hooks/use-api';
-import { checkBackendHealth } from '@/lib/api';
 import { User, Event, AloeVeraSong } from '@/types/user';
 import heroBg from '@/assets/hero-bg.jpg';
 
@@ -146,9 +143,6 @@ const Profile = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [eventsScrollPosition, setEventsScrollPosition] = useState(0);
   const { t, language, setLanguage } = useLanguage();
-  
-  // API health check hook
-  const healthCheck = useHealthCheck();
 
   const scrollEvents = (direction: 'left' | 'right') => {
     const container = document.getElementById('events-scroll-container');
@@ -177,10 +171,6 @@ const Profile = () => {
   const handleSignOut = () => {
     // Navigate back to welcome page
     navigate('/');
-  };
-
-  const handleApiTest = async () => {
-    await healthCheck.execute(() => checkBackendHealth());
   };
 
   return (
@@ -523,70 +513,11 @@ const Profile = () => {
                 <Button 
                   variant="destructive" 
                   onClick={handleSignOut}
-                  className="w-full mb-3"
+                  className="w-full"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   {t('profile.signOut')}
                 </Button>
-                
-                {/* API Test Section */}
-                <div className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => window.open('https://20.153.164.3:5002', '_blank')}
-                    className="w-full mb-2"
-                  >
-                    <Globe className="w-4 h-4 mr-2" />
-                    Accept Certificate
-                  </Button>
-                  
-                  <div className="flex items-center justify-between">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleApiTest}
-                      disabled={healthCheck.loading}
-                      className="flex-1 mr-3"
-                    >
-                      <Wifi className="w-4 h-4 mr-2" />
-                      {healthCheck.loading ? 'Testing...' : 'API Test'}
-                    </Button>
-                    {healthCheck.data && (
-                      <div className="text-xs text-green-600 font-mono bg-green-50 px-2 py-1 rounded">
-                        ✓ Connected
-                      </div>
-                    )}
-                    {healthCheck.error && (
-                      <div className="text-xs text-red-600 font-mono bg-red-50 px-2 py-1 rounded">
-                        ✗ Error
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* API Response Display */}
-                  {healthCheck.data && (
-                    <Alert>
-                      <AlertDescription>
-                        <div className="font-mono text-xs">
-                          <strong>Backend Response:</strong>
-                          <pre className="mt-1 whitespace-pre-wrap">
-                            {JSON.stringify(healthCheck.data, null, 2)}
-                          </pre>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {healthCheck.error && (
-                    <Alert variant="destructive">
-                      <AlertDescription>
-                        <div className="font-mono text-xs">
-                          <strong>Error:</strong>
-                          <div className="mt-1">{healthCheck.error}</div>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
               </div>
             </CardContent>
           </Card>
