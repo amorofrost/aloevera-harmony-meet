@@ -60,4 +60,5 @@ export interface Event {
   category: 'concert' | 'meetup' | 'party' | 'festival' | 'yachting' | 'other';
   price?: number;
   organizer: string;
+  isSecret?: boolean;
 }

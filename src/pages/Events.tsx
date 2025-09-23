@@ -60,10 +60,11 @@ const mockEvents: Event[] = [
     endDate: new Date('2026-04-22T18:00:00'),
     location: 'Золотое побережье, Австралия',
     capacity: 50,
-    attendees: ['13', '14', '15'],
+    attendees: ['1', '13', '14', '15'],
     category: 'yachting',
     price: 25000,
-    organizer: 'Oceanic Adventures'
+    organizer: 'Oceanic Adventures',
+    isSecret: true
   }
 ];
 
@@ -156,7 +157,7 @@ const pastEvents: Event[] = [
 ];
 
 const Events = () => {
-  const [joinedEvents, setJoinedEvents] = useState<string[]>(['2']);
+  const [joinedEvents, setJoinedEvents] = useState<string[]>(['2', '9']);
   const [attendedEvents, setAttendedEvents] = useState<string[]>(['4', '6', '7']); // Past events user attended
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -235,10 +236,15 @@ const Events = () => {
                 style={{ backgroundImage: `url(${event.imageUrl})` }}
               >
                 <div className="absolute inset-0 bg-black/40" />
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 flex gap-2">
                   <Badge className={getCategoryColor(event.category)}>
                     {getCategoryLabel(event.category)}
                   </Badge>
+                  {event.isSecret && (
+                    <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">
+                      секрет
+                    </Badge>
+                  )}
                 </div>
                 {event.price && (
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
@@ -335,10 +341,15 @@ const Events = () => {
                 style={{ backgroundImage: `url(${event.imageUrl})` }}
               >
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all duration-300" />
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 flex gap-2">
                   <Badge className={`${getCategoryColor(event.category)} opacity-70 group-hover:opacity-100 transition-opacity duration-300`}>
                     {getCategoryLabel(event.category)}
                   </Badge>
+                  {event.isSecret && (
+                    <Badge className="bg-gray-900/60 group-hover:bg-gray-900/90 text-yellow-400 border border-yellow-400/50 opacity-70 group-hover:opacity-100 transition-all duration-300">
+                      секрет
+                    </Badge>
+                  )}
                 </div>
                 {event.price && (
                   <div className="absolute top-4 right-4 bg-white/60 group-hover:bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 transition-all duration-300">
