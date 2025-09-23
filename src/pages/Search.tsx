@@ -422,6 +422,8 @@ const Search = () => {
                                   title={event.title}
                                   category={event.category}
                                   className="w-12 h-12"
+                                  showEventName={true}
+                                  onClick={() => navigate(`/events/${event.id}`)}
                                 />
                               </div>
                             ))}

@@ -7,9 +7,11 @@ interface EventPostmarkProps {
   title: string;
   category: string;
   className?: string;
+  onClick?: () => void;
+  showEventName?: boolean;
 }
 
-const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, category, className = '' }) => {
+const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, category, className = '', onClick, showEventName = false }) => {
   const year = date.getFullYear();
   const city = location.split(',')[1]?.trim() || location.split(',')[0].trim();
   
@@ -224,7 +226,10 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, ca
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={`relative inline-block ${className} group cursor-pointer`}>
+          <div 
+            className={`relative inline-block ${className} group cursor-pointer`}
+            onClick={onClick}
+          >
             {/* Postmark Background with gradient */}
             <div className={`relative w-16 h-16 bg-gradient-to-br ${design.bgColor} rounded-lg p-1 shadow-lg border-2 border-white transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl`}>
               {/* Postmark border effect */}
@@ -251,7 +256,10 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, ca
           </div>
         </TooltipTrigger>
         <TooltipContent side="top">
-          <p className="text-sm font-medium">{city}</p>
+          <div className="text-center">
+            {showEventName && <p className="text-sm font-medium">{title}</p>}
+            <p className="text-sm">{city}</p>
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
