@@ -99,11 +99,11 @@ const mockUsers: User[] = [
     bio: 'Обожаю музыку AloeVera и концерты под открытым небом. Ищу того, с кем можно петь любимые песни ❤️',
     location: 'Москва',
     gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
+    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
     images: [],
     lastSeen: new Date(),
     isOnline: true,
-    eventsAttended: [mockEvents[0], mockEvents[1], mockEvents[3]],
+    eventsAttended: [mockEvents[0]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
@@ -118,7 +118,7 @@ const mockUsers: User[] = [
     images: [],
     lastSeen: new Date(),
     isOnline: false,
-    eventsAttended: [mockEvents[0], mockEvents[2], mockEvents[5]],
+    eventsAttended: [],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
   },
