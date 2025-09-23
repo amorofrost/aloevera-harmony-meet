@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Edit3, Camera, LogOut, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Settings, Edit3, Camera, LogOut, Globe, ChevronLeft, ChevronRight, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import BottomNavigation from '@/components/ui/bottom-navigation';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Event, AloeVeraSong } from '@/types/user';
+import { debugApi } from '@/lib/api';
 import heroBg from '@/assets/hero-bg.jpg';
 
 // Mock AloeVera songs data
@@ -142,6 +143,8 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [eventsScrollPosition, setEventsScrollPosition] = useState(0);
+  const [debugResponse, setDebugResponse] = useState<string>('');
+  const [isTestingApi, setIsTestingApi] = useState(false);
   const { t, language, setLanguage } = useLanguage();
 
   const scrollEvents = (direction: 'left' | 'right') => {
@@ -171,6 +174,20 @@ const Profile = () => {
   const handleSignOut = () => {
     // Navigate back to welcome page
     navigate('/');
+  };
+
+  const handleDebugTest = async () => {
+    setIsTestingApi(true);
+    setDebugResponse('');
+    
+    try {
+      const response = await debugApi.health();
+      setDebugResponse(JSON.stringify(response, null, 2));
+    } catch (error) {
+      setDebugResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsTestingApi(false);
+    }
   };
 
   return (
@@ -509,7 +526,7 @@ const Profile = () => {
                 </Select>
               </div>
 
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t space-y-3">
                 <Button 
                   variant="destructive" 
                   onClick={handleSignOut}
@@ -518,6 +535,27 @@ const Profile = () => {
                   <LogOut className="w-4 h-4 mr-2" />
                   {t('profile.signOut')}
                 </Button>
+                
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleDebugTest}
+                    disabled={isTestingApi}
+                    className="flex-shrink-0"
+                  >
+                    <Bug className="w-4 h-4 mr-1" />
+                    {isTestingApi ? 'Testing...' : 'Test API'}
+                  </Button>
+                  
+                  {debugResponse && (
+                    <div className="flex-1 bg-muted/50 rounded p-2 text-xs font-mono overflow-hidden">
+                      <pre className="whitespace-pre-wrap break-all">
+                        {debugResponse}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
