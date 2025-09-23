@@ -19,18 +19,36 @@ export class ApiClient {
         'Content-Type': 'application/json',
         ...options.headers,
       },
+      // For development with self-signed certificates
+      mode: 'cors',
     };
 
-    const response = await fetch(url, {
-      ...defaultOptions,
-      ...options,
-    });
+    try {
+      const response = await fetch(url, {
+        ...defaultOptions,
+        ...options,
+      });
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      // Enhanced error handling for common development issues
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error(
+          `Network error: Cannot connect to ${url}. ` +
+          `This might be due to:\n` +
+          `1. CORS policy blocking the request\n` +
+          `2. Self-signed HTTPS certificate not trusted by browser\n` +
+          `3. Backend server not running\n` +
+          `4. Firewall blocking the connection\n\n` +
+          `For self-signed certificates, try visiting ${this.baseUrl} directly in your browser first to accept the certificate.`
+        );
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   async get<T>(endpoint: string): Promise<T> {

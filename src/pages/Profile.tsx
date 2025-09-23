@@ -182,12 +182,21 @@ const Profile = () => {
     
     try {
       const response = await debugApi.health();
-      setDebugResponse(JSON.stringify(response, null, 2));
+      setDebugResponse(`✅ Success!\n${JSON.stringify(response, null, 2)}`);
     } catch (error) {
-      setDebugResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setDebugResponse(`❌ ${errorMessage}`);
+      
+      // Log to console for debugging
+      console.error('API Debug Test Error:', error);
     } finally {
       setIsTestingApi(false);
     }
+  };
+
+  const handleCertificateHelp = () => {
+    // Open backend URL in new tab to allow certificate acceptance
+    window.open('https://20.153.164.3:5002', '_blank');
   };
 
   return (
@@ -536,20 +545,31 @@ const Profile = () => {
                   {t('profile.signOut')}
                 </Button>
                 
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleDebugTest}
-                    disabled={isTestingApi}
-                    className="flex-shrink-0"
-                  >
-                    <Bug className="w-4 h-4 mr-1" />
-                    {isTestingApi ? 'Testing...' : 'Test API'}
-                  </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleDebugTest}
+                      disabled={isTestingApi}
+                      className="flex-shrink-0"
+                    >
+                      <Bug className="w-4 h-4 mr-1" />
+                      {isTestingApi ? 'Testing...' : 'Test API'}
+                    </Button>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleCertificateHelp}
+                      className="flex-shrink-0 text-xs"
+                    >
+                      Accept Certificate
+                    </Button>
+                  </div>
                   
                   {debugResponse && (
-                    <div className="flex-1 bg-muted/50 rounded p-2 text-xs font-mono overflow-hidden">
+                    <div className="bg-muted/50 rounded p-3 text-xs font-mono overflow-hidden max-h-32 overflow-y-auto">
                       <pre className="whitespace-pre-wrap break-all">
                         {debugResponse}
                       </pre>
