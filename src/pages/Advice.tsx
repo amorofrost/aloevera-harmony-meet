@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import heroBg from '@/assets/hero-bg.jpg';
 
 // Mock advice data
 const mockAdvice = {
@@ -102,9 +103,16 @@ const Advice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-background/90"></div>
+      </div>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">
             Советы любви
@@ -114,7 +122,7 @@ const Advice = () => {
       </div>
 
       {/* Tabs */}
-      <div className="p-4">
+      <div className="p-4 relative z-10">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="daily">Совет дня</TabsTrigger>

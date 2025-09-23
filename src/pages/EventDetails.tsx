@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Event, User } from '@/types/user';
+import heroBg from '@/assets/hero-bg.jpg';
 
 // Mock data - in real app this would come from props or API
 const mockEvents: Event[] = [
@@ -226,8 +227,15 @@ const EventDetails = () => {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-background flex items-center justify-center relative">
+        {/* Background Image */}
+        <div 
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+          style={{ backgroundImage: `url(${heroBg})` }}
+        >
+          <div className="absolute inset-0 bg-background/90"></div>
+        </div>
+        <div className="text-center relative z-10">
           <h2 className="text-xl font-bold mb-4">Событие не найдено</h2>
           <Button onClick={() => navigate('/events')}>
             Вернуться к событиям
@@ -291,9 +299,16 @@ const EventDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-background/90"></div>
+      </div>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center gap-4 p-4">
           <Button
             variant="ghost"
@@ -309,7 +324,7 @@ const EventDetails = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 relative z-10">
         {/* Event Image and Info */}
         <Card className="profile-card overflow-hidden">
           <div 

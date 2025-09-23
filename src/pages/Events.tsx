@@ -8,6 +8,7 @@ import BottomNavigation from '@/components/ui/bottom-navigation';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Event } from '@/types/user';
+import heroBg from '@/assets/hero-bg.jpg';
 
 // Mock events data
 const mockEvents: Event[] = [
@@ -206,9 +207,16 @@ const Events = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-background/90"></div>
+      </div>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">
             {t('events.title')}
@@ -218,7 +226,7 @@ const Events = () => {
       </div>
 
       {/* Upcoming Events */}
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 relative z-10">
         <h2 className="text-lg font-semibold text-foreground mb-4">Предстоящие события</h2>
         
         {mockEvents.map((event) => {

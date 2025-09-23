@@ -8,6 +8,7 @@ import EventPostmark from '@/components/ui/event-postmark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Event } from '@/types/user';
+import heroBg from '@/assets/hero-bg.jpg';
 
 // Mock events data
 const mockEvents: Event[] = [
@@ -303,9 +304,16 @@ const Search = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-background/90"></div>
+      </div>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           {isViewingSpecificUser && (
             <Button
@@ -334,7 +342,7 @@ const Search = () => {
       </div>
 
       {/* Profile Card */}
-      <div className="relative p-4 flex-1">
+      <div className="relative p-4 flex-1 z-10">
         <SwipeCard
           onSwipeLeft={handlePass}
           onSwipeRight={handleLike}

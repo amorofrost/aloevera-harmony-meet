@@ -9,6 +9,7 @@ import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Chat, GroupChat, PrivateChat, Message } from '@/types/chat';
 import { User } from '@/types/user';
+import heroBg from '@/assets/hero-bg.jpg';
 
 // Mock data
 const mockUsers: Record<string, User> = {
@@ -281,7 +282,7 @@ const Chats = () => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto relative z-10">
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
             {chat.type === 'private' 
@@ -333,7 +334,14 @@ const Chats = () => {
     if (!chat) return null;
     
     return (
-      <div className="min-h-screen bg-background pb-20 flex flex-col">
+      <div className="min-h-screen bg-background pb-20 flex flex-col relative">
+        {/* Background Image */}
+        <div 
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+          style={{ backgroundImage: `url(${heroBg})` }}
+        >
+          <div className="absolute inset-0 bg-background/90"></div>
+        </div>
         <ChatView chat={chat} />
         <BottomNavigation />
       </div>
@@ -341,9 +349,16 @@ const Chats = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-background/90"></div>
+      </div>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">
             Чаты
@@ -353,7 +368,7 @@ const Chats = () => {
       </div>
 
       {/* Tabs */}
-      <div className="p-4">
+      <div className="p-4 relative z-10">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="private">{t('chats.private')}</TabsTrigger>
