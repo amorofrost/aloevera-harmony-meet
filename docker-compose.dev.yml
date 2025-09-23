@@ -1,0 +1,24 @@
+# Development Docker Compose (simplified)
+version: '3.8'
+
+services:
+  # Development version with hot reload
+  aloevera-harmony-meet-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: aloevera-dating-app-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    networks:
+      - dating-app-dev-network
+
+networks:
+  dating-app-dev-network:
+    driver: bridge

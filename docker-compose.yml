@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # Main dating web app frontend
+  aloevera-harmony-meet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aloevera-dating-app
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Backend API URL (configure based on your microservice)
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8080}
+    networks:
+      - dating-app-network
+
+networks:
+  dating-app-network:
+    driver: bridge

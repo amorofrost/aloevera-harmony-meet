@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+ProjectStructure.md
+
+# Docker
+.env
+ssl/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
