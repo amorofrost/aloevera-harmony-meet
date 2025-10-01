@@ -64,29 +64,9 @@ const mockPrivateChats: (PrivateChat & { otherUser: User })[] = [
   }
 ];
 
-const mockGroupChats: GroupChat[] = [
+const mockEventChats: GroupChat[] = [
   {
-    id: 'group-1',
-    type: 'group',
-    name: 'Фанаты AloeVera Москва',
-    description: 'Общение фанатов из Москвы',
-    participants: ['current-user', '1', '2'],
-    isEventChat: false,
-    adminIds: ['admin-1'],
-    createdAt: new Date('2024-02-15'),
-    updatedAt: new Date('2024-02-22'),
-    lastMessage: {
-      id: 'msg-2',
-      chatId: 'group-1',
-      senderId: '2',
-      content: 'Кто идет на концерт в мае?',
-      timestamp: new Date('2024-02-22T16:45:00'),
-      read: true,
-      type: 'text'
-    }
-  },
-  {
-    id: 'group-2',
+    id: 'event-1',
     type: 'group',
     name: 'Фан-встреча: Поэзия и музыка',
     description: 'Чат для участников встречи',
@@ -98,10 +78,154 @@ const mockGroupChats: GroupChat[] = [
     updatedAt: new Date('2024-02-21'),
     lastMessage: {
       id: 'msg-3',
-      chatId: 'group-2',
+      chatId: 'event-1',
       senderId: '1',
       content: 'Встречаемся у входа в 19:00!',
       timestamp: new Date('2024-02-21T18:00:00'),
+      read: true,
+      type: 'text'
+    }
+  },
+  {
+    id: 'event-2',
+    type: 'group',
+    name: 'Концерт AloeVera - Москва',
+    description: 'Общение участников концерта',
+    participants: ['current-user', '1', '2', '3'],
+    isEventChat: true,
+    eventId: '1',
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-02-22'),
+    lastMessage: {
+      id: 'msg-4',
+      chatId: 'event-2',
+      senderId: '2',
+      content: 'Не могу дождаться концерта! 🎵',
+      timestamp: new Date('2024-02-22T12:30:00'),
+      read: true,
+      type: 'text'
+    }
+  }
+];
+
+const mockCommunityChats: GroupChat[] = [
+  {
+    id: 'community-1',
+    type: 'group',
+    name: '📢 Официальные объявления',
+    description: 'Новости и анонсы от команды',
+    participants: ['current-user', '1', '2', '3', '4', '5'],
+    isEventChat: false,
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-02-23'),
+    lastMessage: {
+      id: 'msg-5',
+      chatId: 'community-1',
+      senderId: 'admin-1',
+      content: 'Новый альбом выходит в марте! 🎉',
+      timestamp: new Date('2024-02-23T10:00:00'),
+      read: false,
+      type: 'text'
+    }
+  },
+  {
+    id: 'community-2',
+    type: 'group',
+    name: '💬 Общие темы',
+    description: 'Обсуждение всего подряд',
+    participants: ['current-user', '1', '2', '3', '4', '5', '6', '7', '8'],
+    isEventChat: false,
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-02-23'),
+    lastMessage: {
+      id: 'msg-6',
+      chatId: 'community-2',
+      senderId: '3',
+      content: 'Какая ваша любимая песня?',
+      timestamp: new Date('2024-02-23T09:15:00'),
+      read: true,
+      type: 'text'
+    }
+  },
+  {
+    id: 'community-3',
+    type: 'group',
+    name: '🏙️ Москва',
+    description: 'Чат для фанатов из Москвы',
+    participants: ['current-user', '1', '2', '5'],
+    isEventChat: false,
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-02-22'),
+    lastMessage: {
+      id: 'msg-7',
+      chatId: 'community-3',
+      senderId: '1',
+      content: 'Кто-нибудь в центре сегодня?',
+      timestamp: new Date('2024-02-22T16:45:00'),
+      read: true,
+      type: 'text'
+    }
+  },
+  {
+    id: 'community-4',
+    type: 'group',
+    name: '🏙️ Санкт-Петербург',
+    description: 'Чат для фанатов из Питера',
+    participants: ['current-user', '2', '4', '6'],
+    isEventChat: false,
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-02-22'),
+    lastMessage: {
+      id: 'msg-8',
+      chatId: 'community-4',
+      senderId: '2',
+      content: 'Планируете приехать на фестиваль?',
+      timestamp: new Date('2024-02-22T14:20:00'),
+      read: true,
+      type: 'text'
+    }
+  },
+  {
+    id: 'community-5',
+    type: 'group',
+    name: '🎵 Музыкальные обсуждения',
+    description: 'Разбор песен и творчества',
+    participants: ['current-user', '1', '2', '3', '4', '5', '6'],
+    isEventChat: false,
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-01-25'),
+    updatedAt: new Date('2024-02-23'),
+    lastMessage: {
+      id: 'msg-9',
+      chatId: 'community-5',
+      senderId: '4',
+      content: 'Текст последней песни просто космос 🌌',
+      timestamp: new Date('2024-02-23T11:30:00'),
+      read: true,
+      type: 'text'
+    }
+  },
+  {
+    id: 'community-6',
+    type: 'group',
+    name: '🎨 Оффтопик',
+    description: 'Обсуждение всего, кроме музыки',
+    participants: ['current-user', '1', '3', '5', '7'],
+    isEventChat: false,
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-22'),
+    lastMessage: {
+      id: 'msg-10',
+      chatId: 'community-6',
+      senderId: '5',
+      content: 'Кто смотрел новый фильм?',
+      timestamp: new Date('2024-02-22T20:15:00'),
       read: true,
       type: 'text'
     }
@@ -120,8 +244,10 @@ const Chats = () => {
     const eventId = searchParams.get('eventId');
     const chatId = searchParams.get('chatId');
     
-    if (tab === 'group') {
-      setActiveTab('group');
+    if (tab === 'events') {
+      setActiveTab('events');
+    } else if (tab === 'community') {
+      setActiveTab('community');
     }
     
     // If chatId is provided, directly open that chat
@@ -132,6 +258,7 @@ const Chats = () => {
     
     // If eventId is provided, scroll to that event's chat
     if (eventId) {
+      setActiveTab('events');
       setTimeout(() => {
         const element = document.getElementById(`event-chat-${eventId}`);
         if (element) {
@@ -330,7 +457,7 @@ const Chats = () => {
   );
 
   if (selectedChat) {
-    const chat = [...mockPrivateChats, ...mockGroupChats].find(c => c.id === selectedChat);
+    const chat = [...mockPrivateChats, ...mockEventChats, ...mockCommunityChats].find(c => c.id === selectedChat);
     if (!chat) return null;
     
     return (
@@ -370,9 +497,10 @@ const Chats = () => {
       {/* Tabs */}
       <div className="p-4 relative z-10">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="private">{t('chats.private')}</TabsTrigger>
-            <TabsTrigger value="group">{t('chats.group')}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="private">Личные</TabsTrigger>
+            <TabsTrigger value="events">События</TabsTrigger>
+            <TabsTrigger value="community">Общие</TabsTrigger>
           </TabsList>
 
           {/* Private Chats Tab */}
@@ -380,9 +508,9 @@ const Chats = () => {
             {mockPrivateChats.length === 0 ? (
               <div className="text-center py-12">
                 <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">{t('chats.noPrivateChats')}</h3>
+                <h3 className="text-lg font-semibold mb-2">Нет личных чатов</h3>
                 <p className="text-muted-foreground">
-                  {t('chats.startChatting')}
+                  Начните общение с понравившимися людьми
                 </p>
               </div>
             ) : (
@@ -398,25 +526,48 @@ const Chats = () => {
             )}
           </TabsContent>
 
-          {/* Group Chats Tab */}
-          <TabsContent value="group" className="mt-6">
-            {mockGroupChats.length === 0 ? (
+          {/* Event Chats Tab */}
+          <TabsContent value="events" className="mt-6">
+            {mockEventChats.length === 0 ? (
               <div className="text-center py-12">
-                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">{t('chats.noGroupChats')}</h3>
+                <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Нет чатов событий</h3>
                 <p className="text-muted-foreground">
-                  Присоединяйтесь к событиям, чтобы попасть в групповые чаты
+                  Присоединяйтесь к событиям, чтобы попасть в чаты
                 </p>
               </div>
             ) : (
               <div>
-                {mockGroupChats.map((chat) => (
+                {mockEventChats.map((chat) => (
                   <ChatListItem
                     key={chat.id}
                     chat={{
                       ...chat,
-                      id: chat.isEventChat && chat.eventId ? `event-chat-${chat.eventId}` : chat.id
+                      id: chat.eventId ? `event-chat-${chat.eventId}` : chat.id
                     }}
+                    onClick={() => handleChatSelect(chat.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Community Chats Tab */}
+          <TabsContent value="community" className="mt-6">
+            {mockCommunityChats.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Нет общих чатов</h3>
+                <p className="text-muted-foreground">
+                  Присоединяйтесь к сообществу фанатов
+                </p>
+              </div>
+            ) : (
+              <div>
+                {mockCommunityChats.map((chat) => (
+                  <ChatListItem
+                    key={chat.id}
+                    chat={chat}
                     onClick={() => handleChatSelect(chat.id)}
                   />
                 ))}
