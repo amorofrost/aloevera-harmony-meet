@@ -156,7 +156,7 @@ const mockEvents: Event[] = [
 // Mock group chats to find event-specific chats
 const mockGroupChats = [
   {
-    id: 'group-2',
+    id: 'event-1',
     type: 'group' as const,
     name: 'Фан-встреча: Поэзия и музыка',
     description: 'Чат для участников встречи',
@@ -166,6 +166,18 @@ const mockGroupChats = [
     adminIds: ['admin-1'],
     createdAt: new Date('2024-02-18'),
     updatedAt: new Date('2024-02-21')
+  },
+  {
+    id: 'event-2',
+    type: 'group' as const,
+    name: 'Концерт AloeVera - Москва',
+    description: 'Общение участников концерта',
+    participants: ['current-user', '1', '2', '3'],
+    isEventChat: true,
+    eventId: '1',
+    adminIds: ['admin-1'],
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-02-22')
   }
 ];
 
