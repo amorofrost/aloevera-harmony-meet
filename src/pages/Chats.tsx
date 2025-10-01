@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { MessageCircle, Users, Send, ArrowLeft, MoreVertical, Calendar } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { MessageCircle, Users, Send, ArrowLeft, MoreVertical, Calendar, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -237,6 +237,7 @@ const Chats = () => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -390,7 +391,7 @@ const Chats = () => {
             ) : (
               <>
                 <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
+                  {chat.isEventChat ? <Calendar className="w-5 h-5 text-white" /> : <Users className="w-5 h-5 text-white" />}
                 </div>
                 <div>
                   <h2 className="font-semibold">{chat.name}</h2>
@@ -401,6 +402,17 @@ const Chats = () => {
               </>
             )}
           </div>
+          
+          {chat.isEventChat && chat.eventId && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate(`/event/${chat.eventId}`)}
+              title="Перейти к событию"
+            >
+              <ExternalLink className="w-5 h-5" />
+            </Button>
+          )}
           
           <Button variant="ghost" size="sm">
             <MoreVertical className="w-5 h-5" />
