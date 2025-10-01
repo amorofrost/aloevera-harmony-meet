@@ -407,7 +407,7 @@ const Chats = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate(`/event/${chat.eventId}`)}
+              onClick={() => navigate(`/events/${chat.eventId}`)}
               title="Перейти к событию"
             >
               <ExternalLink className="w-5 h-5" />
