@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLanguage } from '@/contexts/LanguageContext';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
+import { api } from '@/lib/api';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -23,14 +24,29 @@ const Welcome = () => {
     gender: ''
   });
 
-  const handleLogin = () => {
-    // For now, navigate to search regardless of credentials
-    navigate('/search');
+  const handleLogin = async () => {
+    try {
+      await api.login(loginData.email, loginData.password);
+      navigate('/search');
+    } catch (e) {
+      alert('Не удалось войти. Проверьте почту и пароль.');
+    }
   };
 
-  const handleRegister = () => {
-    // For now, navigate to search regardless of form data
-    navigate('/search');
+  const handleRegister = async () => {
+    try {
+      await api.register({
+        email: registerData.email,
+        password: registerData.password,
+        bio: registerData.bio,
+        location: registerData.location,
+        age: registerData.age ? Number(registerData.age) : undefined,
+        gender: registerData.gender
+      });
+      navigate('/search');
+    } catch (e) {
+      alert('Регистрация не удалась');
+    }
   };
 
   return (

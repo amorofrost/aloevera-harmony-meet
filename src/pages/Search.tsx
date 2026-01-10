@@ -7,244 +7,11 @@ import SwipeCard from '@/components/ui/swipe-card';
 import EventPostmark from '@/components/ui/event-postmark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User, Event, AloeVeraSong } from '@/types/user';
+import { User, Event } from '@/types/user';
 import heroBg from '@/assets/hero-bg.jpg';
-
-// Mock AloeVera songs data
-const mockSongs: AloeVeraSong[] = [
-  {
-    id: '1',
-    title: 'Звездное небо',
-    album: 'Первый альбом',
-    duration: '3:45',
-    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
-    year: 2018
-  },
-  {
-    id: '2', 
-    title: 'Летний ветер',
-    album: 'Первый альбом',
-    duration: '4:12',
-    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
-    year: 2018
-  },
-  {
-    id: '3',
-    title: 'Новые горизонты',
-    album: 'Второй альбом', 
-    duration: '3:28',
-    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
-    year: 2020
-  },
-  {
-    id: '4',
-    title: 'В объятиях тишины',
-    album: 'Второй альбом',
-    duration: '4:55',
-    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
-    year: 2020
-  },
-  {
-    id: '5',
-    title: 'Дыхание города',
-    album: 'Третий альбом',
-    duration: '3:33',
-    previewUrl: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav',
-    year: 2022
-  }
-];
-
-// Mock events data
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'AloeVera: Новые Горизонты',
-    description: 'Большой концерт в поддержку нового альбома',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
-    date: new Date('2023-06-15'),
-    location: 'Крокус Сити Холл, Москва',
-    capacity: 7000,
-    attendees: ['1', '2'],
-    category: 'concert',
-    price: 3500,
-    organizer: 'AloeVera Official'
-  },
-  {
-    id: '2',
-    title: 'Акустический вечер: Близко к сердцу',
-    description: 'Камерное выступление с акустическими версиями любимых песен',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
-    date: new Date('2024-03-20'),
-    location: 'Театр Эстрады, Санкт-Петербург',
-    capacity: 500,
-    attendees: ['1', '3'],
-    category: 'concert',
-    price: 2500,
-    organizer: 'AloeVera Official'
-  },
-  {
-    id: '3',
-    title: 'AloeVera Summer Fest',
-    description: 'Летний фестиваль под открытым небом',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
-    date: new Date('2024-07-10'),
-    location: 'Парк Сокольники, Москва',
-    capacity: 10000,
-    attendees: ['2', '3', '4'],
-    category: 'festival',
-    price: 4000,
-    organizer: 'AloeVera Official'
-  },
-  {
-    id: '4',
-    title: 'Фан-встреча: Музыка и Общение',
-    description: 'Неформальная встреча поклонников группы',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
-    date: new Date('2024-05-12'),
-    location: 'Клуб Plan B, Москва',
-    capacity: 200,
-    attendees: ['1', '4', '5'],
-    category: 'meetup',
-    organizer: 'AloeVera Fan Club'
-  },
-  {
-    id: '5',
-    title: 'Новогодний концерт 2024',
-    description: 'Празднование Нового года с любимой группой',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
-    date: new Date('2023-12-31'),
-    location: 'Олимпийский, Москва',
-    capacity: 15000,
-    attendees: ['5', '6', '7'],
-    category: 'party',
-    price: 5000,
-    organizer: 'AloeVera Official'
-  },
-  {
-    id: '6',
-    title: 'Винтажный вечер: Ретро-хиты',
-    description: 'Вечер старых хитов группы в камерной обстановке',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600',
-    date: new Date('2024-02-14'),
-    location: 'Клуб Космонавт, Санкт-Петербург',
-    capacity: 300,
-    attendees: ['2', '6', '7'],
-    category: 'party',
-    price: 2000,
-    organizer: 'AloeVera Official'
-  }
-];
-
-// Mock data
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Анна',
-    age: 25,
-    bio: 'Обожаю музыку AloeVera и концерты под открытым небом. Ищу того, с кем можно петь любимые песни ❤️',
-    location: 'Москва',
-    gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: true,
-    eventsAttended: [mockEvents[0]],
-    favoriteSong: mockSongs[0],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  {
-    id: '2',
-    name: 'Дмитрий',
-    age: 28,
-    bio: 'Музыкант, фанат AloeVera с первого альбома. Играю на гитаре и пишу песни. Давайте создадим дуэт! 🎸',
-    location: 'Санкт-Петербург',
-    gender: 'male',
-    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: false,
-    eventsAttended: [],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  {
-    id: '3',
-    name: 'Елена',
-    age: 22,
-    bio: 'Танцую под AloeVera, хожу на все концерты. Ищу романтика, который разделит мою страсть к музыке 💃',
-    location: 'Новосибирск',
-    gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: true,
-    eventsAttended: [mockEvents[1], mockEvents[2], mockEvents[4], mockEvents[5], mockEvents[0], mockEvents[3]],
-    favoriteSong: mockSongs[2],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  {
-    id: '4',
-    name: 'Мария',
-    age: 23,
-    bio: 'Поэтесса и меломан. AloeVera вдохновляет меня на стихи',
-    location: 'Москва',
-    gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: true,
-    eventsAttended: [mockEvents[2], mockEvents[3]],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  {
-    id: '5',
-    name: 'Александр',
-    age: 26,
-    bio: 'Фотограф и фанат AloeVera. Ищу музу и вторую половинку',
-    location: 'Москва', 
-    gender: 'male',
-    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: false,
-    eventsAttended: [mockEvents[3], mockEvents[4]],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  {
-    id: '6',
-    name: 'София',
-    age: 24,
-    bio: 'Художница, рисую под музыку AloeVera. Творческая душа ищет понимание',
-    location: 'Москва',
-    gender: 'female', 
-    profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: true,
-    eventsAttended: [mockEvents[4], mockEvents[5]],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  {
-    id: '7',
-    name: 'Максим',
-    age: 27,
-    bio: 'Барабанщик, мечтаю сыграть на одной сцене с AloeVera',
-    location: 'Москва',
-    gender: 'male',
-    profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=600&fit=crop&crop=face',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: false,
-    eventsAttended: [mockEvents[4], mockEvents[5]],
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  }
-];
+import { api } from '@/lib/api';
+// Users will be fetched from API
+let cachedUsers: User[] | null = null;
 
 const Search = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
@@ -257,9 +24,27 @@ const Search = () => {
   const specificUserId = searchParams.get('userId');
   const isViewingSpecificUser = Boolean(specificUserId);
 
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        if (!cachedUsers) {
+          cachedUsers = await api.getUsers();
+        }
+        if (active) setUsers(cachedUsers);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
+
   const currentUser = specificUserId 
-    ? mockUsers.find(user => user.id === specificUserId) 
-    : mockUsers[currentUserIndex];
+    ? users.find(user => user.id === specificUserId) 
+    : users[currentUserIndex];
 
   useEffect(() => {
     if (specificUserId) {
@@ -267,11 +52,11 @@ const Search = () => {
     }
   }, [specificUserId]);
 
-  const handleLike = () => {
-    console.log('Liked user:', currentUser?.name);
-    if (!isViewingSpecificUser) {
-      nextUser();
+  const handleLike = async () => {
+    if (currentUser) {
+      try { await api.sendLike(currentUser.id); } catch {}
     }
+    if (!isViewingSpecificUser) nextUser();
   };
 
   const handlePass = () => {
@@ -330,7 +115,7 @@ const Search = () => {
     );
   }
 
-  if (!isViewingSpecificUser && currentUserIndex >= mockUsers.length) {
+  if (!isViewingSpecificUser && currentUserIndex >= users.length) {
     return (
       <div className="min-h-screen bg-background pb-20">
         <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">

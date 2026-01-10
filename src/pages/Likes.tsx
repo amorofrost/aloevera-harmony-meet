@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Heart, Send, ArrowLeft, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -9,130 +9,91 @@ import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Match, Like } from '@/types/user';
 import heroBg from '@/assets/hero-bg.jpg';
+import { api } from '@/lib/api';
 
-// Mock data with read status
-const mockMatches: (Match & { otherUser: User; isRead: boolean })[] = [
-  {
-    id: '1',
-    users: ['current-user', '1'],
-    createdAt: new Date('2024-02-20'),
-    isRead: false,
-    otherUser: {
-      id: '1',
-      name: 'Анна',
-      age: 25,
-      bio: 'Обожаю музыку AloeVera',
-      location: 'Москва',
-      gender: 'female',
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
-      images: [],
-      lastSeen: new Date(),
-      isOnline: true,
-      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-    }
-  },
-  {
-    id: '4',
-    users: ['current-user', '4'],
-    createdAt: new Date('2024-02-22'),
-    isRead: true,
-    otherUser: {
-      id: '4',
-      name: 'Мария',
-      age: 26,
-      bio: 'Фотограф, люблю AloeVera',
-      location: 'Москва',
-      gender: 'female',
-      profileImage: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop&crop=face',
-      images: [],
-      lastSeen: new Date(),
-      isOnline: false,
-      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-    }
-  }
-];
-
-const mockSentLikes: (Like & { toUser: User })[] = [
-  {
-    id: '2',
-    fromUserId: 'current-user',
-    toUserId: '2',
-    createdAt: new Date('2024-02-21'),
-    isMatch: false,
-    toUser: {
-      id: '2',
-      name: 'Дмитрий',
-      age: 28,
-      bio: 'Музыкант, фанат AloeVera',
-      location: 'Санкт-Петербург',
-      gender: 'male',
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
-      images: [],
-      lastSeen: new Date(),
-      isOnline: false,
-      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-    }
-  }
-];
-
-const mockReceivedLikes: (Like & { fromUser: User; isRead: boolean })[] = [
-  {
-    id: '3',
-    fromUserId: '3',
-    toUserId: 'current-user',
-    createdAt: new Date('2024-02-19'),
-    isMatch: false,
-    isRead: false,
-    fromUser: {
-      id: '3',
-      name: 'Елена',
-      age: 22,
-      bio: 'Танцую под AloeVera',
-      location: 'Новосибирск',
-      gender: 'female',
-      profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
-      images: [],
-      lastSeen: new Date(),
-      isOnline: true,
-      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-    }
-  },
-  {
-    id: '5',
-    fromUserId: '5',
-    toUserId: 'current-user',
-    createdAt: new Date('2024-02-18'),
-    isMatch: false,
-    isRead: true,
-    fromUser: {
-      id: '5',
-      name: 'Алексей',
-      age: 30,
-      bio: 'Музыкант AloeVera cover band',
-      location: 'Екатеринбург',
-      gender: 'male',
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop&crop=face',
-      images: [],
-      lastSeen: new Date(),
-      isOnline: false,
-      preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-      settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-    }
-  }
-];
+type MatchVM = Match & { otherUser: User; isRead: boolean };
+type SentLikeVM = Like & { toUser: User };
+type ReceivedLikeVM = Like & { fromUser: User; isRead: boolean };
 
 const Likes = () => {
   const [activeTab, setActiveTab] = useState('matches');
+  const [matches, setMatches] = useState<MatchVM[]>([]);
+  const [sentLikes, setSentLikes] = useState<SentLikeVM[]>([]);
+  const [receivedLikes, setReceivedLikes] = useState<ReceivedLikeVM[]>([]);
   const { t } = useLanguage();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    api.getLikes().then((data) => {
+      setMatches(data.matches.map((m: any) => ({
+        id: m.id,
+        users: m.users,
+        createdAt: new Date(m.createdAt),
+        isRead: m.isRead,
+        otherUser: {
+          id: m.otherUser.id,
+          name: m.otherUser.name,
+          age: m.otherUser.age,
+          bio: m.otherUser.bio,
+          location: m.otherUser.location,
+          gender: m.otherUser.gender,
+          profileImage: m.otherUser.profileImage,
+          images: [],
+          lastSeen: new Date(),
+          isOnline: m.otherUser.isOnline,
+          preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+          settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+        }
+      })));
+      setSentLikes(data.sent.map((s: any) => ({
+        id: s.id,
+        fromUserId: s.fromUserId,
+        toUserId: s.toUserId,
+        createdAt: new Date(s.createdAt),
+        isMatch: s.isMatch,
+        toUser: {
+          id: s.toUser.id,
+          name: s.toUser.name,
+          age: s.toUser.age,
+          bio: s.toUser.bio,
+          location: s.toUser.location,
+          gender: s.toUser.gender,
+          profileImage: s.toUser.profileImage,
+          images: [],
+          lastSeen: new Date(),
+          isOnline: s.toUser.isOnline,
+          preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+          settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+        }
+      })));
+      setReceivedLikes(data.received.map((r: any) => ({
+        id: r.id,
+        fromUserId: r.fromUserId,
+        toUserId: r.toUserId,
+        createdAt: new Date(r.createdAt),
+        isMatch: r.isMatch,
+        isRead: r.isRead,
+        fromUser: {
+          id: r.fromUser.id,
+          name: r.fromUser.name,
+          age: r.fromUser.age,
+          bio: r.fromUser.bio,
+          location: r.fromUser.location,
+          gender: r.fromUser.gender,
+          profileImage: r.fromUser.profileImage,
+          images: [],
+          lastSeen: new Date(),
+          isOnline: r.fromUser.isOnline,
+          preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
+          settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+        }
+      })));
+    }).catch(console.error);
+  }, []);
+
   // Count unread items
-  const unreadMatches = mockMatches.filter(match => !match.isRead).length;
-  const unreadReceivedLikes = mockReceivedLikes.filter(like => !like.isRead).length;
+  const unreadMatches = matches.filter(match => !match.isRead).length;
+  const unreadReceivedLikes = receivedLikes.filter(like => !like.isRead).length;
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ru-RU', {
@@ -212,7 +173,7 @@ const Likes = () => {
               <div className="flex items-center gap-2">
                 <span>{t('likes.matches')}</span>
                 <Badge variant="secondary" className="text-xs">
-                  {mockMatches.length}
+                  {matches.length}
                 </Badge>
                 {unreadMatches > 0 && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
@@ -223,7 +184,7 @@ const Likes = () => {
               <div className="flex items-center gap-2">
                 <span>{t('likes.sent')}</span>
                 <Badge variant="secondary" className="text-xs">
-                  {mockSentLikes.length}
+                  {sentLikes.length}
                 </Badge>
               </div>
             </TabsTrigger>
@@ -231,7 +192,7 @@ const Likes = () => {
               <div className="flex items-center gap-2">
                 <span>{t('likes.received')}</span>
                 <Badge variant="secondary" className="text-xs">
-                  {mockReceivedLikes.length}
+                  {receivedLikes.length}
                 </Badge>
                 {unreadReceivedLikes > 0 && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
@@ -242,7 +203,7 @@ const Likes = () => {
 
           {/* Matches Tab */}
           <TabsContent value="matches" className="mt-6">
-            {mockMatches.length === 0 ? (
+            {matches.length === 0 ? (
               <div className="text-center py-12">
                 <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{t('likes.noMatches')}</h3>
@@ -252,7 +213,7 @@ const Likes = () => {
               </div>
             ) : (
               <div>
-                {mockMatches.map((match) => (
+                {matches.map((match) => (
                   <UserCard
                     key={match.id}
                     user={match.otherUser}
@@ -274,7 +235,7 @@ const Likes = () => {
 
           {/* Sent Likes Tab */}
           <TabsContent value="sent" className="mt-6">
-            {mockSentLikes.length === 0 ? (
+            {sentLikes.length === 0 ? (
               <div className="text-center py-12">
                 <Send className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{t('likes.noSent')}</h3>
@@ -284,7 +245,7 @@ const Likes = () => {
               </div>
             ) : (
               <div>
-                {mockSentLikes.map((like) => (
+                {sentLikes.map((like) => (
                   <UserCard
                     key={like.id}
                     user={like.toUser}
@@ -297,7 +258,7 @@ const Likes = () => {
 
           {/* Received Likes Tab */}
           <TabsContent value="received" className="mt-6">
-            {mockReceivedLikes.length === 0 ? (
+            {receivedLikes.length === 0 ? (
               <div className="text-center py-12">
                 <ArrowLeft className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{t('likes.noReceived')}</h3>
@@ -307,7 +268,7 @@ const Likes = () => {
               </div>
             ) : (
               <div>
-                {mockReceivedLikes.map((like) => (
+                {receivedLikes.map((like) => (
                   <UserCard
                     key={like.id}
                     user={like.fromUser}
