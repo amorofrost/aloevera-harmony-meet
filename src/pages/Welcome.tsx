@@ -25,12 +25,12 @@ const Welcome = () => {
 
   const handleLogin = () => {
     // For now, navigate to search regardless of credentials
-    navigate('/search');
+    navigate('/friends');
   };
 
   const handleRegister = () => {
     // For now, navigate to search regardless of form data
-    navigate('/search');
+    navigate('/friends');
   };
 
   return (

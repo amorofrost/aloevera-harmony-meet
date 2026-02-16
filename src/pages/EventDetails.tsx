@@ -249,7 +249,7 @@ const EventDetails = () => {
         </div>
         <div className="text-center relative z-10">
           <h2 className="text-xl font-bold mb-4">Событие не найдено</h2>
-          <Button onClick={() => navigate('/events')}>
+          <Button onClick={() => navigate('/aloevera')}>
             Вернуться к событиям
           </Button>
         </div>
@@ -293,7 +293,7 @@ const EventDetails = () => {
   const attendeeUsers = mockUsers.filter(user => event.attendees.includes(user.id));
 
   const handleAttendeeClick = (userId: string) => {
-    navigate(`/search?userId=${userId}`);
+    navigate(`/friends?userId=${userId}`);
   };
 
   const handleGroupChatClick = () => {
@@ -303,10 +303,9 @@ const EventDetails = () => {
     );
     
     if (eventGroupChat) {
-      navigate(`/chats?chatId=${eventGroupChat.id}`);
+      navigate(`/talks?chatId=${eventGroupChat.id}`);
     } else {
-      // Fallback to group chats list if specific chat not found
-      navigate(`/chats?tab=group&eventId=${eventId}`);
+      navigate(`/talks?tab=events&eventId=${eventId}`);
     }
   };
 
@@ -325,7 +324,7 @@ const EventDetails = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/events')}
+            onClick={() => navigate('/aloevera')}
             className="p-2"
           >
             <ArrowLeft className="w-5 h-5" />
