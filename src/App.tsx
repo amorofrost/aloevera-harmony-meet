@@ -11,7 +11,7 @@ import Events from "./pages/Events";
 import EventDetails from "./pages/EventDetails";
 import Likes from "./pages/Likes";
 import Chats from "./pages/Chats";
-import Advice from "./pages/Advice";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +31,7 @@ const App = () => (
             <Route path="/events/:eventId" element={<EventDetails />} />
             <Route path="/likes" element={<Likes />} />
             <Route path="/chats" element={<Chats />} />
-            <Route path="/advice" element={<Advice />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
