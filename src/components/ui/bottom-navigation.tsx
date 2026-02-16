@@ -10,12 +10,6 @@ const BottomNavigation = () => {
 
   const navItems = [
     {
-      icon: User,
-      label: t('nav.profile'),
-      href: '/profile',
-      path: '/profile'
-    },
-    {
       icon: Search,
       label: t('nav.search'),
       href: '/search',
@@ -38,6 +32,12 @@ const BottomNavigation = () => {
       label: t('nav.chats'),
       href: '/chats',
       path: '/chats'
+    },
+    {
+      icon: User,
+      label: t('nav.profile'),
+      href: '/profile',
+      path: '/profile'
     },
   ];
 
