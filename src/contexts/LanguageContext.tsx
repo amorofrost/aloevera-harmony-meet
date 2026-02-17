@@ -26,7 +26,10 @@ const translations = {
     'nav.events': 'События',
     'nav.likes': 'Лайки',
     'nav.chats': 'Чаты',
-    'nav.advice': 'Советы',
+    'nav.talks': 'Форум',
+    'nav.friends': 'Друзья',
+    'nav.aloevera': 'АлоэВера',
+    'nav.settings': 'Настройки',
 
     // Common
     'common.like': 'Лайк',
@@ -109,7 +112,10 @@ const translations = {
     'nav.events': 'Events',
     'nav.likes': 'Likes',
     'nav.chats': 'Chats',
-    'nav.advice': 'Advice',
+    'nav.talks': 'Talks',
+    'nav.friends': 'Friends',
+    'nav.aloevera': 'AloeVera',
+    'nav.settings': 'Settings',
 
     // Common
     'common.like': 'Like',

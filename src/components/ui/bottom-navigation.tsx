@@ -2,15 +2,17 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, Users, Music, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const BottomNavigation = () => {
   const location = useLocation();
+  const { t } = useLanguage();
 
   const navItems = [
-    { icon: MessageSquare, label: 'Talks', href: '/talks', path: '/talks' },
-    { icon: Users, label: 'Друзья', href: '/friends', path: '/friends' },
-    { icon: Music, label: 'AloeVera', href: '/aloevera', path: '/aloevera' },
-    { icon: Settings, label: 'Настройки', href: '/settings', path: '/settings' },
+    { icon: MessageSquare, label: t('nav.talks'), href: '/talks', path: '/talks' },
+    { icon: Users, label: t('nav.friends'), href: '/friends', path: '/friends' },
+    { icon: Music, label: t('nav.aloevera'), href: '/aloevera', path: '/aloevera' },
+    { icon: Settings, label: t('nav.settings'), href: '/settings', path: '/settings' },
   ];
 
   return (
