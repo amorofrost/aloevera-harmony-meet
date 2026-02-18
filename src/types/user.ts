@@ -10,6 +10,7 @@ export interface AloeVeraSong {
 export interface User {
   id: string;
   name: string;
+  email?: string;
   age: number;
   bio: string;
   location: string;
