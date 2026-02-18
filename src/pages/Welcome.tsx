@@ -20,7 +20,6 @@ const Welcome = () => {
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
-    username: '',
     email: '',
     password: '',
     name: '',
@@ -85,8 +84,8 @@ const Welcome = () => {
       }
 
       // Validate required fields
-      if (!registerData.username || !registerData.email || !registerData.name) {
-        throw new Error('Username, email, and name are required');
+      if (!registerData.email || !registerData.name) {
+        throw new Error('Email and name are required');
       }
 
       // TODO: Call backend API when integrated
@@ -285,18 +284,19 @@ const Welcome = () => {
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reg-username" className="text-white font-medium">
-                    Username *
+                  <Label htmlFor="reg-email" className="text-white font-medium">
+                    {t('auth.email')} *
                   </Label>
                   <Input
-                    id="reg-username"
-                    type="text"
-                    placeholder="Choose a username"
-                    value={registerData.username}
-                    onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                    id="reg-email"
+                    type="email"
+                    placeholder={t('auth.enterEmail')}
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
+                  <p className="text-xs text-white/60">Your email will be used as your login</p>
                 </div>
 
                 <div className="space-y-2">
@@ -309,21 +309,6 @@ const Welcome = () => {
                     placeholder="Your name"
                     value={registerData.name}
                     onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                    disabled={isLoading}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email" className="text-white font-medium">
-                    {t('auth.email')} *
-                  </Label>
-                  <Input
-                    id="reg-email"
-                    type="email"
-                    placeholder={t('auth.enterEmail')}
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
