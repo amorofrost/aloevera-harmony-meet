@@ -119,7 +119,7 @@ const AloeVera = () => {
           <TabsContent value="store" className="mt-6">
             <div className="grid grid-cols-2 gap-4">
               {mockStoreItems.map((item) => (
-                <Card key={item.id} className="profile-card overflow-hidden cursor-pointer">
+                <Card key={item.id} className="profile-card overflow-hidden cursor-pointer" onClick={() => navigate(`/aloevera/store/${item.id}`)}>
                   <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${item.imageUrl})` }} />
                   <CardContent className="p-3">
                     <Badge variant="secondary" className="mb-2 text-xs">{item.category}</Badge>
