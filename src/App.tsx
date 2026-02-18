@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { isMockMode } from "@/config/api.config";
 import Welcome from "./pages/Welcome";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
@@ -22,25 +23,32 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        {isMockMode() && (
+          <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500/90 backdrop-blur-sm text-black px-4 py-2 text-center text-sm font-medium shadow-lg">
+            🔧 DEBUG MODE: Running with mock data (no backend connection)
+          </div>
+        )}
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Welcome />} />
-            <Route path="/talks" element={<Talks />} />
-            <Route path="/friends" element={<Friends />} />
-            <Route path="/aloevera" element={<AloeVera />} />
-            <Route path="/aloevera/events/:eventId" element={<EventDetails />} />
-            <Route path="/aloevera/blog/:postId" element={<BlogPost />} />
-            <Route path="/aloevera/store/:itemId" element={<StoreItem />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            {/* Legacy redirects */}
-            <Route path="/search" element={<Navigate to="/friends" replace />} />
-            <Route path="/events" element={<Navigate to="/aloevera" replace />} />
-            <Route path="/events/:eventId" element={<Navigate to="/aloevera" replace />} />
-            <Route path="/likes" element={<Navigate to="/friends" replace />} />
-            <Route path="/chats" element={<Navigate to="/talks" replace />} />
-            <Route path="/profile" element={<Navigate to="/settings" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className={isMockMode() ? "pt-10" : ""}>
+            <Routes>
+              <Route path="/" element={<Welcome />} />
+              <Route path="/talks" element={<Talks />} />
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/aloevera" element={<AloeVera />} />
+              <Route path="/aloevera/events/:eventId" element={<EventDetails />} />
+              <Route path="/aloevera/blog/:postId" element={<BlogPost />} />
+              <Route path="/aloevera/store/:itemId" element={<StoreItem />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              {/* Legacy redirects */}
+              <Route path="/search" element={<Navigate to="/friends" replace />} />
+              <Route path="/events" element={<Navigate to="/aloevera" replace />} />
+              <Route path="/events/:eventId" element={<Navigate to="/aloevera" replace />} />
+              <Route path="/likes" element={<Navigate to="/friends" replace />} />
+              <Route path="/chats" element={<Navigate to="/talks" replace />} />
+              <Route path="/profile" element={<Navigate to="/settings" replace />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </LanguageProvider>
