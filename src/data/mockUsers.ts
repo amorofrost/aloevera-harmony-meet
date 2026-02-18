@@ -1,10 +1,11 @@
 import type { User } from '@/types/user';
 
-export const mockUsers: (User & { email: string })[] = [
+export const mockUsers: (User & { email: string; password: string })[] = [
   {
     id: 'user-1',
     name: 'Алиса Иванова',
     email: 'alice@example.com',
+    password: 'Test123!@#',
     age: 25,
     bio: 'Люблю музыку и путешествия',
     location: 'Москва',
@@ -29,6 +30,7 @@ export const mockUsers: (User & { email: string })[] = [
     id: 'user-2',
     name: 'Борис Петров',
     email: 'boris@example.com',
+    password: 'Test123!@#',
     age: 28,
     bio: 'Фанат Aloe Vera',
     location: 'Санкт-Петербург',

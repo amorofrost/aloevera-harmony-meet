@@ -43,7 +43,7 @@ export const authApi = {
     const mockUser = mockUsers.find(u => u.email === data.email);
 
     // Simple mock validation
-    if (mockUser && data.email === mockUser.email && data.password === 'Test123!@#') {
+    if (mockUser && data.password === mockUser.password) {
       return {
         success: true,
         data: {
