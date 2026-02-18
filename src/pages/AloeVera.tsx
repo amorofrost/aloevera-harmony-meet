@@ -62,7 +62,7 @@ const AloeVera = () => {
 
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
-          <h1 className="text-2xl font-bold text-foreground">AloeVera</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('nav.aloevera')}</h1>
           <Music className="w-6 h-6 text-primary" />
         </div>
       </div>

@@ -230,7 +230,7 @@ const Talks = () => {
             </Button>
           )}
           <h1 className="text-2xl font-bold text-foreground flex-1">
-            {currentSection ? currentSection.title : 'Talks'}
+            {currentSection ? currentSection.title : t('nav.talks')}
           </h1>
           <MessageSquare className="w-6 h-6 text-primary" />
         </div>
