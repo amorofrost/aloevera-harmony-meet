@@ -133,7 +133,7 @@ const AloeVera = () => {
           {/* Blog Tab */}
           <TabsContent value="blog" className="mt-6 space-y-6">
             {mockBlogPosts.map((post) => (
-              <Card key={post.id} className="profile-card overflow-hidden cursor-pointer">
+              <Card key={post.id} className="profile-card overflow-hidden cursor-pointer" onClick={() => navigate(`/aloevera/blog/${post.id}`)}>
                 <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${post.imageUrl})` }} />
                 <CardContent className="p-6">
                   <p className="text-xs text-muted-foreground mb-2">{formatBlogDate(post.date)} · {post.author}</p>
