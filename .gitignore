@@ -16,7 +16,13 @@ ProjectStructure.md
 
 # Docker
 .env
+.env.local
+.env.*.local
 ssl/
+
+# Keep example env files
+!.env.development
+!.env.production
 
 # Editor directories and files
 .vscode/*

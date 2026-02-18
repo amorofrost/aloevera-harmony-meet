@@ -1,22 +1,50 @@
+# Docker Compose for AloeVera Harmony Meet
+# Full stack: Frontend + Backend
+
 version: '3.8'
 
 services:
-  # Main dating web app frontend
-  aloevera-harmony-meet:
+  # Backend API (.NET)
+  backend:
+    build:
+      context: ../lovecraft
+      dockerfile: Dockerfile
+    container_name: aloevera-backend
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - JWT_SECRET_KEY=your-super-secret-key-min-32-chars-change-in-prod!!
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - aloevera-network
+
+  # Frontend (React)
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: aloevera-dating-app
+      args:
+        VITE_API_MODE: api
+        VITE_API_BASE_URL: http://backend:8080
+    container_name: aloevera-frontend
     ports:
-      - "3000:80"
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      # Backend API URL (configure based on your microservice)
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:8080}
+      - "8080:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
     networks:
-      - dating-app-network
+      - aloevera-network
 
 networks:
-  dating-app-network:
+  aloevera-network:
     driver: bridge

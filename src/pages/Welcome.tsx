@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { authApi } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
 
@@ -44,26 +45,18 @@ const Welcome = () => {
     setIsLoading(true);
 
     try {
-      // TODO: Call backend API when integrated
-      // const response = await fetch('http://localhost:5000/api/v1/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   credentials: 'include',
-      //   body: JSON.stringify(loginData)
-      // });
-      // 
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   throw new Error(error.error?.message || 'Login failed');
-      // }
-      //
-      // const result = await response.json();
-      // // Store access token and user info
-      // localStorage.setItem('accessToken', result.data.accessToken);
-      
-      // Mock: For now, just navigate
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      navigate('/friends');
+      const response = await authApi.login(loginData);
+
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Login failed');
+      }
+
+      // Store access token (in a real app, use auth context)
+      if (response.data) {
+        console.log('Login successful:', response.data.user);
+        // TODO: Store token in auth context
+        navigate('/friends');
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {
@@ -88,27 +81,20 @@ const Welcome = () => {
         throw new Error('Email and name are required');
       }
 
-      // TODO: Call backend API when integrated
-      // const response = await fetch('http://localhost:5000/api/v1/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   credentials: 'include',
-      //   body: JSON.stringify({
-      //     ...registerData,
-      //     age: parseInt(registerData.age) || 18
-      //   })
-      // });
-      //
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   throw new Error(error.error?.message || 'Registration failed');
-      // }
-      //
-      // const result = await response.json();
-      // setSuccess('Account created! Please check your email to verify your account.');
-      
-      // Mock: For now, show success message
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authApi.register({
+        email: registerData.email,
+        password: registerData.password,
+        name: registerData.name,
+        age: registerData.age ? parseInt(registerData.age) : undefined,
+        location: registerData.location || undefined,
+        gender: registerData.gender || undefined,
+        bio: registerData.bio || undefined,
+      });
+
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Registration failed');
+      }
+
       setSuccess('Account created! Please check your email to verify your account before logging in.');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -119,7 +105,7 @@ const Welcome = () => {
 
   const handleOAuthLogin = (provider: 'google' | 'facebook' | 'vk') => {
     // TODO: Redirect to OAuth endpoint when integrated
-    // window.location.href = `http://localhost:5000/api/v1/auth/oauth/${provider}/login`;
+    // window.location.href = `${API_CONFIG.baseURL}/api/v1/auth/oauth/${provider}/login`;
     setError(`${provider} login will be available soon`);
   };
 
