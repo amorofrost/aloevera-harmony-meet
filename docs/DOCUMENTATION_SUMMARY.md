@@ -166,11 +166,26 @@ GitHub Organization: @aloevera-harmony-meet/
 - Authentication flows
 - Error codes
 
-**[docs/AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)** _(To be created)_
-- JWT implementation details
-- Token structure
-- Multi-client auth strategy
-- Security measures
+**[docs/AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)** ✨ NEW (26KB)
+- **Complete authentication design**
+- Multi-provider support (username/password, OAuth, Telegram)
+- Account linking strategy
+- JWT token implementation
+- Security architecture
+- Database schema for auth
+- API endpoints
+- User flows and scenarios
+- Implementation phases
+
+**[docs/AUTH_FLOWS.md](../../lovecraft/Lovecraft/docs/AUTH_FLOWS.md)** ✨ NEW (15KB)
+- **Visual flow diagrams**
+- Registration flows
+- Login flows
+- OAuth integration
+- Telegram authentication
+- Account linking scenarios
+- Token refresh flow
+- Password reset flow
 
 **[docs/DEVELOPMENT.md](../../lovecraft/Lovecraft/docs/DEVELOPMENT.md)** _(To be created)_
 - Local development setup
@@ -293,7 +308,8 @@ GitHub Organization: @aloevera-harmony-meet/
 2. Code conventions: [AGENTS.md](../AGENTS.md)
 3. Features: [docs/FEATURES.md](./FEATURES.md)
 4. Backend API: [docs/BACKEND_PLAN.md](./BACKEND_PLAN.md)
-5. Issues: [docs/ISSUES.md](./ISSUES.md)
+5. **Authentication Integration: [docs/FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md)** ✨ NEW
+6. Issues: [docs/ISSUES.md](./ISSUES.md)
 
 ### For Telegram Bot Developers (Future)
 - Separate repository: `@aloevera-telegram-bot/`

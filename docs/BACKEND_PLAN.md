@@ -691,7 +691,7 @@ All detailed technical documentation is in `@lovecraft/Lovecraft/docs/`:
 - **[API.md](../../lovecraft/Lovecraft/docs/API.md)** - Complete API specification with request/response examples _(to be created)_
 - **[ARCHITECTURE.md](../../lovecraft/Lovecraft/docs/ARCHITECTURE.md)** - Detailed backend architecture
 - **[AZURE_STORAGE.md](../../lovecraft/Lovecraft/docs/AZURE_STORAGE.md)** - Azure Table Storage schema and patterns
-- **[AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)** - Authentication and authorization design _(to be created)_
+- **[AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)** - ✅ Authentication and authorization design (multi-provider, account linking, JWT)
 - **[DEPLOYMENT.md](../../lovecraft/Lovecraft/docs/DEPLOYMENT.md)** - Deployment guide for Azure _(to be created)_
 - **[DEVELOPMENT.md](../../lovecraft/Lovecraft/docs/DEVELOPMENT.md)** - Local development setup _(to be created)_
 
