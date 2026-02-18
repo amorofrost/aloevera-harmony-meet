@@ -1,7 +1,50 @@
 // src/services/api/usersApi.ts
 import { apiClient, isApiMode } from './apiClient';
-import { mockUsers } from '@/data/mockUsers';
 import type { User } from '@/types';
+
+// Simple mock users for testing
+const mockUsers: User[] = [
+  {
+    id: '1',
+    name: 'Test User 1',
+    email: 'user1@example.com',
+    age: 25,
+    location: 'Test City',
+    gender: 'Male',
+    bio: 'Mock user 1',
+    photos: [],
+    preferences: {
+      showMe: 'all',
+      ageRange: [18, 50],
+      maxDistance: 100,
+      profileVisibility: 'public',
+    },
+    settings: {
+      language: 'en',
+      notifications: true,
+    },
+  },
+  {
+    id: '2',
+    name: 'Test User 2',
+    email: 'user2@example.com',
+    age: 28,
+    location: 'Another City',
+    gender: 'Female',
+    bio: 'Mock user 2',
+    photos: [],
+    preferences: {
+      showMe: 'all',
+      ageRange: [20, 40],
+      maxDistance: 50,
+      profileVisibility: 'public',
+    },
+    settings: {
+      language: 'en',
+      notifications: true,
+    },
+  },
+];
 
 export const usersApi = {
   // Get all users
