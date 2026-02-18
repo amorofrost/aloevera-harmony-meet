@@ -10,6 +10,7 @@ import Friends from "./pages/Friends";
 import AloeVera from "./pages/AloeVera";
 import EventDetails from "./pages/EventDetails";
 import BlogPost from "./pages/BlogPost";
+import StoreItem from "./pages/StoreItem";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/aloevera" element={<AloeVera />} />
             <Route path="/aloevera/events/:eventId" element={<EventDetails />} />
             <Route path="/aloevera/blog/:postId" element={<BlogPost />} />
+            <Route path="/aloevera/store/:itemId" element={<StoreItem />} />
             <Route path="/settings" element={<SettingsPage />} />
             {/* Legacy redirects */}
             <Route path="/search" element={<Navigate to="/friends" replace />} />
