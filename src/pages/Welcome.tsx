@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
 
@@ -13,24 +14,114 @@ const Welcome = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [showRegister, setShowRegister] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
+  
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
+    username: '',
     email: '',
     password: '',
+    name: '',
     bio: '',
     location: '',
     age: '',
     gender: ''
   });
 
-  const handleLogin = () => {
-    // For now, navigate to search regardless of credentials
-    navigate('/friends');
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+    if (password.length < 8) errors.push('At least 8 characters');
+    if (!/[A-Z]/.test(password)) errors.push('One uppercase letter');
+    if (!/[a-z]/.test(password)) errors.push('One lowercase letter');
+    if (!/[0-9]/.test(password)) errors.push('One number');
+    if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) errors.push('One special character');
+    return errors;
   };
 
-  const handleRegister = () => {
-    // For now, navigate to search regardless of form data
-    navigate('/friends');
+  const handleLogin = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // TODO: Call backend API when integrated
+      // const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   credentials: 'include',
+      //   body: JSON.stringify(loginData)
+      // });
+      // 
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.error?.message || 'Login failed');
+      // }
+      //
+      // const result = await response.json();
+      // // Store access token and user info
+      // localStorage.setItem('accessToken', result.data.accessToken);
+      
+      // Mock: For now, just navigate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      navigate('/friends');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+
+    try {
+      // Validate password
+      const passwordErrors = validatePassword(registerData.password);
+      if (passwordErrors.length > 0) {
+        throw new Error('Password must have: ' + passwordErrors.join(', '));
+      }
+
+      // Validate required fields
+      if (!registerData.username || !registerData.email || !registerData.name) {
+        throw new Error('Username, email, and name are required');
+      }
+
+      // TODO: Call backend API when integrated
+      // const response = await fetch('http://localhost:5000/api/v1/auth/register', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   credentials: 'include',
+      //   body: JSON.stringify({
+      //     ...registerData,
+      //     age: parseInt(registerData.age) || 18
+      //   })
+      // });
+      //
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.error?.message || 'Registration failed');
+      // }
+      //
+      // const result = await response.json();
+      // setSuccess('Account created! Please check your email to verify your account.');
+      
+      // Mock: For now, show success message
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSuccess('Account created! Please check your email to verify your account before logging in.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOAuthLogin = (provider: 'google' | 'facebook' | 'vk') => {
+    // TODO: Redirect to OAuth endpoint when integrated
+    // window.location.href = `http://localhost:5000/api/v1/auth/oauth/${provider}/login`;
+    setError(`${provider} login will be available soon`);
   };
 
   return (
@@ -71,9 +162,30 @@ const Welcome = () => {
 
         {/* Login/Register Forms */}
         <div className="mt-12 w-full max-w-md">
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl backdrop-blur-md">
+              <div className="flex items-center gap-2 text-white">
+                <AlertCircle className="w-5 h-5" />
+                <span className="text-sm">{error}</span>
+              </div>
+            </div>
+          )}
+          
+          {success && (
+            <div className="mb-4 p-4 bg-green-500/20 border border-green-500/50 rounded-xl backdrop-blur-md">
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="w-5 h-5" />
+                <span className="text-sm">{success}</span>
+              </div>
+            </div>
+          )}
+
           {!showRegister ? (
             // Login Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
+              <h2 className="text-2xl font-bold text-white mb-4">Sign In</h2>
+              
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white font-medium">
@@ -86,6 +198,7 @@ const Welcome = () => {
                     value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -99,6 +212,7 @@ const Welcome = () => {
                     value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -107,26 +221,102 @@ const Welcome = () => {
                 onClick={handleLogin}
                 size="lg"
                 className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
+                disabled={isLoading}
               >
-                {t('auth.signIn')}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  t('auth.signIn')
+                )}
               </Button>
               
-              <div className="text-center">
+              {/* OAuth Buttons */}
+              <div className="space-y-3 pt-4 border-t border-white/20">
+                <p className="text-white/60 text-sm">Or continue with</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    onClick={() => handleOAuthLogin('google')}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+                    disabled={isLoading}
+                  >
+                    Google
+                  </Button>
+                  <Button
+                    onClick={() => handleOAuthLogin('facebook')}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+                    disabled={isLoading}
+                  >
+                    Facebook
+                  </Button>
+                  <Button
+                    onClick={() => handleOAuthLogin('vk')}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+                    disabled={isLoading}
+                  >
+                    VK
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="text-center space-y-2">
                 <button
                   onClick={() => setShowRegister(true)}
-                  className="text-white/80 hover:text-white underline text-sm"
+                  className="text-white/80 hover:text-white underline text-sm block w-full"
                 >
                   {t('auth.noAccount')}
+                </button>
+                <button
+                  className="text-white/60 hover:text-white/80 text-xs block w-full"
+                >
+                  Forgot password?
                 </button>
               </div>
             </div>
           ) : (
             // Registration Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
+              <h2 className="text-2xl font-bold text-white mb-4">Create Account</h2>
+              
               <div className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="reg-username" className="text-white font-medium">
+                    Username *
+                  </Label>
+                  <Input
+                    id="reg-username"
+                    type="text"
+                    placeholder="Choose a username"
+                    value={registerData.username}
+                    onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="reg-name" className="text-white font-medium">
+                    Display Name *
+                  </Label>
+                  <Input
+                    id="reg-name"
+                    type="text"
+                    placeholder="Your name"
+                    value={registerData.name}
+                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="reg-email" className="text-white font-medium">
-                    {t('auth.email')}
+                    {t('auth.email')} *
                   </Label>
                   <Input
                     id="reg-email"
@@ -135,12 +325,13 @@ const Welcome = () => {
                     value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="reg-password" className="text-white font-medium">
-                    {t('auth.password')}
+                    {t('auth.password')} *
                   </Label>
                   <Input
                     id="reg-password"
@@ -149,7 +340,22 @@ const Welcome = () => {
                     value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
+                  {registerData.password && (
+                    <div className="text-xs text-white/70 space-y-1 mt-2">
+                      {validatePassword(registerData.password).map((err, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          <span className="text-red-300">✗</span> {err}
+                        </div>
+                      ))}
+                      {validatePassword(registerData.password).length === 0 && (
+                        <div className="flex items-center gap-1 text-green-300">
+                          <span>✓</span> Password meets requirements
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -164,6 +370,7 @@ const Welcome = () => {
                       value={registerData.age}
                       onChange={(e) => setRegisterData({ ...registerData, age: e.target.value })}
                       className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -171,7 +378,11 @@ const Welcome = () => {
                     <Label htmlFor="gender" className="text-white font-medium">
                       {t('auth.gender')}
                     </Label>
-                    <Select value={registerData.gender} onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}>
+                    <Select 
+                      value={registerData.gender} 
+                      onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}
+                      disabled={isLoading}
+                    >
                       <SelectTrigger className="bg-white/20 border-white/30 text-white">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -194,6 +405,7 @@ const Welcome = () => {
                     value={registerData.location}
                     onChange={(e) => setRegisterData({ ...registerData, location: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -207,6 +419,7 @@ const Welcome = () => {
                     value={registerData.bio}
                     onChange={(e) => setRegisterData({ ...registerData, bio: e.target.value })}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px]"
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -215,14 +428,54 @@ const Welcome = () => {
                 onClick={handleRegister}
                 size="lg"
                 className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
+                disabled={isLoading}
               >
-                {t('auth.createAccount')}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  t('auth.createAccount')
+                )}
               </Button>
+              
+              {/* OAuth Buttons */}
+              <div className="space-y-3 pt-4 border-t border-white/20">
+                <p className="text-white/60 text-sm">Or sign up with</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    onClick={() => handleOAuthLogin('google')}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+                    disabled={isLoading}
+                  >
+                    Google
+                  </Button>
+                  <Button
+                    onClick={() => handleOAuthLogin('facebook')}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+                    disabled={isLoading}
+                  >
+                    Facebook
+                  </Button>
+                  <Button
+                    onClick={() => handleOAuthLogin('vk')}
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
+                    disabled={isLoading}
+                  >
+                    VK
+                  </Button>
+                </div>
+              </div>
               
               <div className="text-center">
                 <button
                   onClick={() => setShowRegister(false)}
                   className="text-white/80 hover:text-white underline text-sm"
+                  disabled={isLoading}
                 >
                   {t('auth.hasAccount')}
                 </button>
