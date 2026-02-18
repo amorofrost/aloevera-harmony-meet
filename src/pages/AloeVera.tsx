@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar, MapPin, Users, Music, Clock, ShoppingBag, BookOpen, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,7 +37,8 @@ const mockBlogPosts: BlogPost[] = [
 ];
 
 const AloeVera = () => {
-  const [activeTab, setActiveTab] = useState('events');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
   const [joinedEvents, setJoinedEvents] = useState<string[]>(['2', '9']);
   const navigate = useNavigate();
   const { t } = useLanguage();
