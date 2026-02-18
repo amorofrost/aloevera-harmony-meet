@@ -7,7 +7,7 @@ services:
   # Backend API (.NET)
   backend:
     build:
-      context: ../lovecraft
+      context: ../lovecraft/Lovecraft
       dockerfile: Dockerfile
     container_name: aloevera-backend
     ports:
@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_MODE: api
-        VITE_API_BASE_URL: http://backend:8080
+        VITE_API_BASE_URL: http://localhost:5000
     container_name: aloevera-frontend
     ports:
       - "8080:80"
