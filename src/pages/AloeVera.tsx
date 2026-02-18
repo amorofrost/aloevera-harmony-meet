@@ -29,17 +29,18 @@ const mockStoreItems: StoreItem[] = [
 ];
 
 // ── Mock blog posts ──
-interface BlogPost { id: string; title: string; excerpt: string; date: Date; imageUrl: string; author: string; }
+interface BlogPost { id: string; title: string; excerpt: string; date: Date; imageUrl: string; author: string; tags: string[]; }
 const mockBlogPosts: BlogPost[] = [
-  { id: 'b1', title: 'За кулисами нового альбома', excerpt: 'Эксклюзивный репортаж из студии записи. Как создавался новый звук группы...', date: new Date('2024-02-20'), imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&h=400&fit=crop', author: 'AloeVera Team' },
-  { id: 'b2', title: 'Итоги тура 2023', excerpt: 'Вспоминаем лучшие моменты прошлогоднего тура по России...', date: new Date('2024-01-15'), imageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop', author: 'AloeVera Team' },
-  { id: 'b3', title: 'Интервью: О вдохновении и музыке', excerpt: 'Большое интервью с участниками группы о творческом процессе...', date: new Date('2024-02-10'), imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop', author: 'Music Magazine' },
+  { id: 'b1', title: 'За кулисами нового альбома', excerpt: 'Эксклюзивный репортаж из студии записи. Как создавался новый звук группы...', date: new Date('2024-02-20'), imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&h=400&fit=crop', author: 'AloeVera Team', tags: ['Студия', 'Альбом'] },
+  { id: 'b2', title: 'Итоги тура 2023', excerpt: 'Вспоминаем лучшие моменты прошлогоднего тура по России...', date: new Date('2024-01-15'), imageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800&h=400&fit=crop', author: 'AloeVera Team', tags: ['Тур', 'Концерт'] },
+  { id: 'b3', title: 'Интервью: О вдохновении и музыке', excerpt: 'Большое интервью с участниками группы о творческом процессе...', date: new Date('2024-02-10'), imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop', author: 'Music Magazine', tags: ['Интервью', 'Альбом'] },
 ];
 
 const AloeVera = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
   const [joinedEvents, setJoinedEvents] = useState<string[]>(['2', '9']);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -133,13 +134,39 @@ const AloeVera = () => {
 
           {/* Blog Tab */}
           <TabsContent value="blog" className="mt-6 space-y-6">
-            {mockBlogPosts.map((post) => (
+            <div className="flex gap-2 flex-wrap">
+              <Badge
+                variant={selectedTag === null ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setSelectedTag(null)}
+              >
+                Все
+              </Badge>
+              {Array.from(new Set(mockBlogPosts.flatMap(p => p.tags))).map(tag => (
+                <Badge
+                  key={tag}
+                  variant={selectedTag === tag ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedTag(tag)}
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+            {mockBlogPosts
+              .filter(post => !selectedTag || post.tags.includes(selectedTag))
+              .map((post) => (
               <Card key={post.id} className="profile-card overflow-hidden cursor-pointer" onClick={() => navigate(`/aloevera/blog/${post.id}`)}>
                 <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${post.imageUrl})` }} />
                 <CardContent className="p-6">
                   <p className="text-xs text-muted-foreground mb-2">{formatBlogDate(post.date)} · {post.author}</p>
                   <h3 className="text-lg font-bold mb-2">{post.title}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                  <div className="flex gap-1.5 mt-3">
+                    {post.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             ))}
