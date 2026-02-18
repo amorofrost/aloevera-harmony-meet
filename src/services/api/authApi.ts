@@ -1,16 +1,6 @@
 // src/services/api/authApi.ts
 import { apiClient, isApiMode } from './apiClient';
-
-// Simple mock user for testing
-const mockUser = {
-  id: 'mock-user-1',
-  email: 'user@example.com',
-  name: 'Mock User',
-  age: 25,
-  location: 'Test City',
-  gender: 'Male',
-  bio: 'Test user for mock mode'
-};
+import { mockUsers } from '@/data/mockUsers';
 
 export interface LoginRequest {
   email: string;
@@ -50,8 +40,10 @@ export const authApi = {
     // Mock implementation
     await new Promise(resolve => setTimeout(resolve, 500));
     
+    const mockUser = mockUsers.find(u => u.email === data.email);
+
     // Simple mock validation
-    if (data.email === mockUser.email && data.password === 'Test123!@#') {
+    if (mockUser && data.email === mockUser.email && data.password === 'Test123!@#') {
       return {
         success: true,
         data: {
@@ -69,33 +61,16 @@ export const authApi = {
         timestamp: new Date().toISOString(),
       };
     }
-    
-    // Find user by email
-    // const user = mockUsers.find(u => u.email === data.email);
-    
-    return {
-<<<<<<< HEAD
-      success: false,
-      error: {
-        code: 'INVALID_CREDENTIALS',
-        message: 'Invalid email or password',
-=======
-      success: true as const,
-      data: {
-        accessToken: 'mock-access-token',
-        refreshToken: 'mock-refresh-token',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          emailVerified: true,
-          authMethods: ['local'],
+    else {
+      return {
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password',
         },
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
->>>>>>> 878ae39fd8ac441f08e40e203ad638fb1243aaa6
-      },
-      timestamp: new Date().toISOString(),
-    };
+        timestamp: new Date().toISOString(),
+      };
+    }
   },
 
   // Register
@@ -106,18 +81,6 @@ export const authApi = {
 
     // Mock implementation
     await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Check if email exists (simple check)
-    if (data.email === mockUser.email) {
-      return {
-        success: false,
-        error: {
-          code: 'EMAIL_EXISTS',
-          message: 'Email already registered',
-        },
-        timestamp: new Date().toISOString(),
-      };
-    }
 
     return {
       success: true,
@@ -185,7 +148,9 @@ export const authApi = {
 
     // Mock implementation
     await new Promise(resolve => setTimeout(resolve, 200));
-    
+
+    const mockUser = mockUsers[0];
+
     return {
       success: true,
       data: {
