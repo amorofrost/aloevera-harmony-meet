@@ -74,10 +74,25 @@ export const authApi = {
     // const user = mockUsers.find(u => u.email === data.email);
     
     return {
+<<<<<<< HEAD
       success: false,
       error: {
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
+=======
+      success: true as const,
+      data: {
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          emailVerified: true,
+          authMethods: ['local'],
+        },
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+>>>>>>> 878ae39fd8ac441f08e40e203ad638fb1243aaa6
       },
       timestamp: new Date().toISOString(),
     };
