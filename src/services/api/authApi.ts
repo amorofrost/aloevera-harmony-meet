@@ -57,7 +57,7 @@ export const authApi = {
     }
 
     return {
-      success: true,
+      success: true as const,
       data: {
         accessToken: 'mock-access-token',
         refreshToken: 'mock-refresh-token',

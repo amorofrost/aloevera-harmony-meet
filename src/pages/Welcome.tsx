@@ -48,7 +48,7 @@ const Welcome = () => {
       const response = await authApi.login(loginData);
 
       if (!response.success) {
-        throw new Error(response.error?.message || 'Login failed');
+        throw new Error((response as any).error?.message || 'Login failed');
       }
 
       // Store access token (in a real app, use auth context)
@@ -92,7 +92,7 @@ const Welcome = () => {
       });
 
       if (!response.success) {
-        throw new Error(response.error?.message || 'Registration failed');
+        throw new Error((response as any).error?.message || 'Registration failed');
       }
 
       setSuccess('Account created! Please check your email to verify your account before logging in.');
