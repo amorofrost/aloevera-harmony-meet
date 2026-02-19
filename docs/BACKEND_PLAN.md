@@ -2,8 +2,8 @@
 
 **AloeVera Harmony Meet** - Backend Development Roadmap
 
-**Last Updated**: February 17, 2026  
-**Status**: Planning Phase - .NET 10 Backend with Azure Storage
+**Last Updated**: February 18, 2026  
+**Status**: Active Development — Mock backend running with JWT auth; Azure Storage integration pending
 
 ---
 
@@ -428,81 +428,75 @@ LOGGING__LOGLEVEL__DEFAULT=Information
 
 ## 📊 Implementation Phases
 
-### Phase 1: Foundation (Weeks 1-2)
+### Phase 1: Foundation ✅ DONE
 **Goal**: Basic project setup and infrastructure
 
-- [ ] Create .NET solution structure
-- [ ] Set up projects: Common, Backend, UnitTests
-- [ ] Configure Azure Storage connection
-- [ ] Implement basic DTO models
-- [ ] Create Docker configuration
-- [ ] Set up local development environment
+- [x] Create .NET solution structure
+- [x] Set up projects: Common, Backend, UnitTests
+- [x] Implement basic DTO models (all domains)
+- [x] Create Docker configuration
+- [x] Set up local development environment
+- [ ] Configure Azure Storage connection _(deferred to Phase 3)_
 
-**Deliverables**: Working Docker container, basic project structure
+**Deliverables**: Working Docker container, basic project structure ✅
 
 ---
 
-### Phase 2: Authentication (Week 3)
+### Phase 2: Authentication ✅ DONE (Mock)
 **Goal**: User registration and JWT authentication
 
-- [ ] Implement User entity and DTOs
-- [ ] Create UserRepository (Azure Table Storage)
-- [ ] Implement password hashing
-- [ ] Create JWT token generation/validation
-- [ ] Build AuthController (`/register`, `/login`, `/refresh`)
-- [ ] Add authentication middleware
-- [ ] Unit tests for auth logic
+- [x] Implement User entity and DTOs
+- [x] Implement password hashing (PBKDF2 + salt)
+- [x] Create JWT token generation/validation (`JwtService.cs`)
+- [x] Build AuthController (register, login, logout, refresh, verify-email, forgot-password, reset-password, change-password)
+- [x] Add authentication middleware (`[Authorize]` on all controllers)
+- [x] 16 unit tests for auth logic
+- [x] Frontend: `authApi.ts` service wired to `Welcome.tsx`
+- [ ] Create UserRepository (Azure Table Storage) _(deferred)_
 
-**Deliverables**: Working registration and login
+**Deliverables**: Working registration and login (mock) ✅
 
 ---
 
-### Phase 3: User Management (Week 4)
+### Phase 3: User Management ✅ DONE (Mock)
 **Goal**: User profiles and settings
 
-- [ ] Implement UserService
-- [ ] Build UsersController (GET, PUT)
-- [ ] Profile image upload (Azure Blob Storage)
-- [ ] User search/filtering
-- [ ] Preferences management
-- [ ] Settings management
-- [ ] Unit tests
+- [x] Implement `MockUserService`
+- [x] Build `UsersController` (GET list, GET by ID, PUT)
+- [ ] Profile image upload (Azure Blob Storage) _(deferred)_
+- [ ] User search/filtering _(basic pagination only)_
+- [ ] Settings management _(stub)_
 
-**Deliverables**: Full user profile CRUD
+**Deliverables**: Basic user profile API (mock) ✅
 
 ---
 
-### Phase 4: Matching System (Weeks 5-6)
+### Phase 4: Matching System ✅ DONE (Mock)
 **Goal**: Likes, matches, and recommendations
 
-- [ ] Create Like and Match entities
-- [ ] Implement LikeRepository and MatchRepository
-- [ ] Build MatchingService (like logic, match detection)
-- [ ] Create LikesController
-- [ ] Create MatchesController
-- [ ] Implement basic recommendation algorithm
-- [ ] Unit tests
+- [x] Create Like and Match DTOs
+- [x] Implement `MockMatchingService`
+- [x] Build `MatchingController` (send like, get sent/received likes, get matches)
+- [ ] Implement recommendation algorithm _(deferred)_
 
-**Deliverables**: Working like/match functionality
+**Deliverables**: Working like/match API (mock) ✅
 
 ---
 
-### Phase 5: Events (Week 7)
+### Phase 5: Events ✅ DONE (Mock)
 **Goal**: Event management
 
-- [ ] Create Event entity
-- [ ] Implement EventRepository
-- [ ] Build EventsController
-- [ ] Event registration/unregistration logic
-- [ ] Event image storage
-- [ ] Event filtering/search
-- [ ] Unit tests
+- [x] Create Event DTOs
+- [x] Implement `MockEventService`
+- [x] Build `EventsController` (list, get by ID, register, unregister)
+- [ ] Event image storage _(deferred)_
+- [ ] Event filtering/search _(deferred)_
 
-**Deliverables**: Full event management
+**Deliverables**: Basic event management API (mock) ✅
 
 ---
 
-### Phase 6: Basic Messaging (Week 8)
+### Phase 6: Basic Messaging 🔜 Planned
 **Goal**: REST-based messaging (no real-time yet)
 
 - [ ] Create Chat and Message entities
@@ -516,46 +510,45 @@ LOGGING__LOGLEVEL__DEFAULT=Information
 
 ---
 
-### Phase 7: Community Features (Weeks 9-10)
+### Phase 7: Community Features ✅ DONE (Mock)
 **Goal**: Forum and blog
 
-- [ ] Create Forum entities (Section, Topic, Reply)
-- [ ] Implement ForumRepository
-- [ ] Build ForumController
-- [ ] Create BlogPost entity
-- [ ] Implement BlogRepository
-- [ ] Build BlogController
-- [ ] Unit tests
+- [x] Create Forum DTOs (Section, Topic, Reply)
+- [x] Implement `MockForumService`
+- [x] Build `ForumController`
+- [x] Create BlogPost DTOs
+- [x] Implement `MockBlogService`
+- [x] Build `BlogController`
 
-**Deliverables**: Forum and blog APIs
+**Deliverables**: Forum and blog APIs (mock) ✅
 
 ---
 
-### Phase 8: Store Integration (Week 11)
+### Phase 8: Store Integration ✅ DONE (Mock)
 **Goal**: Store catalog (read-only)
 
-- [ ] Create StoreItem entity
-- [ ] Implement StoreRepository
-- [ ] Build StoreController (read-only)
-- [ ] External URL configuration
-- [ ] Unit tests
+- [x] Create StoreItem DTOs
+- [x] Implement `MockStoreService`
+- [x] Build `StoreController` (list, get by ID)
+- [x] External purchase URL support
 
-**Deliverables**: Store catalog API
+**Deliverables**: Store catalog API (mock) ✅
 
 ---
 
-### Phase 9: Frontend Integration (Weeks 12-13)
+### Phase 9: Frontend Integration 🔄 In Progress
 **Goal**: Connect frontend to backend
 
-- [ ] CORS configuration
-- [ ] API documentation (Swagger)
-- [ ] Frontend API service layer
-- [ ] Replace mock data with API calls
-- [ ] Error handling
-- [ ] Loading states
-- [ ] Integration testing
+- [x] CORS configuration (localhost:8080, localhost:5173)
+- [x] Swagger/OpenAPI documentation
+- [x] Frontend API service layer (`src/services/api/`)
+- [x] Auth endpoints connected (login/register working)
+- [ ] Frontend AuthContext (token storage + auto-refresh)
+- [ ] Protected routes
+- [ ] Replace mock data in Friends, AloeVera, Talks pages
+- [ ] Error handling and loading states
 
-**Deliverables**: Working frontend-backend integration
+**Deliverables**: Working frontend-backend integration (in progress)
 
 ---
 

@@ -2,58 +2,62 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: February 17, 2026  
-**Status**: Mock Application - No Backend Implementation
+**Last Updated**: February 18, 2026  
+**Status**: Backend integration in progress — auth wired, other pages still using embedded mock data
 
 ---
 
 ## 🔴 Critical Issues
 
-### 1. No Backend Implementation
-**Severity**: Critical  
-**Impact**: Application is non-functional for real-world use
+### 1. Pages Not Connected to Backend API
+**Severity**: High (was Critical)  
+**Impact**: Most features don't benefit from the running backend yet
 
-All data is hardcoded mock data within components. No actual data persistence, API calls, or server communication exists.
+The backend (`@lovecraft/`) is running with all mock services and JWT auth. The API service layer (`src/services/api/`) is in place. **Authentication (Welcome.tsx) is wired.** However, the following pages still use embedded mock data and have not been migrated to the API yet:
 
-**Affected Areas**:
-- User authentication
-- Profile management
-- Matching system
-- Messaging
-- Event management
-- Store functionality
-- Blog posts
-- Forum system
+**Still Using Embedded Mock Data**:
+- `Friends.tsx` — Users, matches, likes, chats
+- `AloeVera.tsx` — Events, store items, blog posts
+- `Talks.tsx` — Forum topics, group chats
+- `EventDetails.tsx` — Event attendees
+- `SettingsPage.tsx` — User profile
 
-**Resolution**: Requires full backend implementation. See [BACKEND_PLAN.md](./BACKEND_PLAN.md).
+**Resolution**: Create API service files (`eventsApi.ts`, `matchingApi.ts`, `forumsApi.ts`, `storeApi.ts`, `blogApi.ts`) following the pattern in `authApi.ts`, then update page components to use `useQuery` with the service functions. See [API_INTEGRATION.md](./API_INTEGRATION.md).
 
 ---
 
-### 2. No Authentication/Authorization System
+### 2. AuthContext Not Implemented — Token Not Stored
 **Severity**: Critical  
-**Impact**: Security vulnerability, no user management
+**Impact**: Even though auth endpoints work, the access token is discarded after login
 
-- Welcome page has login/register forms but they don't actually authenticate
-- No session management
-- No protected routes
-- Current user is hardcoded as `'current-user'`
-- Anyone can access any feature without authentication
+The backend JWT auth is fully implemented and `Welcome.tsx` calls `authApi.login()` / `authApi.register()`. However:
+- The access token returned by login is logged to the console and then lost
+- `apiClient.getAccessToken()` always returns `null` — no authenticated API calls can be made
+- No `AuthContext` or `AuthProvider` exists
+- No protected routes — all pages are accessible without logging in
+- Current user is still effectively hardcoded as `'current-user'` in embedded mock data
 
-**Resolution**: Implement JWT or session-based authentication with protected routes.
+**Resolution**:
+1. Create `src/contexts/AuthContext.tsx` with token state, `login()`, `logout()`, auto-refresh
+2. Wrap `App.tsx` with `<AuthProvider>`
+3. Wire `apiClient.getAccessToken()` to read from AuthContext
+4. Add `<ProtectedRoute>` wrapper and apply to all routes except `/`
+5. See [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for complete implementation guide
 
 ---
 
-### 3. No Data Persistence
+### 3. No Data Persistence (Backend In-Memory)
 **Severity**: Critical  
-**Impact**: All user actions are lost on refresh
+**Impact**: All backend data resets when the backend restarts
 
-- Likes/matches are not saved
-- Messages disappear on refresh
+The backend uses in-memory storage (static dictionaries in mock services). Any registrations, likes, matches, or event registrations created via the API are lost on backend restart.
+
+- Likes/matches are not persisted beyond backend process lifetime
+- Registered users are lost on restart (except the seeded `test@example.com`)
 - Event registrations are lost
-- Profile changes don't persist
-- Settings changes are temporary
+- Profile changes are not persisted
 
-**Resolution**: Implement database integration and state persistence.
+**Resolution**: Integrate Azure Table Storage and Azure Blob Storage into the backend services (replace `MockUserService`, `MockEventService`, etc. with real implementations). This is a backend task — see `@lovecraft/Lovecraft/docs/AZURE_STORAGE.md`.
 
 ---
 
@@ -121,11 +125,11 @@ src/
 
 ---
 
-### 6. Mock Data Embedded in Components
-**Severity**: High  
+### 6. Mock Data Still Embedded in Most Page Components
+**Severity**: Medium (was High)  
 **Impact**: Code maintainability, data consistency, reusability
 
-Mock data is defined directly in page components:
+Auth mock data is now centralized in `src/data/mockUsers.ts`. However, other pages still embed their mock data directly:
 - `Friends.tsx`: Users, events, matches, likes, chats
 - `AloeVera.tsx`: Events, store items, blog posts
 - `Talks.tsx`: Forum topics, group chats
@@ -135,20 +139,9 @@ Mock data is defined directly in page components:
 **Problems**:
 - Duplication (same events defined in multiple files)
 - Inconsistent data (IDs don't match across files)
-- Hard to update
-- Hard to test
-- Can't share data between components
+- Hard to update or share between components
 
-**Resolution**: Centralize mock data:
-```typescript
-// src/data/mockData.ts or src/mocks/
-export const mockUsers: User[] = [...]
-export const mockEvents: Event[] = [...]
-export const mockStoreItems: StoreItem[] = [...]
-// etc.
-```
-
-Consider using **MSW (Mock Service Worker)** for API mocking when backend development begins.
+**Resolution**: The preferred path is to migrate page-by-page to the API service pattern (create `eventsApi.ts`, etc.) rather than further centralizing mock data files. Each API service already contains a mock branch. See issue #1 and [API_INTEGRATION.md](./API_INTEGRATION.md).
 
 ---
 
@@ -476,37 +469,40 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 
 | Category | Critical | High | Medium | Low | Total |
 |----------|----------|------|--------|-----|-------|
-| **Backend/Data** | 3 | 2 | 1 | 1 | 7 |
+| **Backend/Data** | 2 | 1 | 1 | 1 | 5 |
 | **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 |
 | **UX/Features** | 0 | 1 | 4 | 3 | 8 |
 | **Infrastructure** | 0 | 0 | 1 | 4 | 5 |
-| **Total** | **3** | **6** | **7** | **9** | **25** |
+| **Total** | **2** | **5** | **7** | **9** | **23** |
 
 ---
 
 ## 🎯 Recommended Priority Order
 
-1. **Implement Backend** (Issues #1, #2, #3) - Foundation for everything
-2. **Centralize Mock Data** (Issue #6) - Improves development experience immediately
-3. **Fix Type Issues** (Issues #4, #7) - Prevents bugs during development
-4. **Add Testing** (Issue #5) - Enables confident refactoring
-5. **Complete i18n** (Issue #8) - Better UX
-6. **Add Form Validation** (Issue #10) - Data quality
-7. **Implement State Management** (Issue #12) - Scalability
-8. **Add Error Handling** (Issue #9) - Resilience
-9. **Improve Swipe UX** (Issue #13) - Core feature polish
-10. **Everything else** - Based on priority
+1. **Implement AuthContext** (Issue #2) — Unblocks all authenticated API calls
+2. **Add Protected Routes** (Issue #2) — Security baseline
+3. **Wire remaining pages to API** (Issue #1) — Events, Friends, Talks, Store, Blog
+4. **Backend: Azure Storage** (Issue #3) — Data persistence
+5. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
+6. **Add Testing** (Issue #5) — Enables confident refactoring
+7. **Complete i18n** (Issue #8) — Better UX
+8. **Add Form Validation** (Issue #10) — Data quality
+9. **Implement State Management** (Issue #12) — Scalability
+10. **Add Error Handling** (Issue #9) — Resilience
+11. **Improve Swipe UX** (Issue #13) — Core feature polish
+12. **Everything else** — Based on priority
 
 ---
 
 ## 📝 Notes
 
-- This is a mock application created with Lovable platform
-- Many issues are expected given the current stage (no backend)
-- Some issues (like unused dependencies) may be intentional for future features
-- Frontend code quality is generally good considering it's generated code
+- Application was bootstrapped with Lovable, then manually extended
+- Backend (`@lovecraft/`) is a working .NET 10 stub with full JWT auth and mock services
+- Frontend-backend integration has started: auth flow is wired, other pages pending
+- API service layer (`src/services/api/`) provides the mock/real dual-mode pattern
 - Design system and component architecture are solid foundations
+- Token storage and AuthContext are the critical missing piece before further integration
 
 ---
 
-**Next Steps**: See [BACKEND_PLAN.md](./BACKEND_PLAN.md) for implementation roadmap.
+**Next Steps**: See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for implementation guidance.

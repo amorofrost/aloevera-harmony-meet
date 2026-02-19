@@ -44,9 +44,9 @@ Welcome to the AloeVera Harmony Meet documentation.
 
 ### [ISSUES.md](./ISSUES.md)
 **Known issues and technical debt**
-- 25 documented issues categorized by severity
-- Critical issues (no backend, no auth, no persistence)
-- High priority issues (TypeScript config, testing, mock data)
+- 23 documented issues categorized by severity
+- Critical issues (AuthContext not implemented, backend in-memory only)
+- High priority issues (remaining pages not wired to API, TypeScript config, testing)
 - Medium and low priority issues
 - Recommended priority order for fixes
 

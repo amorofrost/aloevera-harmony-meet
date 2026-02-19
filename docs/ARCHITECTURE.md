@@ -2,8 +2,8 @@
 
 **AloeVera Harmony Meet** - Technical Architecture Overview
 
-**Version**: 1.0 (Mock/Frontend Only)  
-**Last Updated**: February 17, 2026
+**Version**: 1.1 (Backend Integration In Progress)  
+**Last Updated**: February 18, 2026
 
 ---
 
@@ -12,10 +12,11 @@
 AloeVera Harmony Meet is a **React-based single-page application (SPA)** designed as a fan community platform combining dating features, social networking, event management, and e-commerce for AloeVera music band enthusiasts.
 
 ### Current State
-- **Frontend Only**: Complete UI implementation with mock data
-- **No Backend**: All data is hardcoded in components
-- **No API Layer**: No HTTP requests or WebSocket connections
-- **No Database**: No data persistence
+- **Backend integration in progress**: The LoveCraft .NET 10 backend is running with JWT auth and mock services
+- **API service layer implemented**: `src/services/api/` provides mock/real dual-mode HTTP client
+- **Authentication wired**: Login and register in `Welcome.tsx` call the real backend
+- **Other pages still use embedded mock data**: Friends, AloeVera, Talks — migration in progress
+- **No data persistence yet**: Backend uses in-memory storage
 
 ### Technology Philosophy
 - **Modern React**: Hooks, functional components, TypeScript
@@ -740,7 +741,7 @@ VITE_GA_ID=...
 
 ## 📈 Scalability Considerations
 
-**Current**: Not applicable (no backend)
+**Current**: Backend running as in-memory mock (Azure Storage not integrated)
 
 **For Growth**:
 
@@ -770,17 +771,19 @@ VITE_GA_ID=...
 
 ## 🔄 Migration Path
 
-**Phase 1: Foundation** (Current → Backend)
-1. Centralize mock data
-2. Create service layer interfaces
-3. Add environment configuration
-4. Implement authentication
+**Phase 1: Foundation** ✅ Done
+1. ~~Centralize mock data~~ (partially — auth users centralized)
+2. ~~Create service layer interfaces~~ (`src/services/api/`)
+3. ~~Add environment configuration~~ (`.env.development`/`.env.production`)
+4. ~~Implement authentication~~ (backend JWT + frontend `authApi.ts`)
 
-**Phase 2: Backend Integration**
-1. Replace mock data with API calls
-2. Add React Query for server state
-3. Implement real-time messaging
-4. Add error handling
+**Phase 2: Backend Integration** 🔄 In Progress
+1. **Implement AuthContext** — token storage and auto-refresh (critical)
+2. **Add protected routes** — redirect unauthenticated users
+3. Replace mock data with API calls (page-by-page)
+4. Add React Query for server state management
+5. Implement real-time messaging (SignalR — backend phase)
+6. Add comprehensive error handling
 
 **Phase 3: Enhancement**
 1. Add testing

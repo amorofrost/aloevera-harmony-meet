@@ -17,7 +17,19 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 
 ## 🎯 Current Status
 
-**⚠️ Frontend-only with MOCK data.** The backend is being developed separately in the **LoveCraft** repository (`@lovecraft/`). All features currently use static mock data defined in components. See [/docs/ISSUES.md](/docs/ISSUES.md) for identified issues and [/docs/BACKEND_PLAN.md](/docs/BACKEND_PLAN.md) for backend roadmap.
+**🔄 Backend integration in progress.** The backend (.NET 10) lives in the **LoveCraft** repository (`@lovecraft/`) and is running with full mock data and JWT authentication. The frontend API layer is wired and the **authentication flow (login/register) is connected to the real backend**. Other pages (Friends, AloeVera, Talks) still use embedded mock data and will be migrated feature by feature.
+
+| Area | Status |
+|------|--------|
+| API service layer (`src/services/api/`) | ✅ Implemented |
+| Auth endpoints (login/register) | ✅ Connected to backend |
+| Token storage / AuthContext | ⚠️ Not yet implemented |
+| Protected routes | ⚠️ Not yet implemented |
+| Friends / matching pages | ⚠️ Still using embedded mock data |
+| Events / Store / Blog pages | ⚠️ Still using embedded mock data |
+| Talks / Forum pages | ⚠️ Still using embedded mock data |
+
+See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues and [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide.
 
 ## 🚀 Quick Start
 
@@ -114,6 +126,8 @@ aloevera-harmony-meet/
 Detailed documentation is available in the `/docs` directory:
 
 - **[ARCHITECTURE.md](/docs/ARCHITECTURE.md)** - Technical architecture and design decisions
+- **[API_INTEGRATION.md](/docs/API_INTEGRATION.md)** - API service layer guide (mock vs real backend)
+- **[FRONTEND_AUTH_GUIDE.md](/docs/FRONTEND_AUTH_GUIDE.md)** - Auth integration guide for developers
 - **[ISSUES.md](/docs/ISSUES.md)** - Known issues and technical debt
 - **[FEATURES.md](/docs/FEATURES.md)** - Detailed feature specifications
 - **[BACKEND_PLAN.md](/docs/BACKEND_PLAN.md)** - Backend implementation roadmap
@@ -151,16 +165,23 @@ Detailed documentation is available in the `/docs` directory:
 
 The app supports Russian (ru) and English (en) via `LanguageContext`. Translation keys are defined in `src/contexts/LanguageContext.tsx`.
 
-## 🎭 Mock Data
+## 🎭 Mock Data & API Integration
 
-All data is currently hardcoded within page components:
+The app operates in two modes controlled by `VITE_API_MODE`:
 
-- **Users**: Defined in `Friends.tsx`, `EventDetails.tsx`, `SettingsPage.tsx`
-- **Events**: Defined in `AloeVera.tsx`, `EventDetails.tsx`
-- **Store Items**: Defined in `AloeVera.tsx`, `StoreItem.tsx`
-- **Blog Posts**: Defined in `AloeVera.tsx`, `BlogPost.tsx`
-- **Forum Topics**: Defined in `Talks.tsx`
-- **Chats/Messages**: Defined in `Friends.tsx`, `Talks.tsx`
+- **`mock` (default/dev)**: Uses local mock data. No backend required.
+- **`api`**: Calls the real LoveCraft backend at `VITE_API_BASE_URL`.
+
+**Centralized mock data** (partially done):
+- `src/data/mockUsers.ts` - Auth mock users
+
+**Still embedded in page components** (to be migrated):
+- **Users**: `Friends.tsx`, `EventDetails.tsx`, `SettingsPage.tsx`
+- **Events**: `AloeVera.tsx`, `EventDetails.tsx`
+- **Store Items**: `AloeVera.tsx`, `StoreItem.tsx`
+- **Blog Posts**: `AloeVera.tsx`, `BlogPost.tsx`
+- **Forum Topics**: `Talks.tsx`
+- **Chats/Messages**: `Friends.tsx`, `Talks.tsx`
 
 ## 🐳 Docker Support
 
@@ -207,32 +228,36 @@ Changes made via Lovable are automatically committed to the repository.
 
 See [/docs/ISSUES.md](/docs/ISSUES.md) for a comprehensive list. Major issues include:
 
-- ⚠️ **Backend in separate repo** - See `@lovecraft/` for .NET 10 backend
-- ⚠️ Frontend uses mock data (no API integration yet)
+- ✅ Backend exists in `@lovecraft/` (.NET 10 with JWT auth)
+- ✅ Auth endpoints wired to backend API
+- ⚠️ AuthContext / token storage not implemented — access token is not persisted
+- ⚠️ No protected routes — pages accessible without login
+- ⚠️ Friends, Talks, AloeVera pages still use embedded mock data
 - ⚠️ Loose TypeScript configuration
 - ⚠️ No testing setup
-- ⚠️ Mock data embedded in components (should be centralized)
-- ⚠️ No authentication/authorization (frontend-only)
-- ⚠️ No data persistence
 - ⚠️ Type inconsistencies (duplicate Message interface)
 
 ## 🗺️ Roadmap
 
-### Backend Development (In Progress)
+### Backend — `@lovecraft/` (Working Mock)
 
-Backend is being developed in **`@lovecraft/`** repository:
-- **.NET 10** REST API
-- **Azure Storage** (Tables + Blobs)
-- **Docker** containerization
-- **JWT** authentication
+The backend is running with in-memory mock data:
+- ✅ **.NET 10** REST API with all controllers
+- ✅ **JWT** authentication (login, register, refresh, email verify)
+- ✅ **Docker** containerization
+- ✅ **Swagger UI** at `/swagger`
+- ⚠️ **Azure Storage** — not yet integrated (still in-memory)
+- ⚠️ **Email service** — not yet integrated (tokens logged to console)
 
-See [/docs/BACKEND_PLAN.md](/docs/BACKEND_PLAN.md) for 12-phase implementation plan.
+See [/docs/BACKEND_PLAN.md](/docs/BACKEND_PLAN.md) for the full roadmap.
 
-### Frontend Integration
-- Connect to backend API
-- Replace mock data with real API calls
-- Add loading states and error handling
-- Real-time messaging (SignalR)
+### Frontend Integration — Immediate Next Steps
+
+1. **AuthContext** — store access token in React Context, implement auto-refresh
+2. **Protected routes** — redirect unauthenticated users to `/`
+3. **Wire remaining pages** — create `eventsApi`, `matchingApi`, `forumsApi`, `storeApi`, `blogApi`
+4. **Replace embedded mock data** — Friends, AloeVera, Talks pages
+5. **Loading & error states** — for all async data fetches
 
 ### Future Clients
 - Telegram Mini App (JavaScript)
