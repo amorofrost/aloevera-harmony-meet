@@ -27,7 +27,8 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Protected routes (`ProtectedRoute`) | ✅ All content routes guarded |
 | Friends / matching pages | ✅ Wired to `matchingApi` / `chatsApi` |
 | Events / Store / Blog pages | ✅ Wired to `eventsApi` / `storeApi` / `blogApi` |
-| Talks / Forum pages | ✅ Wired to `forumsApi` / `chatsApi` |
+| Talks / Forum pages | ✅ Wired (sections, topic list, topic detail, reply posting) |
+| Forum topic detail view | ✅ `TopicDetail` component with author navigation |
 | Mock data centralized | ✅ All in `src/data/` |
 | Backend data persistence | ❌ In-memory only (Azure Storage pending) |
 | Token refresh | ❌ Not yet implemented (users re-login after ~1h) |

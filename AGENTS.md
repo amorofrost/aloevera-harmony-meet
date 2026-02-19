@@ -24,6 +24,8 @@ aloevera-harmony-meet/
 │   ├── pages/              # Page components (main routes)
 │   ├── components/
 │   │   ├── ui/             # Reusable UI components (shadcn/ui + custom)
+│   │   ├── forum/
+│   │   │   └── TopicDetail.tsx # Forum topic detail view (post + replies + reply input)
 │   │   └── ProtectedRoute.tsx  # Auth guard — redirects unauthenticated users to /
 │   ├── config/
 │   │   └── api.config.ts   # API mode (mock/api) and base URL config
@@ -35,7 +37,7 @@ aloevera-harmony-meet/
 │   │       ├── eventsApi.ts    # Events (list, detail, register/unregister)
 │   │       ├── storeApi.ts     # Store items (list, detail)
 │   │       ├── blogApi.ts      # Blog posts (list, detail)
-│   │       ├── forumsApi.ts    # Forum sections and topics
+│   │       ├── forumsApi.ts    # Forum sections, topics, topic detail, and replies
 │   │       ├── matchingApi.ts  # Search profiles, matches, likes
 │   │       ├── chatsApi.ts     # Event group chats and private chats (mock-only)
 │   │       ├── songsApi.ts     # AloeVera songs (mock-only)
@@ -46,7 +48,7 @@ aloevera-harmony-meet/
 │   │   ├── mockEvents.ts
 │   │   ├── mockStoreItems.ts
 │   │   ├── mockBlogPosts.ts
-│   │   ├── mockForumData.ts
+│   │   ├── mockForumData.ts    # Sections, topics, mockTopicDetails (12 topics × replies)
 │   │   ├── mockChats.ts
 │   │   ├── mockProfiles.ts
 │   │   └── mockSongs.ts

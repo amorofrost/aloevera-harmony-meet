@@ -32,6 +32,12 @@ All pages are now wired to the backend API (in API mode) via dedicated service f
 
 **Remaining**: Chat (private/group) send-message endpoints not yet backed by real API; songs endpoint not on backend.
 
+**Forum topic detail** (added Feb 19, 2026):
+- `src/components/forum/TopicDetail.tsx` — renders topic content, replies, and reply input
+- `forumsApi.getTopic(topicId)` — calls `GET /api/v1/forum/topics/{topicId}` + `GET /api/v1/forum/topics/{topicId}/replies`
+- `forumsApi.createReply(topicId, content)` — calls `POST /api/v1/forum/topics/{topicId}/replies`
+- Clicking an author name/avatar in `TopicDetail` navigates to `/friends?userId={authorId}`; `Friends.tsx` loads that user's profile via `usersApi.getUserById`
+
 ---
 
 ### ~~2. AuthContext Not Implemented — Token Not Stored~~ ✅ RESOLVED (minimal implementation)
