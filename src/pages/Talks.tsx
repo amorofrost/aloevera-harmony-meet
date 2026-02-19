@@ -11,12 +11,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import type { GroupChat } from '@/types/chat';
 import { forumsApi, chatsApi } from '@/services/api';
 import type { ForumSection } from '@/data/mockForumData';
+import TopicDetail from '@/components/forum/TopicDetail';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const Talks = () => {
   const [activeTab, setActiveTab] = useState('forum');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -142,8 +144,11 @@ const Talks = () => {
 
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
-          {selectedSection && (
-            <Button variant="ghost" size="sm" onClick={() => setSelectedSection(null)} className="mr-2">
+          {(selectedSection || selectedTopic) && (
+            <Button variant="ghost" size="sm" onClick={() => {
+              if (selectedTopic) { setSelectedTopic(null); }
+              else { setSelectedSection(null); }
+            }} className="mr-2">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
@@ -165,6 +170,8 @@ const Talks = () => {
           <TabsContent value="forum" className="mt-6">
             {isLoading ? (
               <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+            ) : selectedTopic ? (
+              <TopicDetail topicId={selectedTopic} onBack={() => setSelectedTopic(null)} />
             ) : !selectedSection ? (
               <div className="space-y-4">
                 {forumSections.map((section) => (
@@ -195,7 +202,8 @@ const Talks = () => {
                     return b.lastActivity.getTime() - a.lastActivity.getTime();
                   })
                   .map((topic) => (
-                    <Card key={topic.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow">
+                    <Card key={topic.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setSelectedTopic(topic.id)}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-1 min-w-0">
