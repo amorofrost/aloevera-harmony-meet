@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pin, Send, ThumbsUp, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +19,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [replyText, setReplyText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
@@ -44,6 +46,12 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     setIsSending(false);
   };
 
+  const handleAuthorClick = (authorId?: string) => {
+    if (authorId) {
+      navigate(`/friends?userId=${authorId}`);
+    }
+  };
+
   const formatDate = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -53,6 +61,31 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}д назад`;
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  };
+
+  const AuthorBadge = ({ authorId, authorName, size = 'md' }: { authorId?: string; authorName: string; size?: 'sm' | 'md' }) => {
+    const isClickable = Boolean(authorId);
+    const avatarSize = size === 'md' ? 'w-8 h-8' : 'w-7 h-7';
+    const textSize = size === 'md' ? 'text-sm' : 'text-xs';
+
+    return (
+      <div
+        className={`flex items-center gap-2 ${isClickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        onClick={isClickable ? () => handleAuthorClick(authorId) : undefined}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        onKeyDown={isClickable ? (e) => { if (e.key === 'Enter') handleAuthorClick(authorId); } : undefined}
+      >
+        <div className={`${avatarSize} rounded-full ${size === 'md' ? 'bg-primary/20' : 'bg-muted'} flex items-center justify-center`}>
+          <span className={`${textSize} font-semibold ${size === 'md' ? 'text-primary' : ''}`}>
+            {authorName.charAt(0)}
+          </span>
+        </div>
+        <span className={`font-medium ${textSize} ${isClickable ? 'text-primary underline-offset-2 hover:underline' : ''}`}>
+          {authorName}
+        </span>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -82,12 +115,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
             <h2 className="text-lg font-bold">{topic.title}</h2>
           </div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-sm font-semibold text-primary">
-                {topic.authorName.charAt(0)}
-              </span>
-            </div>
-            <span className="font-medium text-sm">{topic.authorName}</span>
+            <AuthorBadge authorId={topic.authorId} authorName={topic.authorName} size="md" />
             <span className="text-xs text-muted-foreground">· {formatDate(topic.createdAt)}</span>
           </div>
           <p className="text-sm leading-relaxed text-foreground">{topic.content}</p>
@@ -106,10 +134,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
           <Card key={reply.id} className="profile-card">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-xs font-semibold">{reply.authorName.charAt(0)}</span>
-                </div>
-                <span className="font-medium text-sm">{reply.authorName}</span>
+                <AuthorBadge authorId={reply.authorId} authorName={reply.authorName} size="sm" />
                 <span className="text-xs text-muted-foreground">· {formatDate(reply.createdAt)}</span>
               </div>
               <p className="text-sm leading-relaxed pl-9">{reply.content}</p>

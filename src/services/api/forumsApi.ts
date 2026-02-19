@@ -9,6 +9,7 @@ function mapReplyFromApi(dto: any): ForumReply {
   return {
     id: dto.id,
     topicId: dto.topicId,
+    authorId: dto.authorId,
     authorName: dto.authorName,
     authorAvatar: dto.authorAvatar,
     content: dto.content,
@@ -22,6 +23,7 @@ function mapTopicDetailFromApi(dto: any, replies: ForumReply[]): ForumTopicDetai
     id: dto.id,
     sectionId: dto.sectionId,
     title: dto.title,
+    authorId: dto.authorId,
     authorName: dto.authorName,
     authorAvatar: dto.authorAvatar,
     content: dto.content ?? '',

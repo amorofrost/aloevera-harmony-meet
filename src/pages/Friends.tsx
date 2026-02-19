@@ -10,7 +10,7 @@ import SwipeCard from '@/components/ui/swipe-card';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { User } from '@/types/user';
-import { matchingApi, chatsApi } from '@/services/api';
+import { matchingApi, chatsApi, usersApi } from '@/services/api';
 import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
 import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -22,8 +22,11 @@ const Friends = () => {
   const [likesTab, setLikesTab] = useState('matches');
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const viewingUserId = searchParams.get('userId');
 
   const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
   const [matches, setMatches] = useState<MatchWithUser[]>([]);
@@ -31,6 +34,7 @@ const Friends = () => {
   const [receivedLikes, setReceivedLikes] = useState<ReceivedLikeWithUser[]>([]);
   const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +56,18 @@ const Friends = () => {
     load();
   }, []);
 
+  // Load specific user profile when userId param is present
+  useEffect(() => {
+    if (!viewingUserId) {
+      setViewingUser(null);
+      return;
+    }
+    const loadUser = async () => {
+      const res = await usersApi.getUserById(viewingUserId);
+      if (res.success && res.data) setViewingUser(res.data);
+    };
+    loadUser();
+  }, [viewingUserId]);
   const currentUser = searchProfiles[currentUserIndex];
 
   const handleLike = async () => {
@@ -145,6 +161,48 @@ const Friends = () => {
       </CardContent>
     </Card>
   );
+
+  if (viewingUserId && viewingUser) {
+    return (
+      <div className="min-h-screen bg-background pb-20 relative">
+        <div className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80" style={{ backgroundImage: `url(${heroBg})` }}>
+          <div className="absolute inset-0 bg-background/90"></div>
+        </div>
+
+        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
+          <div className="flex items-center gap-3 p-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="p-1">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold text-foreground">{viewingUser.name}</h1>
+          </div>
+        </div>
+
+        <div className="p-4 relative z-10">
+          <Card className="profile-card aspect-[3/4] relative overflow-hidden max-w-sm mx-auto">
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${viewingUser.profileImage})` }}>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-3 h-3 rounded-full ${viewingUser.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
+                  <span className="text-sm opacity-90">{viewingUser.isOnline ? 'Онлайн' : 'Недавно'}</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-1">{viewingUser.name}, {viewingUser.age}</h2>
+                <p className="text-sm opacity-90 mb-2">{viewingUser.location}</p>
+                <p className="text-sm opacity-75">{viewingUser.bio}</p>
+              </div>
+            </div>
+          </Card>
+          <div className="flex justify-center gap-6 mt-6">
+            <Button size="lg" variant="outline" onClick={() => navigate(-1)} className="rounded-full w-16 h-16 btn-pass"><X className="w-8 h-8" /></Button>
+            <Button size="lg" onClick={() => { matchingApi.sendLike(viewingUser.id); navigate(-1); }} className="rounded-full w-16 h-16 btn-like"><Heart className="w-8 h-8" /></Button>
+          </div>
+        </div>
+
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20 relative">
