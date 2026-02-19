@@ -56,6 +56,17 @@ class ApiClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
+        // Session expired or invalid token — send user back to login
+        if (response.status === 401) {
+          this.clearAccessToken();
+          window.location.href = '/';
+          return {
+            success: false,
+            error: { code: 'UNAUTHORIZED', message: 'Session expired. Please log in again.' },
+            timestamp: new Date().toISOString(),
+          };
+        }
+
         const error = await response.json().catch(() => ({
           error: { code: 'UNKNOWN', message: 'Request failed' }
         }));
@@ -113,20 +124,17 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
-  // Token management
+  // Token management — uses localStorage until AuthContext is implemented
   private getAccessToken(): string | null {
-    // Get from your auth context/state management
-    // For now, return null - will be implemented with auth context
-    return null;
+    return localStorage.getItem('access_token');
   }
 
   setAccessToken(token: string) {
-    // Store in your auth context/state management
-    // This will be implemented when integrating auth
+    localStorage.setItem('access_token', token);
   }
 
   clearAccessToken() {
-    // Clear from your auth context/state management
+    localStorage.removeItem('access_token');
   }
 }
 

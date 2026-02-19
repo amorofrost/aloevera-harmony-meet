@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { isMockMode } from "@/config/api.config";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
@@ -31,14 +32,18 @@ const App = () => (
         <BrowserRouter>
           <div className={isMockMode() ? "pt-10" : ""}>
             <Routes>
+              {/* Public — authentication page */}
               <Route path="/" element={<Welcome />} />
-              <Route path="/talks" element={<Talks />} />
-              <Route path="/friends" element={<Friends />} />
-              <Route path="/aloevera" element={<AloeVera />} />
-              <Route path="/aloevera/events/:eventId" element={<EventDetails />} />
-              <Route path="/aloevera/blog/:postId" element={<BlogPost />} />
-              <Route path="/aloevera/store/:itemId" element={<StoreItem />} />
-              <Route path="/settings" element={<SettingsPage />} />
+
+              {/* Protected — require a valid JWT */}
+              <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
+              <Route path="/talks" element={<ProtectedRoute><Talks /></ProtectedRoute>} />
+              <Route path="/aloevera" element={<ProtectedRoute><AloeVera /></ProtectedRoute>} />
+              <Route path="/aloevera/events/:eventId" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+              <Route path="/aloevera/blog/:postId" element={<ProtectedRoute><BlogPost /></ProtectedRoute>} />
+              <Route path="/aloevera/store/:itemId" element={<ProtectedRoute><StoreItem /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+
               {/* Legacy redirects */}
               <Route path="/search" element={<Navigate to="/friends" replace />} />
               <Route path="/events" element={<Navigate to="/aloevera" replace />} />
@@ -46,6 +51,7 @@ const App = () => (
               <Route path="/likes" element={<Navigate to="/friends" replace />} />
               <Route path="/chats" element={<Navigate to="/talks" replace />} />
               <Route path="/profile" element={<Navigate to="/settings" replace />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

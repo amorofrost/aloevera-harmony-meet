@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { authApi } from '@/services/api';
+import { authApi, apiClient } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
 
@@ -51,10 +51,9 @@ const Welcome = () => {
         throw new Error((response as any).error?.message || 'Login failed');
       }
 
-      // Store access token (in a real app, use auth context)
       if (response.data) {
+        apiClient.setAccessToken(response.data.accessToken);
         console.log('Login successful:', response.data.user);
-        // TODO: Store token in auth context
         navigate('/friends');
       }
     } catch (err: any) {

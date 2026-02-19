@@ -1,33 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import BottomNavigation from '@/components/ui/bottom-navigation';
-
-interface StoreItem {
-  id: string;
-  title: string;
-  price: number;
-  imageUrl: string;
-  category: string;
-  description: string;
-}
-
-const mockStoreItems: StoreItem[] = [
-  { id: 's1', title: 'Футболка "Новые горизонты"', price: 2500, imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=800&fit=crop', category: 'Одежда', description: 'Официальная футболка из коллекции «Новые горизонты». 100% хлопок, прямой крой. Принт с логотипом AloeVera на груди и арт-работой на спине. Доступные размеры: S, M, L, XL, XXL.' },
-  { id: 's2', title: 'Виниловая пластинка — Первый альбом', price: 3500, imageUrl: 'https://images.unsplash.com/photo-1539375665275-f9de415ef9ac?w=800&h=800&fit=crop', category: 'Музыка', description: 'Коллекционное издание первого альбома на виниле. Включает вкладыш с текстами песен и эксклюзивными фотографиями из студии. Вес — 180 г, качество звука Hi-Fi.' },
-  { id: 's3', title: 'Постер "AloeVera Fest 2024"', price: 800, imageUrl: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=800&fit=crop', category: 'Мерч', description: 'Официальный постер фестиваля AloeVera Fest 2024. Размер 60×90 см, плотная матовая бумага. Лимитированный тираж — всего 500 экземпляров.' },
-  { id: 's4', title: 'Худи "AloeVera"', price: 4500, imageUrl: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&h=800&fit=crop', category: 'Одежда', description: 'Тёплое худи с вышитым логотипом AloeVera. Флисовая подкладка, карман-кенгуру, регулируемый капюшон. Отлично подходит для концертов на открытом воздухе.' },
-];
+import { storeApi } from '@/services/api';
+import type { StoreItem } from '@/data/mockStoreItems';
 
 const StoreItemPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
+  const [item, setItem] = useState<StoreItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const item = mockStoreItems.find((i) => i.id === itemId);
+  useEffect(() => {
+    if (!itemId) return;
+    const load = async () => {
+      setIsLoading(true);
+      const res = await storeApi.getStoreItemById(itemId);
+      if (res.success && res.data) {
+        setItem(res.data);
+      } else {
+        setNotFound(true);
+      }
+      setIsLoading(false);
+    };
+    load();
+  }, [itemId]);
 
-  if (!item) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Загрузка...</p>
+      </div>
+    );
+  }
+
+  if (notFound || !item) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -56,7 +66,11 @@ const StoreItemPage = () => {
         <h2 className="text-2xl font-bold">{item.title}</h2>
         <p className="text-2xl font-bold text-primary">{item.price}₽</p>
         <p className="text-foreground leading-relaxed">{item.description}</p>
-        <Button className="w-full" size="lg">
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={() => item.externalPurchaseUrl && window.open(item.externalPurchaseUrl, '_blank')}
+        >
           <ShoppingBag className="w-5 h-5 mr-2" />
           Добавить в корзину
         </Button>

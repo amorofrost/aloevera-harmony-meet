@@ -1,114 +1,90 @@
-// src/services/api/usersApi.ts
-import { apiClient, isApiMode } from './apiClient';
-import type { User } from '@/types';
+import { apiClient, isApiMode, type ApiResponse } from './apiClient';
+import type { User } from '@/types/user';
+import { mockSearchProfiles } from '@/data/mockProfiles';
+import { mockCurrentUser } from '@/data/mockCurrentUser';
 
-// Simple mock users for testing
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Test User 1',
-    email: 'user1@example.com',
-    age: 25,
-    location: 'Test City',
-    gender: 'Male',
-    bio: 'Mock user 1',
-    photos: [],
+function mapGender(g: string): User['gender'] {
+  const map: Record<string, User['gender']> = {
+    male: 'male', female: 'female',
+    nonBinary: 'non-binary', preferNotToSay: 'prefer-not-to-say',
+  };
+  return map[g] ?? 'prefer-not-to-say';
+}
+
+function mapUserFromApi(dto: any): User {
+  return {
+    id: dto.id,
+    name: dto.name,
+    age: dto.age,
+    bio: dto.bio ?? '',
+    location: dto.location ?? '',
+    gender: mapGender(dto.gender),
+    profileImage: dto.profileImage ?? '',
+    images: dto.images ?? [],
+    lastSeen: new Date(dto.lastSeen),
+    isOnline: dto.isOnline ?? false,
     preferences: {
-      showMe: 'all',
-      ageRange: [18, 50],
-      maxDistance: 100,
-      profileVisibility: 'public',
+      ageRange: [dto.preferences?.ageRangeMin ?? 18, dto.preferences?.ageRangeMax ?? 65],
+      maxDistance: dto.preferences?.maxDistance ?? 50,
+      showMe: dto.preferences?.showMe ?? 'everyone',
     },
     settings: {
-      language: 'en',
-      notifications: true,
+      profileVisibility: dto.settings?.profileVisibility ?? 'public',
+      anonymousLikes: dto.settings?.anonymousLikes ?? false,
+      language: dto.settings?.language ?? 'ru',
+      notifications: dto.settings?.notifications ?? true,
     },
-  },
-  {
-    id: '2',
-    name: 'Test User 2',
-    email: 'user2@example.com',
-    age: 28,
-    location: 'Another City',
-    gender: 'Female',
-    bio: 'Mock user 2',
-    photos: [],
-    preferences: {
-      showMe: 'all',
-      ageRange: [20, 40],
-      maxDistance: 50,
-      profileVisibility: 'public',
-    },
-    settings: {
-      language: 'en',
-      notifications: true,
-    },
-  },
-];
+  };
+}
+
+function mockSuccess<T>(data: T): ApiResponse<T> {
+  return { success: true, data, timestamp: new Date().toISOString() };
+}
 
 export const usersApi = {
-  // Get all users
-  async getUsers(skip = 0, take = 10) {
+  async getUsers(): Promise<ApiResponse<User[]>> {
     if (isApiMode()) {
-      return apiClient.get<User[]>(`/api/v1/users?skip=${skip}&take=${take}`);
+      const res = await apiClient.get<any[]>('/api/v1/users');
+      if (res.success && res.data) {
+        return { ...res, data: res.data.map(mapUserFromApi) };
+      }
+      return res as ApiResponse<User[]>;
     }
-
-    // Mock implementation
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return {
-      success: true,
-      data: mockUsers.slice(skip, skip + take),
-      timestamp: new Date().toISOString(),
-    };
+    return mockSuccess(mockSearchProfiles);
   },
 
-  // Get user by ID
-  async getUserById(id: string) {
+  async getUserById(id: string): Promise<ApiResponse<User | null>> {
     if (isApiMode()) {
-      return apiClient.get<User>(`/api/v1/users/${id}`);
+      const res = await apiClient.get<any>(`/api/v1/users/${id}`);
+      if (res.success && res.data) {
+        return { ...res, data: mapUserFromApi(res.data) };
+      }
+      return res as ApiResponse<User | null>;
     }
-
-    // Mock implementation
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const user = mockUsers.find(u => u.id === id);
-    
-    if (!user) {
-      return {
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'User not found' },
-        timestamp: new Date().toISOString(),
-      };
-    }
-
-    return {
-      success: true,
-      data: user,
-      timestamp: new Date().toISOString(),
-    };
+    const user = mockSearchProfiles.find(u => u.id === id) ?? null;
+    return mockSuccess(user);
   },
 
-  // Update user
-  async updateUser(id: string, data: Partial<User>) {
+  async getCurrentUser(): Promise<ApiResponse<User | null>> {
     if (isApiMode()) {
-      return apiClient.put<User>(`/api/v1/users/${id}`, data);
+      const res = await apiClient.get<any>('/api/v1/auth/me');
+      if (res.success && res.data) {
+        return { ...res, data: mapUserFromApi(res.data) };
+      }
+      return res as ApiResponse<User | null>;
     }
+    return mockSuccess(mockCurrentUser);
+  },
 
-    // Mock implementation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const user = mockUsers.find(u => u.id === id);
-    
-    if (!user) {
-      return {
-        success: false,
-        error: { code: 'NOT_FOUND', message: 'User not found' },
-        timestamp: new Date().toISOString(),
-      };
+  async updateUser(id: string, updates: Partial<User>): Promise<ApiResponse<User | null>> {
+    if (isApiMode()) {
+      const res = await apiClient.put<any>(`/api/v1/users/${id}`, updates);
+      if (res.success && res.data) {
+        return { ...res, data: mapUserFromApi(res.data) };
+      }
+      return res as ApiResponse<User | null>;
     }
-
-    return {
-      success: true,
-      data: { ...user, ...data },
-      timestamp: new Date().toISOString(),
-    };
+    const user = mockSearchProfiles.find(u => u.id === id) ?? null;
+    return mockSuccess(user ? { ...user, ...updates } : null);
   },
 };

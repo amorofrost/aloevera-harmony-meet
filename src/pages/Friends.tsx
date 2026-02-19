@@ -1,81 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, Info, ArrowLeft, ChevronLeft, ChevronRight, Send, MessageCircle, MoreVertical, Search as SearchIcon } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import SwipeCard from '@/components/ui/swipe-card';
-import EventPostmark from '@/components/ui/event-postmark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { User, Event, AloeVeraSong, Match, Like } from '@/types/user';
-import { PrivateChat } from '@/types/chat';
+import type { User } from '@/types/user';
+import { matchingApi, chatsApi } from '@/services/api';
+import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
+import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
-
-// ── Mock songs ──
-const mockSongs: AloeVeraSong[] = [
-  { id: '1', title: 'Звездное небо', album: 'Первый альбом', duration: '3:45', previewUrl: '', year: 2018 },
-  { id: '2', title: 'Летний ветер', album: 'Первый альбом', duration: '4:12', previewUrl: '', year: 2018 },
-  { id: '3', title: 'Новые горизонты', album: 'Второй альбом', duration: '3:28', previewUrl: '', year: 2020 },
-];
-
-// ── Mock events for search cards ──
-const mockEvents: Event[] = [
-  { id: '1', title: 'AloeVera: Новые Горизонты', description: '', imageUrl: '', date: new Date('2023-06-15'), location: 'Москва', attendees: ['1','2'], category: 'concert', organizer: 'AloeVera Official' },
-  { id: '2', title: 'Акустический вечер', description: '', imageUrl: '', date: new Date('2024-03-20'), location: 'СПб', attendees: ['1','3'], category: 'concert', organizer: 'AloeVera Official' },
-];
-
-// ── Mock users for search ──
-const searchUsers: User[] = [
-  { id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera и концерты под открытым небом ❤️', location: 'Москва', gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: true, eventsAttended: [mockEvents[0]], favoriteSong: mockSongs[0],
-    preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } },
-  { id: '2', name: 'Дмитрий', age: 28, bio: 'Музыкант, фанат AloeVera с первого альбома 🎸', location: 'Санкт-Петербург', gender: 'male',
-    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: false,
-    preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } },
-  { id: '3', name: 'Елена', age: 22, bio: 'Танцую под AloeVera 💃', location: 'Новосибирск', gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: true, eventsAttended: [mockEvents[1], mockEvents[0]], favoriteSong: mockSongs[2],
-    preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } },
-  { id: '4', name: 'Мария', age: 23, bio: 'Поэтесса и меломан', location: 'Москва', gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: true,
-    preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } },
-];
-
-// ── Mock likes data ──
-const mockMatches: (Match & { otherUser: User; isRead: boolean })[] = [
-  { id: '1', users: ['current-user','1'], createdAt: new Date('2024-02-20'), isRead: false,
-    otherUser: { id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', location: 'Москва', gender: 'female',
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: true,
-      preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } } },
-];
-
-const mockSentLikes: (Like & { toUser: User })[] = [
-  { id: '2', fromUserId: 'current-user', toUserId: '2', createdAt: new Date('2024-02-21'), isMatch: false,
-    toUser: { id: '2', name: 'Дмитрий', age: 28, bio: 'Музыкант', location: 'Санкт-Петербург', gender: 'male',
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: false,
-      preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } } },
-];
-
-const mockReceivedLikes: (Like & { fromUser: User; isRead: boolean })[] = [
-  { id: '3', fromUserId: '3', toUserId: 'current-user', createdAt: new Date('2024-02-19'), isMatch: false, isRead: false,
-    fromUser: { id: '3', name: 'Елена', age: 22, bio: 'Танцую под AloeVera', location: 'Новосибирск', gender: 'female',
-      profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: true,
-      preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } } },
-];
-
-// ── Mock private chats ──
-const mockPrivateChats: (PrivateChat & { otherUser: User })[] = [
-  {
-    id: 'private-1', type: 'private', participants: ['current-user','1'], matchId: 'match-1',
-    createdAt: new Date('2024-02-20'), updatedAt: new Date('2024-02-22'),
-    lastMessage: { id: 'msg-1', chatId: 'private-1', senderId: '1', content: 'Привет! Тоже обожаешь AloeVera?', timestamp: new Date('2024-02-22T14:30:00'), read: false, type: 'text' },
-    otherUser: { id: '1', name: 'Анна', age: 25, bio: '', location: 'Москва', gender: 'female',
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face', images: [], lastSeen: new Date(), isOnline: true,
-      preferences: { ageRange: [22,35], maxDistance: 50, showMe: 'everyone' }, settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true } }
-  }
-];
 
 const Friends = () => {
   const [activeTab, setActiveTab] = useState('search');
@@ -86,18 +24,49 @@ const Friends = () => {
   const [messageText, setMessageText] = useState('');
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const currentUser = searchUsers[currentUserIndex];
+  const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
+  const [matches, setMatches] = useState<MatchWithUser[]>([]);
+  const [sentLikes, setSentLikes] = useState<SentLikeWithUser[]>([]);
+  const [receivedLikes, setReceivedLikes] = useState<ReceivedLikeWithUser[]>([]);
+  const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleLike = () => { console.log('Liked:', currentUser?.name); nextUser(); };
-  const handlePass = () => { console.log('Passed:', currentUser?.name); nextUser(); };
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      const [profilesRes, matchesRes, sentRes, receivedRes, chatsRes] = await Promise.all([
+        matchingApi.getSearchProfiles(),
+        matchingApi.getMatches(),
+        matchingApi.getSentLikes(),
+        matchingApi.getReceivedLikes(),
+        chatsApi.getPrivateChats(),
+      ]);
+      if (profilesRes.success && profilesRes.data) setSearchProfiles(profilesRes.data);
+      if (matchesRes.success && matchesRes.data) setMatches(matchesRes.data);
+      if (sentRes.success && sentRes.data) setSentLikes(sentRes.data);
+      if (receivedRes.success && receivedRes.data) setReceivedLikes(receivedRes.data);
+      if (chatsRes.success && chatsRes.data) setPrivateChats(chatsRes.data);
+      setIsLoading(false);
+    };
+    load();
+  }, []);
+
+  const currentUser = searchProfiles[currentUserIndex];
+
+  const handleLike = async () => {
+    if (currentUser) {
+      await matchingApi.sendLike(currentUser.id);
+    }
+    nextUser();
+  };
+  const handlePass = () => nextUser();
   const nextUser = () => { setShowDetails(false); setCurrentUserIndex(prev => prev + 1); };
 
-  const formatDateShort = (date: Date) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
-
-  const formatTime = (date: Date) => new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(date);
-
+  const formatDateShort = (date: Date) =>
+    new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
+  const formatTime = (date: Date) =>
+    new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(date);
   const formatChatDate = (date: Date) => {
     const today = new Date();
     if (date.toDateString() === today.toDateString()) return formatTime(date);
@@ -111,7 +80,7 @@ const Friends = () => {
 
   // ── Private Chat View ──
   if (selectedChat) {
-    const chat = mockPrivateChats.find(c => c.id === selectedChat);
+    const chat = privateChats.find(c => c.id === selectedChat);
     if (!chat) return null;
     return (
       <div className="min-h-screen bg-background pb-20 flex flex-col relative">
@@ -199,13 +168,13 @@ const Friends = () => {
             </TabsTrigger>
             <TabsTrigger value="likes" className="relative">
               Лайки
-              {(mockMatches.filter(m => !m.isRead).length + mockReceivedLikes.filter(l => !l.isRead).length) > 0 && (
+              {(matches.filter(m => !m.isRead).length + receivedLikes.filter(l => !l.isRead).length) > 0 && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
               )}
             </TabsTrigger>
             <TabsTrigger value="chats" className="relative">
               Чаты
-              {mockPrivateChats.some(c => c.lastMessage && !c.lastMessage.read) && (
+              {privateChats.some(c => c.lastMessage && !c.lastMessage.read) && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
               )}
             </TabsTrigger>
@@ -213,7 +182,9 @@ const Friends = () => {
 
           {/* Search Tab */}
           <TabsContent value="search" className="mt-6">
-            {currentUserIndex >= searchUsers.length ? (
+            {isLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+            ) : currentUserIndex >= searchProfiles.length ? (
               <div className="text-center py-12">
                 <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h2 className="text-xl font-bold mb-2">{t('search.noMoreProfiles')}</h2>
@@ -261,25 +232,25 @@ const Friends = () => {
           <TabsContent value="likes" className="mt-6">
             <Tabs value={likesTab} onValueChange={setLikesTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="matches">{t('likes.matches')} <Badge variant="secondary" className="ml-1 text-xs">{mockMatches.length}</Badge></TabsTrigger>
-                <TabsTrigger value="sent">{t('likes.sent')} <Badge variant="secondary" className="ml-1 text-xs">{mockSentLikes.length}</Badge></TabsTrigger>
-                <TabsTrigger value="received">{t('likes.received')} <Badge variant="secondary" className="ml-1 text-xs">{mockReceivedLikes.length}</Badge></TabsTrigger>
+                <TabsTrigger value="matches">{t('likes.matches')} <Badge variant="secondary" className="ml-1 text-xs">{matches.length}</Badge></TabsTrigger>
+                <TabsTrigger value="sent">{t('likes.sent')} <Badge variant="secondary" className="ml-1 text-xs">{sentLikes.length}</Badge></TabsTrigger>
+                <TabsTrigger value="received">{t('likes.received')} <Badge variant="secondary" className="ml-1 text-xs">{receivedLikes.length}</Badge></TabsTrigger>
               </TabsList>
               <TabsContent value="matches" className="mt-4">
-                {mockMatches.map((match) => (
+                {matches.map((match) => (
                   <UserCard key={match.id} user={match.otherUser} subtitle={`Взаимность ${formatDateShort(match.createdAt)}`}
                     actionButton={<Button size="sm" onClick={() => navigate('/friends')} className="btn-match"><MessageCircle className="w-4 h-4" /></Button>} />
                 ))}
               </TabsContent>
               <TabsContent value="sent" className="mt-4">
-                {mockSentLikes.map((like) => (
+                {sentLikes.map((like) => (
                   <UserCard key={like.id} user={like.toUser} subtitle={`Лайк отправлен ${formatDateShort(like.createdAt)}`} />
                 ))}
               </TabsContent>
               <TabsContent value="received" className="mt-4">
-                {mockReceivedLikes.map((like) => (
+                {receivedLikes.map((like) => (
                   <UserCard key={like.id} user={like.fromUser} subtitle={`Лайкнул(а) вас ${formatDateShort(like.createdAt)}`}
-                    actionButton={<Button size="sm" className="btn-like"><Heart className="w-4 h-4" /></Button>} />
+                    actionButton={<Button size="sm" className="btn-like" onClick={() => matchingApi.sendLike(like.fromUser.id)}><Heart className="w-4 h-4" /></Button>} />
                 ))}
               </TabsContent>
             </Tabs>
@@ -287,7 +258,9 @@ const Friends = () => {
 
           {/* Private Chats Tab */}
           <TabsContent value="chats" className="mt-6">
-            {mockPrivateChats.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+            ) : privateChats.length === 0 ? (
               <div className="text-center py-12">
                 <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Нет личных чатов</h3>
@@ -295,7 +268,7 @@ const Friends = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {mockPrivateChats.map((chat) => (
+                {privateChats.map((chat) => (
                   <Card key={chat.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => setSelectedChat(chat.id)}>
                     <CardContent className="p-4">
