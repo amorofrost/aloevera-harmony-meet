@@ -2,47 +2,54 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: February 18, 2026  
-**Status**: Backend integration in progress — auth wired, other pages still using embedded mock data
+**Last Updated**: February 19, 2026  
+**Status**: Backend integration complete for all pages — all content routes require authentication, token lifecycle managed via localStorage
 
 ---
 
 ## 🔴 Critical Issues
 
-### 1. Pages Not Connected to Backend API
-**Severity**: High (was Critical)  
-**Impact**: Most features don't benefit from the running backend yet
+### ~~1. Pages Not Connected to Backend API~~ ✅ RESOLVED
+**Resolved**: February 19, 2026
 
-The backend (`@lovecraft/`) is running with all mock services and JWT auth. The API service layer (`src/services/api/`) is in place. **Authentication (Welcome.tsx) is wired.** However, the following pages still use embedded mock data and have not been migrated to the API yet:
+All pages are now wired to the backend API (in API mode) via dedicated service files in `src/services/api/`. Each service has a dual-mode mock/API implementation.
 
-**Still Using Embedded Mock Data**:
-- `Friends.tsx` — Users, matches, likes, chats
-- `AloeVera.tsx` — Events, store items, blog posts
-- `Talks.tsx` — Forum topics, group chats
-- `EventDetails.tsx` — Event attendees
-- `SettingsPage.tsx` — User profile
+**API services created**:
+- `eventsApi.ts` — Events list, detail, register/unregister
+- `storeApi.ts` — Store items list and detail
+- `blogApi.ts` — Blog posts list and detail
+- `forumsApi.ts` — Forum sections and topics
+- `matchingApi.ts` — Search profiles, matches, sent/received likes
+- `chatsApi.ts` — Event group chats and private chats (mock-only; backend endpoint pending)
+- `songsApi.ts` — AloeVera songs (mock-only; backend endpoint pending)
 
-**Resolution**: Create API service files (`eventsApi.ts`, `matchingApi.ts`, `forumsApi.ts`, `storeApi.ts`, `blogApi.ts`) following the pattern in `authApi.ts`, then update page components to use `useQuery` with the service functions. See [API_INTEGRATION.md](./API_INTEGRATION.md).
+**Mock data centralized** in `src/data/`:
+- `mockSongs.ts`, `mockEvents.ts`, `mockStoreItems.ts`, `mockBlogPosts.ts`
+- `mockForumData.ts`, `mockChats.ts`, `mockProfiles.ts`, `mockCurrentUser.ts`
+
+**Pages updated** to use `useEffect` + API services with loading states:
+- `Friends.tsx`, `AloeVera.tsx`, `Talks.tsx`, `EventDetails.tsx`, `BlogPost.tsx`, `StoreItem.tsx`, `SettingsPage.tsx`
+
+**Remaining**: Chat (private/group) send-message endpoints not yet backed by real API; songs endpoint not on backend.
 
 ---
 
-### 2. AuthContext Not Implemented — Token Not Stored
-**Severity**: Critical  
-**Impact**: Even though auth endpoints work, the access token is discarded after login
+### ~~2. AuthContext Not Implemented — Token Not Stored~~ ✅ RESOLVED (minimal implementation)
+**Resolved**: February 19, 2026  
+**Approach**: lightweight localStorage-based token management instead of full AuthContext
 
-The backend JWT auth is fully implemented and `Welcome.tsx` calls `authApi.login()` / `authApi.register()`. However:
-- The access token returned by login is logged to the console and then lost
-- `apiClient.getAccessToken()` always returns `null` — no authenticated API calls can be made
-- No `AuthContext` or `AuthProvider` exists
-- No protected routes — all pages are accessible without logging in
-- Current user is still effectively hardcoded as `'current-user'` in embedded mock data
+**What was implemented**:
+- `apiClient.ts` now stores/reads/clears the access token from `localStorage` (`access_token` key)
+- `Welcome.tsx` calls `apiClient.setAccessToken(token)` on successful login
+- `SettingsPage.tsx` calls `apiClient.clearAccessToken()` on sign-out
+- `apiClient.ts` handles `401 Unauthorized` responses by clearing the token and redirecting to `/`
+- `src/components/ProtectedRoute.tsx` — reads and validates (incl. expiry) the JWT from `localStorage`; in API mode redirects unauthenticated users to `/`; in mock mode always passes through
+- `App.tsx` wraps all routes except `/` with `<ProtectedRoute>`
 
-**Resolution**:
-1. Create `src/contexts/AuthContext.tsx` with token state, `login()`, `logout()`, auto-refresh
-2. Wrap `App.tsx` with `<AuthProvider>`
-3. Wire `apiClient.getAccessToken()` to read from AuthContext
-4. Add `<ProtectedRoute>` wrapper and apply to all routes except `/`
-5. See [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for complete implementation guide
+**Remaining / known limitations**:
+- No token refresh — when the access token expires (1 hour by default) the user is redirected to login
+- No React Context for user identity — the current user is fetched per-page via `usersApi.getCurrentUser()`
+- No `AuthProvider` / `useAuth()` hook — token is accessed imperatively via `apiClient`
 
 ---
 
@@ -125,23 +132,10 @@ src/
 
 ---
 
-### 6. Mock Data Still Embedded in Most Page Components
-**Severity**: Medium (was High)  
-**Impact**: Code maintainability, data consistency, reusability
+### ~~6. Mock Data Still Embedded in Most Page Components~~ ✅ RESOLVED
+**Resolved**: February 19, 2026
 
-Auth mock data is now centralized in `src/data/mockUsers.ts`. However, other pages still embed their mock data directly:
-- `Friends.tsx`: Users, events, matches, likes, chats
-- `AloeVera.tsx`: Events, store items, blog posts
-- `Talks.tsx`: Forum topics, group chats
-- `EventDetails.tsx`: Event attendees
-- `SettingsPage.tsx`: User profile
-
-**Problems**:
-- Duplication (same events defined in multiple files)
-- Inconsistent data (IDs don't match across files)
-- Hard to update or share between components
-
-**Resolution**: The preferred path is to migrate page-by-page to the API service pattern (create `eventsApi.ts`, etc.) rather than further centralizing mock data files. Each API service already contains a mock branch. See issue #1 and [API_INTEGRATION.md](./API_INTEGRATION.md).
+All mock data has been extracted from page components into `src/data/` files and each domain has a corresponding API service with a mock branch. Page components now use `useEffect` hooks to fetch data via service functions in both mock and API modes.
 
 ---
 
@@ -192,17 +186,21 @@ Auth mock data is now centralized in `src/data/mockUsers.ts`. However, other pag
 **Severity**: Medium  
 **Impact**: Poor UX when things go wrong
 
-- No error boundaries
-- No try/catch blocks
-- No loading states for async operations
-- No error messages for failed actions
-- No fallback UI for errors
+**Partially resolved** (February 19, 2026): All page components now have:
+- `try/catch` blocks wrapping API calls
+- Loading state with spinner while data loads
+- Basic error logging to console
+
+**Still missing**:
+- React Error Boundaries (component-level crashes)
+- User-visible error messages (toast / inline alerts) for failed API calls
+- Retry logic
+- Fallback UI when network is unavailable
 
 **Resolution**:
 - Add React Error Boundaries
-- Implement proper error handling for all async operations
-- Add loading indicators
-- Add user-friendly error messages
+- Surface errors with toast notifications (shadcn/ui `toast` is already available)
+- Add retry buttons on error states
 
 ---
 
@@ -335,17 +333,10 @@ The `SwipeCard` component exists (`src/components/ui/swipe-card.tsx`) but:
 
 ---
 
-### 17. Incomplete Docker Configuration
-**Severity**: Low  
-**Impact**: Deployment, containerization
+### ~~17. Incomplete Docker Configuration~~ ✅ RESOLVED
+**Resolved**: February 19, 2026
 
-Docker files exist but:
-- No documentation on how to use them
-- Not clear if they work with current setup
-- No environment variable handling
-- nginx.conf is present but may need updates
-
-**Resolution**: Test Docker setup, document usage, add environment configuration.
+Both repos have working Dockerfiles and Docker Compose configuration tested end-to-end. The full stack (frontend + backend) can be started with `docker-compose up --build` from the `lovecraft/Lovecraft/` directory. Frontend runs in API mode automatically in Docker (uses `.env.production` with `VITE_API_MODE=api`).
 
 ---
 
@@ -467,30 +458,31 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 
 ## 📊 Summary by Category
 
-| Category | Critical | High | Medium | Low | Total |
-|----------|----------|------|--------|-----|-------|
-| **Backend/Data** | 2 | 1 | 1 | 1 | 5 |
-| **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 |
-| **UX/Features** | 0 | 1 | 4 | 3 | 8 |
-| **Infrastructure** | 0 | 0 | 1 | 4 | 5 |
-| **Total** | **2** | **5** | **7** | **9** | **23** |
+| Category | Critical | High | Medium | Low | Total | Resolved |
+|----------|----------|------|--------|-----|-------|----------|
+| **Backend/Data** | 1 | 1 | 1 | 0 | 3 | #1, #6, #17 |
+| **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 | — |
+| **UX/Features** | 0 | 1 | 4 | 3 | 8 | #2 (partial) |
+| **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
+| **Total** | **1** | **5** | **7** | **7** | **20 open** | **#1, #2, #6, #17** |
 
 ---
 
 ## 🎯 Recommended Priority Order
 
-1. **Implement AuthContext** (Issue #2) — Unblocks all authenticated API calls
-2. **Add Protected Routes** (Issue #2) — Security baseline
-3. **Wire remaining pages to API** (Issue #1) — Events, Friends, Talks, Store, Blog
-4. **Backend: Azure Storage** (Issue #3) — Data persistence
-5. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
-6. **Add Testing** (Issue #5) — Enables confident refactoring
-7. **Complete i18n** (Issue #8) — Better UX
-8. **Add Form Validation** (Issue #10) — Data quality
-9. **Implement State Management** (Issue #12) — Scalability
-10. **Add Error Handling** (Issue #9) — Resilience
-11. **Improve Swipe UX** (Issue #13) — Core feature polish
-12. **Everything else** — Based on priority
+1. ~~**Implement AuthContext** (Issue #2)~~ ✅ Done (localStorage-based minimal implementation)
+2. ~~**Add Protected Routes** (Issue #2)~~ ✅ Done (`ProtectedRoute` component in `App.tsx`)
+3. ~~**Wire remaining pages to API** (Issue #1)~~ ✅ Done (all pages use API services)
+4. **Full AuthContext with token refresh** (Issue #2 follow-up) — Replace localStorage pattern with proper context + refresh token flow
+5. **Backend: Azure Storage** (Issue #3) — Data persistence
+6. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
+7. **Add Testing** (Issue #5) — Enables confident refactoring
+8. **Complete i18n** (Issue #8) — Better UX
+9. **Add Form Validation** (Issue #10) — Data quality
+10. **Improve Error Handling** (Issue #9) — User-visible error messages, error boundaries
+11. **Implement State Management** (Issue #12) — Scalability
+12. **Improve Swipe UX** (Issue #13) — Core feature polish
+13. **Everything else** — Based on priority
 
 ---
 
@@ -498,11 +490,14 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 
 - Application was bootstrapped with Lovable, then manually extended
 - Backend (`@lovecraft/`) is a working .NET 10 stub with full JWT auth and mock services
-- Frontend-backend integration has started: auth flow is wired, other pages pending
+- All pages are now wired to the API service layer — the full stack can be run end-to-end in Docker
+- Auth is enforced on all backend content endpoints (`[Authorize]`); the frontend protects routes via `ProtectedRoute`
 - API service layer (`src/services/api/`) provides the mock/real dual-mode pattern
+- Mock data is centralized in `src/data/` for consistency and reuse
+- Backend enum serialization uses camelCase strings (e.g., `"concert"`, `"male"`) for frontend compatibility
 - Design system and component architecture are solid foundations
-- Token storage and AuthContext are the critical missing piece before further integration
+- The primary remaining data gap is **real persistence** (Azure Storage, Issue #3)
 
 ---
 
-**Next Steps**: See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for implementation guidance.
+**Next Steps**: Implement token refresh (Issue #2 follow-up) and Azure Storage (Issue #3). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.

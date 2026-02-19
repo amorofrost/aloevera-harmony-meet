@@ -17,17 +17,20 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 
 ## 🎯 Current Status
 
-**🔄 Backend integration in progress.** The backend (.NET 10) lives in the **LoveCraft** repository (`@lovecraft/`) and is running with full mock data and JWT authentication. The frontend API layer is wired and the **authentication flow (login/register) is connected to the real backend**. Other pages (Friends, AloeVera, Talks) still use embedded mock data and will be migrated feature by feature.
+**✅ Full-stack integration complete.** The backend (.NET 10) lives in the **LoveCraft** repository (`@lovecraft/`) and runs with JWT authentication and in-memory mock services. All frontend pages are wired to the backend via a dual-mode API service layer. The full stack can be run in Docker with a single command.
 
 | Area | Status |
 |------|--------|
-| API service layer (`src/services/api/`) | ✅ Implemented |
+| API service layer (`src/services/api/`) | ✅ Implemented (all domains) |
 | Auth endpoints (login/register) | ✅ Connected to backend |
-| Token storage / AuthContext | ⚠️ Not yet implemented |
-| Protected routes | ⚠️ Not yet implemented |
-| Friends / matching pages | ⚠️ Still using embedded mock data |
-| Events / Store / Blog pages | ⚠️ Still using embedded mock data |
-| Talks / Forum pages | ⚠️ Still using embedded mock data |
+| Token storage (`localStorage`) | ✅ Implemented in `apiClient` |
+| Protected routes (`ProtectedRoute`) | ✅ All content routes guarded |
+| Friends / matching pages | ✅ Wired to `matchingApi` / `chatsApi` |
+| Events / Store / Blog pages | ✅ Wired to `eventsApi` / `storeApi` / `blogApi` |
+| Talks / Forum pages | ✅ Wired to `forumsApi` / `chatsApi` |
+| Mock data centralized | ✅ All in `src/data/` |
+| Backend data persistence | ❌ In-memory only (Azure Storage pending) |
+| Token refresh | ❌ Not yet implemented (users re-login after ~1h) |
 
 See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues and [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide.
 

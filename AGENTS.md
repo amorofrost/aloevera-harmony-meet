@@ -10,7 +10,7 @@ This document provides context and instructions for AI coding assistants (like C
 
 **AloeVera Harmony Meet** is a fan community platform for AloeVera music band enthusiasts that combines dating features, social networking, event management, and e-commerce.
 
-**Current State**: React application with partial backend integration. The **LoveCraft** backend (`@lovecraft/`) is running with JWT auth and mock data. The API service layer (`src/services/api/`) is implemented; **Welcome.tsx (login/register) is wired to the real API**. Other pages (Friends, AloeVera, Talks) still use embedded mock data and will be migrated.
+**Current State**: React application with full backend integration. The **LoveCraft** backend (`@lovecraft/`) is running with JWT auth and mock data. All pages are wired to `src/services/api/` service layer. Authentication is enforced — all content routes require a valid JWT stored in `localStorage`. The full stack runs end-to-end in Docker.
 
 **Tech Stack**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, React Router DOM
 
@@ -22,23 +22,40 @@ This document provides context and instructions for AI coding assistants (like C
 aloevera-harmony-meet/
 ├── src/
 │   ├── pages/              # Page components (main routes)
-│   ├── components/ui/      # Reusable UI components (shadcn/ui + custom)
+│   ├── components/
+│   │   ├── ui/             # Reusable UI components (shadcn/ui + custom)
+│   │   └── ProtectedRoute.tsx  # Auth guard — redirects unauthenticated users to /
 │   ├── config/
 │   │   └── api.config.ts   # API mode (mock/api) and base URL config
 │   ├── services/
 │   │   └── api/            # API service layer
-│   │       ├── apiClient.ts  # Base HTTP client (auth headers, timeout)
-│   │       ├── authApi.ts    # Auth endpoints (login/register/logout/refresh)
-│   │       ├── usersApi.ts   # User endpoints
-│   │       └── index.ts      # Central exports
-│   ├── data/
-│   │   └── mockUsers.ts    # Centralized mock users for auth
+│   │       ├── apiClient.ts    # Base HTTP client (auth headers, 401 handling, localStorage token)
+│   │       ├── authApi.ts      # Auth endpoints (login/register/logout/refresh)
+│   │       ├── usersApi.ts     # User endpoints (getCurrentUser, getUsers, updateUser)
+│   │       ├── eventsApi.ts    # Events (list, detail, register/unregister)
+│   │       ├── storeApi.ts     # Store items (list, detail)
+│   │       ├── blogApi.ts      # Blog posts (list, detail)
+│   │       ├── forumsApi.ts    # Forum sections and topics
+│   │       ├── matchingApi.ts  # Search profiles, matches, likes
+│   │       ├── chatsApi.ts     # Event group chats and private chats (mock-only)
+│   │       ├── songsApi.ts     # AloeVera songs (mock-only)
+│   │       └── index.ts        # Central exports
+│   ├── data/               # Centralized mock data (used by API services in mock mode)
+│   │   ├── mockUsers.ts
+│   │   ├── mockCurrentUser.ts
+│   │   ├── mockEvents.ts
+│   │   ├── mockStoreItems.ts
+│   │   ├── mockBlogPosts.ts
+│   │   ├── mockForumData.ts
+│   │   ├── mockChats.ts
+│   │   ├── mockProfiles.ts
+│   │   └── mockSongs.ts
 │   ├── contexts/           # React Context providers (LanguageContext)
 │   ├── types/              # TypeScript type definitions
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/                # Utility functions
 │   ├── assets/             # Images and static assets
-│   ├── App.tsx             # Main app with routing
+│   ├── App.tsx             # Main app with routing (all routes except / are ProtectedRoute)
 │   ├── main.tsx            # Entry point
 │   └── index.css           # Global styles + design system
 ├── docs/                   # Documentation
@@ -294,41 +311,32 @@ const Component = () => {
 
 ## 🎯 Mock Data Guidelines
 
-**Current State**: Auth mock data is centralized in `src/data/mockUsers.ts`. Other mock data (events, store items, blog posts, forum topics, messages) is still embedded in page components and will be migrated to the API service layer.
+**Current State**: All mock data is centralized in `src/data/`. Every domain has a corresponding `src/services/api/[domain]Api.ts` service that loads from `src/data/` in mock mode and calls the real backend in API mode. **Do not embed new mock data directly in page components.**
 
-**API Service Pattern** (for new work / migration):
-- Create `src/services/api/[domain]Api.ts` following the pattern in `authApi.ts`
-- Each service has a mock branch (`if (!isApiMode())`) and a real API branch
-- Use `src/data/` for standalone mock data files
+**API Service Pattern** (follow for any new domain):
+- Create `src/services/api/[domain]Api.ts` following the pattern in `eventsApi.ts` / `forumsApi.ts`
+- Each service has a mock branch (`if (!isApiMode()) { return mockData; }`) and a real API branch
+- Add mock data to `src/data/mock[Domain].ts`
+- Export from `src/services/api/index.ts`
 
-**When Adding/Keeping Embedded Mock Data** (for pages not yet migrated):
-1. Define data at the top of the component (before the component function)
-2. Use TypeScript types from `src/types/`
-3. Use realistic data (real names, dates, descriptions)
-4. Use Unsplash images: `https://images.unsplash.com/photo-[id]?w=800&h=400&fit=crop`
-5. Keep IDs consistent across related data
-6. Add comments explaining the mock data
-
-**Example**:
+**Page component pattern** — fetch data via API service in `useEffect`:
 ```typescript
-// Mock users for search
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Анна',
-    age: 25,
-    bio: 'Обожаю музыку AloeVera',
-    location: 'Москва',
-    gender: 'female',
-    profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop',
-    images: [],
-    lastSeen: new Date(),
-    isOnline: true,
-    preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
-  },
-  // ... more users
-];
+const [data, setData] = useState<Thing[]>([]);
+const [isLoading, setIsLoading] = useState(true);
+
+useEffect(() => {
+  const load = async () => {
+    try {
+      const result = await thingApi.getThings();
+      if (result.success && result.data) setData(result.data);
+    } catch (err) {
+      console.error('Failed to load things:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  load();
+}, []);
 ```
 
 ---
@@ -337,20 +345,24 @@ const mockUsers: User[] = [
 
 **See [docs/ISSUES.md](./docs/ISSUES.md) for complete list.**
 
-**Critical Issues to Be Aware Of**:
+**Current State**:
 1. ✅ Backend exists (`@lovecraft/`) with JWT auth and mock services
 2. ✅ Auth endpoints (login/register) wired to backend
-3. ❌ **No AuthContext** — access token returned from login is not stored anywhere; `apiClient.getAccessToken()` always returns `null`
-4. ❌ **No protected routes** — all pages are accessible without authentication
-5. ❌ **No data persistence** — backend uses in-memory storage, data resets on restart
-6. ⚠️ Friends, AloeVera, Talks pages still use embedded mock data
-7. ⚠️ TypeScript is loosely configured (see tsconfig.json)
-8. ⚠️ No testing framework
-9. ⚠️ Duplicate `Message` interface in types
+3. ✅ Access token stored in `localStorage` via `apiClient.setAccessToken()` on login
+4. ✅ All content routes protected by `<ProtectedRoute>` — unauthenticated users redirected to `/`
+5. ✅ All pages wired to API services (mock or real depending on `VITE_API_MODE`)
+6. ✅ All mock data centralized in `src/data/`
+7. ❌ **No data persistence** — backend uses in-memory storage, data resets on restart
+8. ❌ **No token refresh** — users are logged out when the JWT expires (~1 hour)
+9. ⚠️ TypeScript is loosely configured (see tsconfig.json)
+10. ⚠️ No testing framework
+11. ⚠️ Duplicate `Message` interface in types
+12. ⚠️ No user-visible error messages when API calls fail
 
 **Don't Try to Fix Without Context**:
 - Type system strictness (requires codebase-wide changes)
 - Test setup (requires project decision on framework)
+- Token refresh (requires backend refresh token endpoint and frontend AuthContext)
 
 ---
 
@@ -554,60 +566,36 @@ if (isLoading) return null;
 
 ## 🚀 Backend Integration — Current State & Next Steps
 
-**The API service layer is in place.** Authentication is wired. The pattern for migrating other pages is established.
+**The API service layer is fully in place.** All pages are wired. Authentication is enforced end-to-end.
 
 ### What's Done
 
-```typescript
-// src/services/api/authApi.ts — already wired in Welcome.tsx
-const response = await authApi.login({ email, password });
-if (response.success) { /* navigate */ }
-```
+- All domain API services exist in `src/services/api/`
+- All pages fetch data via `useEffect` + API service calls, with loading states
+- Token stored in `localStorage`; `apiClient` reads it on every request
+- All content routes guarded by `<ProtectedRoute>` — redirects to `/` if no valid token
+- Backend returns camelCase enum strings matching frontend expectations
+- Full-stack Docker Compose workflow tested and working
 
-### Immediate Next Steps
+### What's Left / Next Steps
 
-#### 1. Create AuthContext (most critical)
+#### 1. Token refresh (Issue #2 follow-up)
+Implement proper refresh token flow so users aren't logged out every hour:
 ```typescript
 // src/contexts/AuthContext.tsx
-const AuthContext = createContext<AuthContextType | null>(null);
-
 export function AuthProvider({ children }) {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  // ... token refresh logic
+  const [accessToken, setAccessToken] = useState<string | null>(
+    localStorage.getItem('access_token')
+  );
+  // Set up refresh interval using authApi.refreshToken()
 }
 ```
 
-#### 2. Wire token into apiClient
-```typescript
-// src/services/api/apiClient.ts — getAccessToken() currently returns null
-// Should read from AuthContext after AuthContext is created
-private getAccessToken(): string | null {
-  return authContextRef.current?.accessToken ?? null;
-}
-```
+#### 2. Azure Storage (Issue #3)
+Replace in-memory `Mock*Service` implementations in the backend with real Azure Table Storage / Blob Storage. See `@lovecraft/Lovecraft/docs/AZURE_STORAGE.md`.
 
-#### 3. Add protected route wrapper
-```typescript
-const { user, isAuthenticated } = useAuth();
-if (!isAuthenticated) return <Navigate to="/" />;
-```
-
-#### 4. Create remaining API services
-```typescript
-// src/services/api/eventsApi.ts, matchingApi.ts, forumsApi.ts, etc.
-// Follow the same mock/api dual-mode pattern as authApi.ts
-```
-
-#### 5. Wire page components to API services
-```typescript
-// Replace embedded mock data:
-const { data: users, isLoading } = useQuery({
-  queryKey: ['users', filters],
-  queryFn: () => usersApi.getUsers(0, 10)
-});
-if (isLoading) return <LoadingSpinner />;
-```
+#### 3. Backend endpoints for chats and songs
+`chatsApi.ts` and `songsApi.ts` always return mock data — the backend has no endpoints for these yet.
 
 **See [docs/API_INTEGRATION.md](./docs/API_INTEGRATION.md) and [docs/FRONTEND_AUTH_GUIDE.md](./docs/FRONTEND_AUTH_GUIDE.md) for details.**
 
@@ -693,13 +681,13 @@ if (isLoading) return <LoadingSpinner />;
 A: Yes. The LoveCraft backend (`@lovecraft/`) is a .NET 10 API with JWT auth and mock services. It runs at `http://localhost:5000`. The frontend has an API service layer in `src/services/api/`.
 
 **Q: Should I make API calls in page components?**  
-A: For pages not yet migrated (Friends, AloeVera, Talks), keep using embedded mock data for consistency. For new features or when explicitly asked to migrate a page, use the API service pattern from `src/services/api/`.
+A: All existing pages now use the API service pattern (`useEffect` + `[domain]Api.[method]()`). Follow the same pattern for any new pages. Never embed mock data directly in page components — add it to `src/data/` and consume it via the API service.
 
 **Q: What mode is the app running in?**  
 A: Controlled by `VITE_API_MODE` env var. `mock` (default) = uses local mock data. `api` = calls real backend. Set `.env.development` to `VITE_API_MODE=api` to use the real backend in dev.
 
-**Q: The access token is not being stored — is that a bug?**  
-A: Yes, it's a known issue (#2 in ISSUES.md). `apiClient.getAccessToken()` currently always returns `null`. An `AuthContext` needs to be created. Don't try to work around this without implementing AuthContext properly.
+**Q: How is the access token stored?**  
+A: In `localStorage` under the key `access_token`. `apiClient.setAccessToken()` / `getAccessToken()` / `clearAccessToken()` manage it. `Welcome.tsx` stores it on login; `SettingsPage.tsx` clears it on logout. On a `401` response, `apiClient` clears the token and redirects to `/`.
 
 **Q: Should I fix TypeScript strict mode issues?**  
 A: No. This requires codebase-wide changes. It's in ISSUES.md as known technical debt.
@@ -714,7 +702,7 @@ A: No. This project uses shadcn/ui exclusively. Use existing components or creat
 A: The design system supports it (check index.css), but it's not implemented. Only add if specifically requested.
 
 **Q: Should I centralize mock data?**  
-A: When adding API services for a page, use `src/data/` for centralized mock. Otherwise, keep the embedded pattern for consistency with existing pages.
+A: Yes — always. All mock data lives in `src/data/`. Do not define new mock data in page components or service files. Add a new `src/data/mock[Domain].ts` file if needed.
 
 **Q: Where do I put images?**  
 A: Use Unsplash URLs for mock images. Real image upload will be a backend feature.
@@ -770,6 +758,6 @@ A: Only if specifically requested or if making changes that naturally lead to re
 
 ---
 
-**Remember**: This is a well-structured frontend app with a solid foundation and an active backend integration effort. Maintain the existing patterns and quality. The API service layer (`src/services/api/`) is the bridge between the frontend and the LoveCraft backend — use it when wiring new features, and keep the mock/api dual-mode pattern consistent.
+**Remember**: This is a fully integrated full-stack application. All pages are wired to the LoveCraft backend. All content requires authentication. The API service layer (`src/services/api/`) is the bridge — use it for all data access, keep mock data in `src/data/`, and maintain the mock/API dual-mode pattern for any new features.
 
 Good luck! 🚀
