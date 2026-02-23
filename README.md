@@ -280,7 +280,7 @@ When working on this project:
 
 ## 📄 License
 
-[Your license here]
+- **[MIT LICENSE](/LICENSE)** 
 
 ## 🔗 Links
 
