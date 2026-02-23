@@ -17,7 +17,7 @@ COPY . .
 # Build arguments for environment configuration
 # Default to mock mode (no backend required)
 ARG VITE_API_MODE=mock
-ARG VITE_API_BASE_URL=http://localhost:5000
+ARG VITE_API_BASE_URL=
 
 # Set environment variables for build
 ENV VITE_API_MODE=$VITE_API_MODE
