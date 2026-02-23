@@ -2,8 +2,8 @@
 
 **AloeVera Harmony Meet** - Technical Architecture Overview
 
-**Version**: 1.1 (Backend Integration In Progress)  
-**Last Updated**: February 18, 2026
+**Version**: 1.2 (Full-stack deployed)
+**Last Updated**: February 23, 2026
 
 ---
 
@@ -12,11 +12,12 @@
 AloeVera Harmony Meet is a **React-based single-page application (SPA)** designed as a fan community platform combining dating features, social networking, event management, and e-commerce for AloeVera music band enthusiasts.
 
 ### Current State
-- **Backend integration in progress**: The LoveCraft .NET 10 backend is running with JWT auth and mock services
-- **API service layer implemented**: `src/services/api/` provides mock/real dual-mode HTTP client
-- **Authentication wired**: Login and register in `Welcome.tsx` call the real backend
-- **Other pages still use embedded mock data**: Friends, AloeVera, Talks — migration in progress
-- **No data persistence yet**: Backend uses in-memory storage
+- **Full-stack deployed on Azure VM** at `http://20.153.164.3:8080`
+- **LoveCraft .NET 10 backend** running with JWT auth and Azure Table Storage
+- **API service layer**: `src/services/api/` provides mock/real dual-mode HTTP client
+- **All pages wired**: every page fetches data via `useEffect` + API service calls
+- **Data persists**: Azure Table Storage, seeded via `Lovecraft.Tools.Seeder`
+- **nginx proxy**: frontend container proxies `/api/` to backend — only port 8080 exposed
 
 ### Technology Philosophy
 - **Modern React**: Hooks, functional components, TypeScript
@@ -38,13 +39,13 @@ AloeVera Harmony Meet is a **React-based single-page application (SPA)** designe
 │  (Contexts, Hooks, State Management)                │
 ├─────────────────────────────────────────────────────┤
 │                   Data Layer                         │
-│  [MISSING - Currently Mock Data in Components]      │
+│  src/data/mock*.ts (mock mode) — centralized        │
 ├─────────────────────────────────────────────────────┤
 │                  Services Layer                      │
-│  [MISSING - No API Service, Auth Service, etc.]     │
+│  src/services/api/ — dual-mode (mock / real API)    │
 ├─────────────────────────────────────────────────────┤
 │                   Backend API                        │
-│  [NOT IMPLEMENTED]                                   │
+│  .NET 10 ASP.NET Core — JWT auth + Azure Storage    │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -83,7 +84,7 @@ AloeVera Harmony Meet is a **React-based single-page application (SPA)** designe
 - **URL Parameters**: Dynamic routes for details pages (`:eventId`, `:postId`, `:itemId`)
 - **Legacy Support**: Redirects from old routes to new structure
 
-**Route Protection**: ❌ Not implemented (all routes are public)
+**Route Protection**: ✅ `<ProtectedRoute>` wraps all routes except `/` — reads and validates JWT expiry from `localStorage`, redirects to `/` if missing/expired (in API mode)
 
 ---
 
@@ -133,7 +134,7 @@ src/
 
 **Pages** (Container Components):
 - Manage local state with `useState`
-- Contain mock data definitions
+- Fetch data via `useEffect` + API service calls (with loading states)
 - Handle business logic
 - Compose UI components
 - Use hooks for routing and context
@@ -217,49 +218,32 @@ useUIStore()
 
 ---
 
-### 4. Data Layer (Current - Mock)
+### 4. Data Layer
 
-**Location**: Inline in page components  
-**Format**: Hardcoded TypeScript arrays/objects
+**Mock mode**: `src/data/mock*.ts` — centralized TypeScript arrays consumed by API services when `VITE_API_MODE=mock`
 
-**Issues**:
-- Duplication across components
-- Inconsistent IDs and relationships
-- Can't be shared between pages
-- Hard to maintain
+**API mode**: All data comes from the LoveCraft backend via `src/services/api/`. Each service has a mock branch and a real-API branch:
 
-**Example** (`Friends.tsx`):
 ```typescript
-const searchUsers: User[] = [
-  { id: '1', name: 'Анна', age: 25, /* ... */ },
-  { id: '2', name: 'Дмитрий', age: 28, /* ... */ },
-  // ...
-];
-
-const mockMatches: (Match & { otherUser: User })[] = [
-  { id: '1', users: ['current-user','1'], /* ... */ },
-  // ...
-];
-```
-
-**Recommended Refactor**:
-```typescript
-// src/data/mockData.ts
-export const MOCK_USERS: User[] = [ /* ... */ ];
-export const MOCK_EVENTS: Event[] = [ /* ... */ ];
-export const MOCK_STORE_ITEMS: StoreItem[] = [ /* ... */ ];
-
-// src/data/mockApi.ts
-export const mockApi = {
-  async getUsers(): Promise<User[]> {
-    return Promise.resolve(MOCK_USERS);
-  },
-  async getUser(id: string): Promise<User | null> {
-    return Promise.resolve(MOCK_USERS.find(u => u.id === id) || null);
-  },
-  // ...
+// Pattern used by all services
+export const eventsApi = {
+  async getEvents() {
+    if (!isApiMode()) return { success: true, data: mockEvents };
+    return apiClient.get<EventDto[]>('/api/v1/events');
+  }
 };
 ```
+
+**Services** (`src/services/api/`):
+- `authApi.ts` — login, register, logout, refresh
+- `usersApi.ts` — current user, user by ID, update profile
+- `eventsApi.ts` — list, detail, register/unregister
+- `storeApi.ts` — list, detail
+- `blogApi.ts` — list, detail
+- `forumsApi.ts` — sections, topics, topic detail, replies, create reply
+- `matchingApi.ts` — search profiles, matches, send/get likes
+- `chatsApi.ts` — mock-only (no backend endpoint yet)
+- `songsApi.ts` — mock-only (no backend endpoint yet)
 
 ---
 
@@ -463,123 +447,57 @@ const translations = {
 
 ---
 
-## 🔌 Integration Points (Future)
+## 🔌 Integration Points
 
-### Backend API (To Be Implemented)
+### Backend API (Live)
 
-**Recommended Architecture**:
+**Current Architecture**:
 
 ```
-Frontend (React SPA)
+Browser
     ↓ HTTP/REST
-Backend API (Node.js/Express or similar)
-    ↓
-Database (PostgreSQL/MongoDB)
-    ↓
-External Services
-    ├─ Authentication (Auth0, Firebase)
-    ├─ File Storage (S3, Cloudinary)
-    ├─ Email (SendGrid, AWS SES)
-    ├─ Payment (Stripe)
-    └─ Real-time (Socket.io, Pusher)
+nginx (port 8080)
+    ├─ /           → React SPA static files
+    ├─ /api/       → proxy_pass → backend:8080 (Docker internal)
+    └─ /swagger    → proxy_pass → backend:8080
+         ↓
+.NET 10 ASP.NET Core (port 8080 internal)
+    ├─ JWT authentication (JwtService, PBKDF2 password hashing)
+    └─ Azure Table Storage (15 tables)
 ```
 
-**API Endpoints Needed**:
+**Implemented API Endpoints** (`/api/v1/`):
+```
+POST   /auth/register, /auth/login, /auth/logout, /auth/refresh
+       /auth/verify-email, /auth/forgot-password, /auth/reset-password, /auth/change-password
 
-```typescript
-// Authentication
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/logout
-GET    /api/auth/me
+GET    /users, /users/me, /users/{id}
+PUT    /users/{id}
 
-// Users
-GET    /api/users
-GET    /api/users/:id
-PUT    /api/users/:id
-GET    /api/users/search?preferences=...
+GET    /events, /events/{id}
+POST   /events/{id}/register
+DELETE /events/{id}/register
 
-// Matching
-POST   /api/likes
-GET    /api/likes/sent
-GET    /api/likes/received
-GET    /api/matches
+POST   /matching/likes
+GET    /matching/likes/sent, /matching/likes/received, /matching/matches
 
-// Messaging
-GET    /api/chats
-GET    /api/chats/:id
-POST   /api/chats/:id/messages
-WS     /ws/chats/:id  // Real-time
+GET    /store, /store/{id}
+GET    /blog, /blog/{id}
 
-// Events
-GET    /api/events
-GET    /api/events/:id
-POST   /api/events/:id/register
-DELETE /api/events/:id/register
-
-// Store
-GET    /api/store/items
-GET    /api/store/items/:id
-POST   /api/store/orders
-
-// Blog
-GET    /api/blog/posts
-GET    /api/blog/posts/:id
-
-// Forum
-GET    /api/forum/sections
-GET    /api/forum/topics
-POST   /api/forum/topics
-POST   /api/forum/replies
+GET    /forum/sections, /forum/sections/{id}/topics
+GET    /forum/topics/{id}, /forum/topics/{id}/replies
+POST   /forum/topics/{id}/replies
 ```
 
-**Service Layer** (to be created):
-
-```typescript
-// src/services/api.ts
-export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-// src/services/authService.ts
-export const authService = {
-  login(email, password),
-  register(data),
-  logout(),
-  getCurrentUser()
-};
-
-// src/services/userService.ts
-export const userService = {
-  getUsers(filters),
-  getUser(id),
-  updateUser(id, data)
-};
-
-// etc.
-```
-
-**React Query Integration**:
-
-```typescript
-// src/hooks/queries/useUsers.ts
-export function useUsers(filters?: UserFilters) {
-  return useQuery({
-    queryKey: ['users', filters],
-    queryFn: () => userService.getUsers(filters)
-  });
-}
-
-// Usage in component
-const { data: users, isLoading, error } = useUsers({ ageRange: [20, 30] });
-```
+**Not yet on backend** (frontend falls back to mock data):
+- Private/group chats (`chatsApi.ts`)
+- Songs (`songsApi.ts`)
 
 ---
 
-## 🔐 Security Considerations (Future)
+## 🔐 Security Considerations
 
-**Current**: ⚠️ No security implementation
+**Current**: JWT auth enforced on all content endpoints (`[Authorize]`). Token stored in `localStorage`. PBKDF2+salt password hashing. CORS restricted to known origins.
 
 **Required for Production**:
 
@@ -772,30 +690,31 @@ VITE_GA_ID=...
 ## 🔄 Migration Path
 
 **Phase 1: Foundation** ✅ Done
-1. ~~Centralize mock data~~ (partially — auth users centralized)
-2. ~~Create service layer interfaces~~ (`src/services/api/`)
-3. ~~Add environment configuration~~ (`.env.development`/`.env.production`)
-4. ~~Implement authentication~~ (backend JWT + frontend `authApi.ts`)
+1. ~~Centralize mock data~~ — all in `src/data/`
+2. ~~Create service layer~~ — `src/services/api/`
+3. ~~Add environment configuration~~ — `.env.development`/`.env.production`
+4. ~~Implement authentication~~ — backend JWT + frontend `authApi.ts`
 
-**Phase 2: Backend Integration** 🔄 In Progress
-1. **Implement AuthContext** — token storage and auto-refresh (critical)
-2. **Add protected routes** — redirect unauthenticated users
-3. Replace mock data with API calls (page-by-page)
-4. Add React Query for server state management
-5. Implement real-time messaging (SignalR — backend phase)
-6. Add comprehensive error handling
+**Phase 2: Backend Integration** ✅ Done
+1. ~~Implement token storage + protected routes~~ — `localStorage` + `ProtectedRoute`
+2. ~~Replace mock data with API calls~~ — all pages use `useEffect` + API services
+3. ~~Azure Table Storage~~ — integrated with mode switch + seeder tool
+4. ~~Docker deployment~~ — nginx proxy, single port, deployed on Azure VM
 
-**Phase 3: Enhancement**
-1. Add testing
-2. Performance optimization
-3. SEO improvements
-4. PWA features
+**Phase 3: Enhancement** 🔄 Next
+1. **Token refresh** — proper `AuthContext` + refresh token flow (Issue #2 follow-up)
+2. Add testing
+3. Performance optimization
+4. Complete i18n (Issue #8)
+5. Add user-visible error handling (Issue #9)
 
 **Phase 4: Production**
-1. Security audit
-2. Load testing
-3. Monitoring setup
-4. Documentation
+1. Azure Blob Storage (image uploads)
+2. Email service (SMTP/SendGrid)
+3. Real-time messaging (SignalR)
+4. Security audit
+5. Load testing
+6. Monitoring setup
 
 ---
 

@@ -7,13 +7,13 @@ services:
   # Backend API (.NET)
   backend:
     build:
-      context: ../lovecraft/Lovecraft
+      context: ../../lovecraft/Lovecraft
       dockerfile: Dockerfile
     container_name: aloevera-backend
     ports:
       - "5000:8080"
     env_file:
-      - ../lovecraft/Lovecraft/.env
+      - ../../lovecraft/Lovecraft/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
@@ -33,14 +33,14 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_MODE: api
-        VITE_API_BASE_URL: http://localhost:5000
+        VITE_API_BASE_URL: http://20.153.164.3:8080
     container_name: aloevera-frontend
     ports:
       - "8080:80"
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
       interval: 30s
       timeout: 3s
       retries: 3

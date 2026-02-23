@@ -17,7 +17,7 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 
 ## 🎯 Current Status
 
-**✅ Full-stack integration complete.** The backend (.NET 10) lives in the **LoveCraft** repository (`@lovecraft/`) and runs with JWT authentication and in-memory mock services. All frontend pages are wired to the backend via a dual-mode API service layer. The full stack can be run in Docker with a single command.
+**✅ Full-stack deployed on Azure VM.** The backend (.NET 10) runs with JWT authentication and Azure Table Storage. All frontend pages are wired to the backend via a dual-mode API service layer. The full stack runs in Docker behind an nginx proxy on a single port.
 
 | Area | Status |
 |------|--------|
@@ -30,7 +30,9 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Talks / Forum pages | ✅ Wired (sections, topic list, topic detail, reply posting) |
 | Forum topic detail view | ✅ `TopicDetail` component with author navigation |
 | Mock data centralized | ✅ All in `src/data/` |
-| Backend data persistence | ❌ In-memory only (Azure Storage pending) |
+| Backend data persistence | ✅ Azure Table Storage integrated (`USE_AZURE_STORAGE=true`) |
+| Seed tool | ✅ `Lovecraft.Tools.Seeder` — seeds all tables from mock data |
+| Docker deployment | ✅ nginx proxy on port 8080 (no need to expose port 5000) |
 | Token refresh | ❌ Not yet implemented (users re-login after ~1h) |
 
 See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues and [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide.

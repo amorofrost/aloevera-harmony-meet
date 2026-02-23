@@ -180,29 +180,33 @@ interface ApiResponse<T> {
 
 ## 🐳 Docker Usage
 
-### Mock Mode (UI Development)
+### Full Stack with Docker Compose (Recommended)
+
+```bash
+# From loveable/aloevera-harmony-meet/
+docker compose up --build -d
+# App: http://<host>:8080
+# API proxied at: http://<host>:8080/api/
+# Swagger at:     http://<host>:8080/swagger
+```
+
+nginx inside the frontend container proxies `/api/` and `/swagger` to the backend container over the internal Docker network (`http://backend:8080`). **Only port 8080 needs to be publicly exposed** — port 5000 does not need to be open in firewall/NSG rules.
+
+**Important**: `VITE_API_BASE_URL` is baked into the JS bundle at build time. When deploying to a remote server, update this arg in `docker-compose.yml` before building:
+
+```yaml
+args:
+  VITE_API_MODE: api
+  VITE_API_BASE_URL: http://<your-server-ip-or-domain>:8080
+```
+
+Backend reads `USE_AZURE_STORAGE` and `AZURE_STORAGE_CONNECTION_STRING` from `../../lovecraft/Lovecraft/.env` via `env_file`. Set `USE_AZURE_STORAGE=true` to use Azure Table Storage.
+
+### Mock Mode (UI Development Only)
 ```bash
 docker build -t aloevera-frontend .
 docker run -p 8080:80 aloevera-frontend
-```
-
-### API Mode (with Backend)
-```bash
-# Build with API mode
-docker build \
-  --build-arg VITE_API_MODE=api \
-  --build-arg VITE_API_BASE_URL=http://backend:8080 \
-  -t aloevera-frontend .
-
-# Run
-docker run -p 8080:80 aloevera-frontend
-```
-
-### Full Stack with Docker Compose
-```bash
-docker-compose up
-# Frontend: http://localhost:8080
-# Backend: http://localhost:5000
+# VITE_API_MODE defaults to mock — no backend required
 ```
 
 ---
@@ -231,24 +235,17 @@ docker-compose up
 
 ---
 
+## ✅ Current State
+
+All API services are implemented and wired. The full stack is deployed on Azure VM.
+
+**Remaining gaps**:
+- `chatsApi.ts` and `songsApi.ts` always return mock data — backend has no endpoints for these yet
+- No token refresh — users must re-login after ~1h (access token expiry)
+- No user-visible error messages for failed API calls (console.error only)
+
 ## 🔜 Next Steps
 
-1. **Add More API Services**
-   - Create `eventsApi.ts` for event endpoints
-   - Create `matchingApi.ts` for matching endpoints
-   - Create `forumsApi.ts` for forum endpoints
-
-2. **Implement Auth Context**
-   - Store access token in React Context
-   - Auto-refresh tokens
-   - Handle 401 responses
-
-3. **Add Loading States**
-   - Global loading indicator
-   - Per-request loading states
-   - Optimistic updates
-
-4. **Error Handling**
-   - Global error boundary
-   - Toast notifications
-   - Retry logic
+1. **Token refresh** — implement `AuthContext` with auto-refresh using the refresh token endpoint (`POST /api/v1/auth/refresh`)
+2. **Chat / Songs backend endpoints** — implement in `Lovecraft.Backend` and wire frontend services
+3. **Error handling** — surface API errors to users via toast notifications

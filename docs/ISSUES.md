@@ -2,8 +2,8 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: February 19, 2026  
-**Status**: Backend integration complete for all pages — all content routes require authentication, token lifecycle managed via localStorage
+**Last Updated**: February 23, 2026
+**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080.
 
 ---
 
@@ -59,18 +59,27 @@ All pages are now wired to the backend API (in API mode) via dedicated service f
 
 ---
 
-### 3. No Data Persistence (Backend In-Memory)
-**Severity**: Critical  
-**Impact**: All backend data resets when the backend restarts
+### ~~3. No Data Persistence (Backend In-Memory)~~ ✅ RESOLVED
+**Resolved**: February 23, 2026
 
-The backend uses in-memory storage (static dictionaries in mock services). Any registrations, likes, matches, or event registrations created via the API are lost on backend restart.
+Azure Table Storage is now fully integrated into the backend. All data persists across restarts.
 
-- Likes/matches are not persisted beyond backend process lifetime
-- Registered users are lost on restart (except the seeded `test@example.com`)
-- Event registrations are lost
-- Profile changes are not persisted
+**What was implemented** (in `Lovecraft.Backend/`):
+- `Storage/TableNames.cs` — 15 table name constants
+- `Storage/Entities/` — 14 entity classes (UserEntity, EventEntity, BlogPostEntity, StoreItemEntity, ForumSectionEntity, ForumTopicEntity, ForumReplyEntity, LikeEntity, MatchEntity, RefreshTokenEntity, etc.)
+- `Services/Azure/` — 7 Azure service implementations: `AzureAuthService`, `AzureUserService`, `AzureEventService`, `AzureMatchingService`, `AzureBlogService`, `AzureStoreService`, `AzureForumService`
+- Mode switch via `USE_AZURE_STORAGE=true/false` in config (false = mock mode, true = Azure)
+- Connection string via `AZURE_STORAGE_CONNECTION_STRING` env var
 
-**Resolution**: Integrate Azure Table Storage and Azure Blob Storage into the backend services (replace `MockUserService`, `MockEventService`, etc. with real implementations). This is a backend task — see `@lovecraft/Lovecraft/docs/AZURE_STORAGE.md`.
+**`Lovecraft.Tools.Seeder`** — new CLI tool that seeds Azure Table Storage with all mock data (users with hashed passwords, events, store items, blog posts, forum sections/topics/replies). Run from `Lovecraft/` directory:
+```bash
+dotnet run --project Lovecraft.Tools.Seeder
+# Requires AZURE_STORAGE_CONNECTION_STRING in .env or environment
+```
+
+**Remaining**:
+- Azure Blob Storage (image uploads) — not yet integrated (images still Unsplash URLs)
+- Email service — tokens logged to console, no real email sending
 
 ---
 
@@ -340,9 +349,19 @@ The `SwipeCard` component exists (`src/components/ui/swipe-card.tsx`) but:
 ---
 
 ### ~~17. Incomplete Docker Configuration~~ ✅ RESOLVED
-**Resolved**: February 19, 2026
+**Resolved**: February 23, 2026 (updated)
 
-Both repos have working Dockerfiles and Docker Compose configuration tested end-to-end. The full stack (frontend + backend) can be started with `docker-compose up --build` from the `lovecraft/Lovecraft/` directory. Frontend runs in API mode automatically in Docker (uses `.env.production` with `VITE_API_MODE=api`).
+Full stack is deployed and tested on Azure VM (`http://20.153.164.3:8080`). The `docker-compose.yml` in `loveable/aloevera-harmony-meet/` starts both containers.
+
+**Key deployment details**:
+- nginx proxies `/api/` and `/swagger` to the backend container over the internal Docker network — only port 8080 needs to be exposed publicly (port 5000 does not need to be open in the Azure NSG)
+- `VITE_API_BASE_URL` is baked into the frontend bundle at build time and must match the public hostname/IP (currently `http://20.153.164.3:8080`)
+- Backend reads `USE_AZURE_STORAGE` and `AZURE_STORAGE_CONNECTION_STRING` from `../../lovecraft/Lovecraft/.env` via `env_file`
+
+```bash
+# From loveable/aloevera-harmony-meet/
+docker compose up --build -d
+```
 
 ---
 
@@ -466,11 +485,11 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 
 | Category | Critical | High | Medium | Low | Total | Resolved |
 |----------|----------|------|--------|-----|-------|----------|
-| **Backend/Data** | 1 | 1 | 1 | 0 | 3 | #1, #6, #17 |
+| **Backend/Data** | 0 | 1 | 1 | 0 | 3 | #1, #3, #6, #17 |
 | **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 | — |
 | **UX/Features** | 0 | 1 | 4 | 3 | 8 | #2 (partial) |
 | **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
-| **Total** | **1** | **5** | **7** | **7** | **20 open** | **#1, #2, #6, #17** |
+| **Total** | **0** | **5** | **7** | **7** | **19 open** | **#1, #2, #3, #6, #17** |
 
 ---
 
@@ -479,8 +498,8 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 1. ~~**Implement AuthContext** (Issue #2)~~ ✅ Done (localStorage-based minimal implementation)
 2. ~~**Add Protected Routes** (Issue #2)~~ ✅ Done (`ProtectedRoute` component in `App.tsx`)
 3. ~~**Wire remaining pages to API** (Issue #1)~~ ✅ Done (all pages use API services)
-4. **Full AuthContext with token refresh** (Issue #2 follow-up) — Replace localStorage pattern with proper context + refresh token flow
-5. **Backend: Azure Storage** (Issue #3) — Data persistence
+4. ~~**Backend: Azure Storage** (Issue #3)~~ ✅ Done (Azure Table Storage integrated, seeder tool available)
+5. **Full AuthContext with token refresh** (Issue #2 follow-up) — Replace localStorage pattern with proper context + refresh token flow
 6. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
 7. **Add Testing** (Issue #5) — Enables confident refactoring
 8. **Complete i18n** (Issue #8) — Better UX
