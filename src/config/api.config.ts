@@ -1,7 +1,7 @@
 // src/config/api.config.ts
 export const API_CONFIG = {
   mode: import.meta.env.VITE_API_MODE || 'mock',
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 30000,
 } as const;
 
