@@ -237,15 +237,14 @@ docker run -p 8080:80 aloevera-frontend
 
 ## ✅ Current State
 
-All API services are implemented and wired. The full stack is deployed on Azure VM.
+All API services are implemented and wired. The full stack is deployed on Azure VM. JWT token refresh is fully implemented end-to-end.
 
 **Remaining gaps**:
 - `chatsApi.ts` and `songsApi.ts` always return mock data — backend has no endpoints for these yet
-- No token refresh — users must re-login after ~1h (access token expiry)
 - No user-visible error messages for failed API calls (console.error only)
 
 ## 🔜 Next Steps
 
-1. **Token refresh** — implement `AuthContext` with auto-refresh using the refresh token endpoint (`POST /api/v1/auth/refresh`)
-2. **Chat / Songs backend endpoints** — implement in `Lovecraft.Backend` and wire frontend services
-3. **Error handling** — surface API errors to users via toast notifications
+1. **Chat / Songs backend endpoints** — implement in `Lovecraft.Backend` and wire frontend services
+2. **Error handling** — surface API errors to users via toast notifications
+3. **Form validation** — apply React Hook Form + Zod to login/register/profile forms

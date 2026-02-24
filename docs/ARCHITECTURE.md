@@ -701,8 +701,8 @@ VITE_GA_ID=...
 3. ~~Azure Table Storage~~ — integrated with mode switch + seeder tool
 4. ~~Docker deployment~~ — nginx proxy, single port, deployed on Azure VM
 
-**Phase 3: Enhancement** 🔄 Next
-1. **Token refresh** — proper `AuthContext` + refresh token flow (Issue #2 follow-up)
+**Phase 3: Enhancement** 🔄 In Progress
+1. ✔️~~**Token refresh**~~ — silent refresh in `apiClient` on 401, proactive near-expiry refresh in `ProtectedRoute`, `refresh_token` stored in `localStorage`, 13 new backend unit tests
 2. Add testing
 3. Performance optimization
 4. Complete i18n (Issue #8)

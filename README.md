@@ -23,8 +23,8 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 |------|--------|
 | API service layer (`src/services/api/`) | ✅ Implemented (all domains) |
 | Auth endpoints (login/register) | ✅ Connected to backend |
-| Token storage (`localStorage`) | ✅ Implemented in `apiClient` |
-| Protected routes (`ProtectedRoute`) | ✅ All content routes guarded |
+| Token storage (`localStorage`) | ✅ Both `access_token` and `refresh_token` stored |
+| Protected routes (`ProtectedRoute`) | ✅ All content routes guarded; proactive refresh on near-expiry |
 | Friends / matching pages | ✅ Wired to `matchingApi` / `chatsApi` |
 | Events / Store / Blog pages | ✅ Wired to `eventsApi` / `storeApi` / `blogApi` |
 | Talks / Forum pages | ✅ Wired (sections, topic list, topic detail, reply posting) |
@@ -33,7 +33,7 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Backend data persistence | ✅ Azure Table Storage integrated (`USE_AZURE_STORAGE=true`) |
 | Seed tool | ✅ `Lovecraft.Tools.Seeder` — seeds all tables from mock data |
 | Docker deployment | ✅ nginx proxy on port 8080 (no need to expose port 5000) |
-| Token refresh | ❌ Not yet implemented (users re-login after ~1h) |
+| Token refresh | ✅ Silent refresh in `apiClient`; proactive refresh in `ProtectedRoute` |
 
 See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues and [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide.
 

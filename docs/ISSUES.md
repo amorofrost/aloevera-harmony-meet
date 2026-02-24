@@ -2,8 +2,8 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: February 23, 2026
-**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080.
+**Last Updated**: February 24, 2026
+**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented.
 
 ---
 
@@ -40,20 +40,19 @@ All pages are now wired to the backend API (in API mode) via dedicated service f
 
 ---
 
-### ~~2. AuthContext Not Implemented — Token Not Stored~~ ✅ RESOLVED (minimal implementation)
-**Resolved**: February 19, 2026  
+### ~~2. AuthContext Not Implemented — Token Not Stored~~ ✅ RESOLVED
+**Resolved**: February 19, 2026 (initial), February 24, 2026 (token refresh)
 **Approach**: lightweight localStorage-based token management instead of full AuthContext
 
 **What was implemented**:
-- `apiClient.ts` now stores/reads/clears the access token from `localStorage` (`access_token` key)
-- `Welcome.tsx` calls `apiClient.setAccessToken(token)` on successful login
-- `SettingsPage.tsx` calls `apiClient.clearAccessToken()` on sign-out
-- `apiClient.ts` handles `401 Unauthorized` responses by clearing the token and redirecting to `/`
-- `src/components/ProtectedRoute.tsx` — reads and validates (incl. expiry) the JWT from `localStorage`; in API mode redirects unauthenticated users to `/`; in mock mode always passes through
+- `apiClient.ts` stores/reads/clears `access_token` and `refresh_token` from `localStorage`
+- `Welcome.tsx` calls `apiClient.setAccessToken()` and `apiClient.setRefreshToken()` on successful login
+- `SettingsPage.tsx` calls `authApi.logout()` (server-side revocation) + `apiClient.clearTokens()` on sign-out
+- **Silent token refresh**: on any `401` response `apiClient` calls `POST /api/v1/auth/refresh` with the stored refresh token in the request body, updates both tokens, and retries the original request — concurrent 401s are deduplicated (only one refresh call fires; others queue)
+- **Proactive refresh** in `ProtectedRoute`: if the access token is missing or expired and a refresh token is present, a silent refresh is attempted with a loading spinner; if the token is near-expiry (<5 min) the user is let through immediately and a background refresh fires
 - `App.tsx` wraps all routes except `/` with `<ProtectedRoute>`
 
 **Remaining / known limitations**:
-- No token refresh — when the access token expires (1 hour by default) the user is redirected to login
 - No React Context for user identity — the current user is fetched per-page via `usersApi.getCurrentUser()`
 - No `AuthProvider` / `useAuth()` hook — token is accessed imperatively via `apiClient`
 
@@ -487,19 +486,19 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 |----------|----------|------|--------|-----|-------|----------|
 | **Backend/Data** | 0 | 1 | 1 | 0 | 3 | #1, #3, #6, #17 |
 | **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 | — |
-| **UX/Features** | 0 | 1 | 4 | 3 | 8 | #2 (partial) |
+| **UX/Features** | 0 | 1 | 4 | 3 | 8 | #2 |
 | **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
-| **Total** | **0** | **5** | **7** | **7** | **19 open** | **#1, #2, #3, #6, #17** |
+| **Total** | **0** | **5** | **7** | **7** | **18 open** | **#1, #2, #3, #6, #17** |
 
 ---
 
 ## 🎯 Recommended Priority Order
 
-1. ~~**Implement AuthContext** (Issue #2)~~ ✅ Done (localStorage-based minimal implementation)
-2. ~~**Add Protected Routes** (Issue #2)~~ ✅ Done (`ProtectedRoute` component in `App.tsx`)
-3. ~~**Wire remaining pages to API** (Issue #1)~~ ✅ Done (all pages use API services)
-4. ~~**Backend: Azure Storage** (Issue #3)~~ ✅ Done (Azure Table Storage integrated, seeder tool available)
-5. **Full AuthContext with token refresh** (Issue #2 follow-up) — Replace localStorage pattern with proper context + refresh token flow
+1. ✔️~~**Implement AuthContext** (Issue #2)~~ ✅ Done (localStorage-based minimal implementation)
+2. ✔️~~**Add Protected Routes** (Issue #2)~~ ✅ Done (`ProtectedRoute` component in `App.tsx`)
+3. ✔️~~**Wire remaining pages to API** (Issue #1)~~ ✅ Done (all pages use API services)
+4. ✔️~~**Backend: Azure Storage** (Issue #3)~~ ✅ Done (Azure Table Storage integrated, seeder tool available)
+5. ✔️~~**Full AuthContext with token refresh** (Issue #2 follow-up)~~ ✅ Done (silent refresh in `apiClient`, proactive refresh in `ProtectedRoute`, 13 new backend unit tests)
 6. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
 7. **Add Testing** (Issue #5) — Enables confident refactoring
 8. **Complete i18n** (Issue #8) — Better UX
@@ -514,15 +513,15 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 ## 📝 Notes
 
 - Application was bootstrapped with Lovable, then manually extended
-- Backend (`@lovecraft/`) is a working .NET 10 stub with full JWT auth and mock services
+- Backend (`@lovecraft/`) is a working .NET 10 API with full JWT auth, Azure Table Storage, and 35 unit tests
 - All pages are now wired to the API service layer — the full stack can be run end-to-end in Docker
 - Auth is enforced on all backend content endpoints (`[Authorize]`); the frontend protects routes via `ProtectedRoute`
+- Token refresh is fully implemented: silent refresh on 401 (with concurrent-request deduplication), proactive refresh in `ProtectedRoute`, and 13 dedicated unit tests in `RefreshTokenTests.cs`
 - API service layer (`src/services/api/`) provides the mock/real dual-mode pattern
 - Mock data is centralized in `src/data/` for consistency and reuse
 - Backend enum serialization uses camelCase strings (e.g., `"concert"`, `"male"`) for frontend compatibility
 - Design system and component architecture are solid foundations
-- The primary remaining data gap is **real persistence** (Azure Storage, Issue #3)
 
 ---
 
-**Next Steps**: Implement token refresh (Issue #2 follow-up) and Azure Storage (Issue #3). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.
+**Next Steps**: Fix Type Issues (#4, #7) and add frontend test framework (#5). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.

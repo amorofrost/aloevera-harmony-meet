@@ -351,20 +351,21 @@ useEffect(() => {
 1. ✅ Backend exists (`@lovecraft/`) with JWT auth and mock services
 2. ✅ Auth endpoints (login/register) wired to backend
 3. ✅ Access token stored in `localStorage` via `apiClient.setAccessToken()` on login
-4. ✅ All content routes protected by `<ProtectedRoute>` — unauthenticated users redirected to `/`
-5. ✅ All pages wired to API services (mock or real depending on `VITE_API_MODE`)
-6. ✅ All mock data centralized in `src/data/`
-7. ❌ **No data persistence** — backend uses in-memory storage, data resets on restart
-8. ❌ **No token refresh** — users are logged out when the JWT expires (~1 hour)
-9. ⚠️ TypeScript is loosely configured (see tsconfig.json)
-10. ⚠️ No testing framework
-11. ⚠️ Duplicate `Message` interface in types
-12. ⚠️ No user-visible error messages when API calls fail
+4. ✅ Refresh token stored in `localStorage` via `apiClient.setRefreshToken()` on login
+5. ✅ All content routes protected by `<ProtectedRoute>` — unauthenticated users redirected to `/`
+6. ✅ Silent token refresh: `apiClient` intercepts 401 responses, calls `POST /api/v1/auth/refresh` with the stored refresh token, retries the original request
+7. ✅ Proactive refresh in `ProtectedRoute`: near-expiry tokens (<5 min) trigger a background refresh; expired tokens with a valid refresh token trigger a silent refresh with a loading spinner
+8. ✅ All pages wired to API services (mock or real depending on `VITE_API_MODE`)
+9. ✅ All mock data centralized in `src/data/`
+10. ❌ **No data persistence in mock mode** — `MockAuthService` uses in-memory storage, data resets on restart (Azure Storage mode persists)
+11. ⚠️ TypeScript is loosely configured (see tsconfig.json)
+12. ⚠️ No frontend testing framework
+13. ⚠️ Duplicate `Message` interface in types
+14. ⚠️ No user-visible error messages when API calls fail
 
 **Don't Try to Fix Without Context**:
 - Type system strictness (requires codebase-wide changes)
 - Test setup (requires project decision on framework)
-- Token refresh (requires backend refresh token endpoint and frontend AuthContext)
 
 ---
 
