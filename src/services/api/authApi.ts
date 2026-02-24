@@ -114,10 +114,12 @@ export const authApi = {
     };
   },
 
-  // Refresh token
+  // Refresh token — sends the stored refresh token in the request body so the
+  // endpoint works over plain HTTP (cookie Secure flag would block it otherwise)
   async refreshToken() {
     if (isApiMode()) {
-      return apiClient.post<AuthResponse>('/api/v1/auth/refresh');
+      const refreshToken = apiClient.getRefreshToken();
+      return apiClient.post<AuthResponse>('/api/v1/auth/refresh', refreshToken ? { refreshToken } : undefined);
     }
 
     // Mock implementation

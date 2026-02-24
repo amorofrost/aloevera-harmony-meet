@@ -53,6 +53,9 @@ const Welcome = () => {
 
       if (response.data) {
         apiClient.setAccessToken(response.data.accessToken);
+        if (response.data.refreshToken) {
+          apiClient.setRefreshToken(response.data.refreshToken);
+        }
         console.log('Login successful:', response.data.user);
         navigate('/friends');
       }

@@ -13,7 +13,7 @@ import EventPostmark from '@/components/ui/event-postmark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { User, AloeVeraSong } from '@/types/user';
-import { usersApi, songsApi, apiClient } from '@/services/api';
+import { usersApi, songsApi, apiClient, authApi } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const SettingsPage = () => {
@@ -58,8 +58,10 @@ const SettingsPage = () => {
     await usersApi.updateUser(user.id, user);
   };
 
-  const handleSignOut = () => {
-    apiClient.clearAccessToken();
+  const handleSignOut = async () => {
+    // Revoke the refresh token on the server, then clear local storage
+    await authApi.logout().catch(() => {}); // best-effort
+    apiClient.clearTokens();
     navigate('/');
   };
 
