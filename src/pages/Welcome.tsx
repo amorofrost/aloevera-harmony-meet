@@ -10,16 +10,23 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { authApi, apiClient } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from '@/components/ui/sonner';
+import { loginSchema, type LoginSchema } from '@/lib/validators';
+import { showApiError } from '@/lib/apiError';
 
 const Welcome = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const loginForm = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+  });
   const [showRegister, setShowRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
     email: '',
     password: '',
@@ -40,31 +47,29 @@ const Welcome = () => {
     return errors;
   };
 
-  const handleLogin = async () => {
-    setError('');
+  const handleLogin = loginForm.handleSubmit(async (data) => {
     setIsLoading(true);
-
     try {
-      const response = await authApi.login(loginData);
-
+      const response = await authApi.login(data);
       if (!response.success) {
-        throw new Error((response as any).error?.message || 'Login failed');
+        const message = (response as any).error?.message || 'Login failed';
+        loginForm.setError('root', { message });
+        return;
       }
-
       if (response.data) {
         apiClient.setAccessToken(response.data.accessToken);
         if (response.data.refreshToken) {
           apiClient.setRefreshToken(response.data.refreshToken);
         }
-        console.log('Login successful:', response.data.user);
+        toast.success('Welcome back!');
         navigate('/friends');
       }
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+    } catch (err) {
+      showApiError(err, 'Login failed');
     } finally {
       setIsLoading(false);
     }
-  };
+  });
 
   const handleRegister = async () => {
     setError('');
@@ -149,118 +154,71 @@ const Welcome = () => {
 
         {/* Login/Register Forms */}
         <div className="mt-12 w-full max-w-md">
-          {/* Error/Success Messages */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl backdrop-blur-md">
-              <div className="flex items-center gap-2 text-white">
-                <AlertCircle className="w-5 h-5" />
-                <span className="text-sm">{error}</span>
-              </div>
-            </div>
-          )}
-          
-          {success && (
-            <div className="mb-4 p-4 bg-green-500/20 border border-green-500/50 rounded-xl backdrop-blur-md">
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircle2 className="w-5 h-5" />
-                <span className="text-sm">{success}</span>
-              </div>
-            </div>
-          )}
-
           {!showRegister ? (
             // Login Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
               <h2 className="text-2xl font-bold text-white mb-4">Sign In</h2>
-              
-              <div className="space-y-4">
+
+              {loginForm.formState.errors.root && (
+                <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl backdrop-blur-md">
+                  <div className="flex items-center gap-2 text-white">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="text-sm">{loginForm.formState.errors.root.message}</span>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white font-medium">
-                    {t('auth.email')}
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t('auth.enterEmail')}
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  <Label htmlFor="email" className="text-white font-medium">{t('auth.email')}</Label>
+                  <Input id="email" type="email" placeholder={t('auth.enterEmail')}
+                    {...loginForm.register('email')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                    disabled={isLoading}
-                  />
+                    disabled={isLoading} />
+                  {loginForm.formState.errors.email && (
+                    <p className="text-xs text-red-300">{loginForm.formState.errors.email.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-white font-medium">
-                    {t('auth.password')}
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder={t('auth.enterPassword')}
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  <Label htmlFor="password" className="text-white font-medium">{t('auth.password')}</Label>
+                  <Input id="password" type="password" placeholder={t('auth.enterPassword')}
+                    {...loginForm.register('password')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                    disabled={isLoading}
-                  />
+                    disabled={isLoading} />
+                  {loginForm.formState.errors.password && (
+                    <p className="text-xs text-red-300">{loginForm.formState.errors.password.message}</p>
+                  )}
                 </div>
-              </div>
-              
-              <Button
-                onClick={handleLogin}
-                size="lg"
-                className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  t('auth.signIn')
-                )}
-              </Button>
-              
-              {/* OAuth Buttons */}
+
+                <Button type="submit" size="lg"
+                  className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
+                  disabled={isLoading}>
+                  {isLoading ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Signing in...</>
+                  ) : (
+                    t('auth.signIn')
+                  )}
+                </Button>
+              </form>
+
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm">Or continue with</p>
                 <div className="grid grid-cols-3 gap-3">
-                  <Button
-                    onClick={() => handleOAuthLogin('google')}
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
-                    disabled={isLoading}
-                  >
-                    Google
-                  </Button>
-                  <Button
-                    onClick={() => handleOAuthLogin('facebook')}
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
-                    disabled={isLoading}
-                  >
-                    Facebook
-                  </Button>
-                  <Button
-                    onClick={() => handleOAuthLogin('vk')}
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
-                    disabled={isLoading}
-                  >
-                    VK
-                  </Button>
+                  <Button onClick={() => handleOAuthLogin('google')} variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Google</Button>
+                  <Button onClick={() => handleOAuthLogin('facebook')} variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
+                  <Button onClick={() => handleOAuthLogin('vk')} variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
                 </div>
               </div>
-              
+
               <div className="text-center space-y-2">
-                <button
-                  onClick={() => setShowRegister(true)}
-                  className="text-white/80 hover:text-white underline text-sm block w-full"
-                >
+                <button onClick={() => setShowRegister(true)}
+                  className="text-white/80 hover:text-white underline text-sm block w-full">
                   {t('auth.noAccount')}
                 </button>
-                <button
-                  className="text-white/60 hover:text-white/80 text-xs block w-full"
-                >
+                <button className="text-white/60 hover:text-white/80 text-xs block w-full">
                   Forgot password?
                 </button>
               </div>
