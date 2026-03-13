@@ -23,7 +23,7 @@ const App = () => (
     <LanguageProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        <Sonner position="bottom-center" richColors />
         {isMockMode() && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500/90 backdrop-blur-sm text-black px-4 py-2 text-center text-sm font-medium shadow-lg">
             🔧 DEBUG MODE: Running with mock data (no backend connection)
