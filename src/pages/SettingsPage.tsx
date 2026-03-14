@@ -15,6 +15,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import type { User, AloeVeraSong } from '@/types/user';
 import { usersApi, songsApi, apiClient, authApi } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from '@/components/ui/sonner';
+import { profileEditSchema, type ProfileEditSchema } from '@/lib/validators';
+import { showApiError } from '@/lib/apiError';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -25,6 +30,9 @@ const SettingsPage = () => {
   const [eventsScrollPosition, setEventsScrollPosition] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { t, language, setLanguage } = useLanguage();
+  const profileForm = useForm<ProfileEditSchema>({
+    resolver: zodResolver(profileEditSchema),
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -33,7 +41,15 @@ const SettingsPage = () => {
         usersApi.getCurrentUser(),
         songsApi.getSongs(),
       ]);
-      if (userRes.success && userRes.data) setUser(userRes.data);
+      if (userRes.success && userRes.data) {
+        setUser(userRes.data);
+        profileForm.reset({
+          name: userRes.data.name,
+          age: userRes.data.age,
+          location: userRes.data.location,
+          bio: userRes.data.bio ?? '',
+        });
+      }
       if (songsRes.success && songsRes.data) setSongs(songsRes.data);
       setIsLoading(false);
     };
@@ -52,15 +68,28 @@ const SettingsPage = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = profileForm.handleSubmit(async (data) => {
     if (!user) return;
-    setIsEditing(false);
-    await usersApi.updateUser(user.id, user);
-  };
+    try {
+      const response = await usersApi.updateUser(user.id, { ...user, ...data });
+      if (!response.success) {
+        showApiError(response, 'Failed to update profile');
+        return;
+      }
+      setUser({ ...user, ...data });
+      setIsEditing(false);
+      toast.success('Profile updated');
+    } catch (err) {
+      showApiError(err, 'Failed to update profile');
+    }
+  });
 
   const handleSignOut = async () => {
-    // Revoke the refresh token on the server, then clear local storage
-    await authApi.logout().catch(() => {}); // best-effort
+    try {
+      await authApi.logout();
+    } catch (err) {
+      showApiError(err, 'Logout failed');
+    }
     apiClient.clearTokens();
     navigate('/');
   };
@@ -114,9 +143,43 @@ const SettingsPage = () => {
             <Card className="profile-card">
               <CardHeader><CardTitle>Информация о профиле</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div><Label>{t('profile.name')}</Label><Input value={user.name} onChange={(e) => setUser({...user, name: e.target.value})} disabled={!isEditing} className="mt-1" /></div>
-                <div><Label>{t('profile.age')}</Label><Input type="number" value={user.age} onChange={(e) => setUser({...user, age: parseInt(e.target.value)})} disabled={!isEditing} className="mt-1" /></div>
-                <div><Label>{t('profile.location')}</Label><Input value={user.location} onChange={(e) => setUser({...user, location: e.target.value})} disabled={!isEditing} className="mt-1" /></div>
+                <div>
+                  <Label>{t('profile.name')}</Label>
+                  <Input
+                    {...(isEditing ? profileForm.register('name') : {})}
+                    defaultValue={user.name}
+                    disabled={!isEditing}
+                    className="mt-1"
+                  />
+                  {isEditing && profileForm.formState.errors.name && (
+                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.name.message}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>{t('profile.age')}</Label>
+                  <Input
+                    type="number"
+                    {...(isEditing ? profileForm.register('age', { valueAsNumber: true }) : {})}
+                    defaultValue={user.age}
+                    disabled={!isEditing}
+                    className="mt-1"
+                  />
+                  {isEditing && profileForm.formState.errors.age && (
+                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.age.message}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>{t('profile.location')}</Label>
+                  <Input
+                    {...(isEditing ? profileForm.register('location') : {})}
+                    defaultValue={user.location}
+                    disabled={!isEditing}
+                    className="mt-1"
+                  />
+                  {isEditing && profileForm.formState.errors.location && (
+                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.location.message}</p>
+                  )}
+                </div>
                 <div>
                   <Label>{t('profile.gender')}</Label>
                   <Select value={user.gender} onValueChange={(v) => setUser({...user, gender: v as User['gender']})} disabled={!isEditing}>
@@ -128,11 +191,28 @@ const SettingsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>{t('profile.bio')}</Label><Textarea value={user.bio} onChange={(e) => setUser({...user, bio: e.target.value})} disabled={!isEditing} className="mt-1 min-h-[100px]" /></div>
+                <div>
+                  <Label>{t('profile.bio')}</Label>
+                  <Textarea
+                    {...(isEditing ? profileForm.register('bio') : {})}
+                    defaultValue={user.bio ?? ''}
+                    disabled={!isEditing}
+                    className="mt-1 min-h-[100px]"
+                  />
+                  {isEditing && profileForm.formState.errors.bio && (
+                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.bio.message}</p>
+                  )}
+                </div>
                 {isEditing && (
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={handleSave} className="flex-1">{t('common.save')}</Button>
-                    <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">{t('common.cancel')}</Button>
+                    <Button type="submit" onClick={handleSave} className="flex-1">{t('common.save')}</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => { profileForm.reset(); setIsEditing(false); }}
+                      className="flex-1"
+                    >
+                      {t('common.cancel')}
+                    </Button>
                   </div>
                 )}
               </CardContent>
