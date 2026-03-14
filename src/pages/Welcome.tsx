@@ -6,14 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { authApi, apiClient } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
-import { loginSchema, type LoginSchema } from '@/lib/validators';
+import { loginSchema, registerSchema, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 
 const Welcome = () => {
@@ -22,31 +22,12 @@ const Welcome = () => {
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
   });
+  const registerForm = useForm<RegisterSchema>({
+    resolver: zodResolver(registerSchema),
+    mode: 'onBlur',
+  });
   const [showRegister, setShowRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
-  
-  const [registerData, setRegisterData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    bio: '',
-    location: '',
-    age: '',
-    gender: ''
-  });
-
-  const validatePassword = (password: string): string[] => {
-    const errors: string[] = [];
-    if (password.length < 8) errors.push('At least 8 characters');
-    if (!/[A-Z]/.test(password)) errors.push('One uppercase letter');
-    if (!/[a-z]/.test(password)) errors.push('One lowercase letter');
-    if (!/[0-9]/.test(password)) errors.push('One number');
-    if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) errors.push('One special character');
-    return errors;
-  };
-
   const handleLogin = loginForm.handleSubmit(async (data) => {
     setIsLoading(true);
     try {
@@ -71,49 +52,40 @@ const Welcome = () => {
     }
   });
 
-  const handleRegister = async () => {
-    setError('');
-    setSuccess('');
+  const handleRegister = registerForm.handleSubmit(async (data) => {
     setIsLoading(true);
-
     try {
-      // Validate password
-      const passwordErrors = validatePassword(registerData.password);
-      if (passwordErrors.length > 0) {
-        throw new Error('Password must have: ' + passwordErrors.join(', '));
-      }
-
-      // Validate required fields
-      if (!registerData.email || !registerData.name) {
-        throw new Error('Email and name are required');
-      }
-
       const response = await authApi.register({
-        email: registerData.email,
-        password: registerData.password,
-        name: registerData.name,
-        age: registerData.age ? parseInt(registerData.age) : undefined,
-        location: registerData.location || undefined,
-        gender: registerData.gender || undefined,
-        bio: registerData.bio || undefined,
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        age: data.age,
+        location: data.location,
+        gender: data.gender,
+        bio: data.bio,
       });
-
       if (!response.success) {
-        throw new Error((response as any).error?.message || 'Registration failed');
+        const apiErr = (response as any).error;
+        if (apiErr?.code === 'EMAIL_TAKEN') {
+          registerForm.setError('email', { message: apiErr.message || 'Email is already taken' });
+          return;
+        }
+        showApiError(response, 'Registration failed');
+        return;
       }
-
-      setSuccess('Account created! Please check your email to verify your account before logging in.');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      toast.success('Account created! Check your email to verify.');
+      setShowRegister(false);
+    } catch (err) {
+      showApiError(err, 'Registration failed');
     } finally {
       setIsLoading(false);
     }
-  };
+  });
 
   const handleOAuthLogin = (provider: 'google' | 'facebook' | 'vk') => {
     // TODO: Redirect to OAuth endpoint when integrated
     // window.location.href = `${API_CONFIG.baseURL}/api/v1/auth/oauth/${provider}/login`;
-    setError(`${provider} login will be available soon`);
+    toast.error(`${provider} login will be available soon`);
   };
 
   return (
@@ -227,8 +199,8 @@ const Welcome = () => {
             // Registration Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
               <h2 className="text-2xl font-bold text-white mb-4">Create Account</h2>
-              
-              <div className="space-y-4">
+
+              <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="reg-email" className="text-white font-medium">
                     {t('auth.email')} *
@@ -237,12 +209,14 @@ const Welcome = () => {
                     id="reg-email"
                     type="email"
                     placeholder={t('auth.enterEmail')}
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                    {...registerForm.register('email')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
                   <p className="text-xs text-white/60">Your email will be used as your login</p>
+                  {registerForm.formState.errors.email && (
+                    <p className="text-xs text-red-300">{registerForm.formState.errors.email.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -253,13 +227,15 @@ const Welcome = () => {
                     id="reg-name"
                     type="text"
                     placeholder="Your name"
-                    value={registerData.name}
-                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                    {...registerForm.register('name')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
+                  {registerForm.formState.errors.name && (
+                    <p className="text-xs text-red-300">{registerForm.formState.errors.name.message}</p>
+                  )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="reg-password" className="text-white font-medium">
                     {t('auth.password')} *
@@ -268,27 +244,42 @@ const Welcome = () => {
                     id="reg-password"
                     type="password"
                     placeholder={t('auth.createPassword')}
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    {...registerForm.register('password')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
-                  {registerData.password && (
-                    <div className="text-xs text-white/70 space-y-1 mt-2">
-                      {validatePassword(registerData.password).map((err, i) => (
-                        <div key={i} className="flex items-center gap-1">
-                          <span className="text-red-300">✗</span> {err}
-                        </div>
-                      ))}
-                      {validatePassword(registerData.password).length === 0 && (
-                        <div className="flex items-center gap-1 text-green-300">
-                          <span>✓</span> Password meets requirements
-                        </div>
-                      )}
-                    </div>
+                  {(() => {
+                    const pw = registerForm.watch('password') || '';
+                    if (!pw) return null;
+                    const rules = [
+                      { test: pw.length >= 8, label: 'At least 8 characters' },
+                      { test: /[A-Z]/.test(pw), label: 'One uppercase letter' },
+                      { test: /[a-z]/.test(pw), label: 'One lowercase letter' },
+                      { test: /[0-9]/.test(pw), label: 'One number' },
+                      { test: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(pw), label: 'One special character' },
+                    ];
+                    return (
+                      <div className="text-xs text-white/70 space-y-1 mt-2">
+                        {rules.map((r, i) =>
+                          r.test ? null : (
+                            <div key={i} className="flex items-center gap-1">
+                              <span className="text-red-300">✗</span> {r.label}
+                            </div>
+                          )
+                        )}
+                        {rules.every(r => r.test) && (
+                          <div className="flex items-center gap-1 text-green-300">
+                            <span>✓</span> Password meets requirements
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {registerForm.formState.errors.password && (
+                    <p className="text-xs text-red-300">{registerForm.formState.errors.password.message}</p>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="age" className="text-white font-medium">
@@ -298,34 +289,41 @@ const Welcome = () => {
                       id="age"
                       type="number"
                       placeholder={t('auth.age')}
-                      value={registerData.age}
-                      onChange={(e) => setRegisterData({ ...registerData, age: e.target.value })}
+                      {...registerForm.register('age', { valueAsNumber: true })}
                       className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                       disabled={isLoading}
                     />
+                    {registerForm.formState.errors.age && (
+                      <p className="text-xs text-red-300">{registerForm.formState.errors.age.message}</p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="gender" className="text-white font-medium">
                       {t('auth.gender')}
                     </Label>
-                    <Select 
-                      value={registerData.gender} 
-                      onValueChange={(value) => setRegisterData({ ...registerData, gender: value })}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">{t('auth.male')}</SelectItem>
-                        <SelectItem value="female">{t('auth.female')}</SelectItem>
-                        <SelectItem value="other">{t('auth.other')}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="gender"
+                      control={registerForm.control}
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
+                          <SelectTrigger className="bg-white/20 border-white/30 text-white">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">{t('auth.male')}</SelectItem>
+                            <SelectItem value="female">{t('auth.female')}</SelectItem>
+                            <SelectItem value="other">{t('auth.other')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {registerForm.formState.errors.gender && (
+                      <p className="text-xs text-red-300">{registerForm.formState.errors.gender.message}</p>
+                    )}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="location" className="text-white font-medium">
                     {t('auth.location')}
@@ -333,13 +331,15 @@ const Welcome = () => {
                   <Input
                     id="location"
                     placeholder={t('auth.cityCountry')}
-                    value={registerData.location}
-                    onChange={(e) => setRegisterData({ ...registerData, location: e.target.value })}
+                    {...registerForm.register('location')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
+                  {registerForm.formState.errors.location && (
+                    <p className="text-xs text-red-300">{registerForm.formState.errors.location.message}</p>
+                  )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="bio" className="text-white font-medium">
                     {t('auth.bio')}
@@ -347,61 +347,44 @@ const Welcome = () => {
                   <Textarea
                     id="bio"
                     placeholder={t('auth.aboutYourself')}
-                    value={registerData.bio}
-                    onChange={(e) => setRegisterData({ ...registerData, bio: e.target.value })}
+                    {...registerForm.register('bio')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[80px]"
                     disabled={isLoading}
                   />
+                  {registerForm.formState.errors.bio && (
+                    <p className="text-xs text-red-300">{registerForm.formState.errors.bio.message}</p>
+                  )}
                 </div>
-              </div>
-              
-              <Button
-                onClick={handleRegister}
-                size="lg"
-                className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  t('auth.createAccount')
-                )}
-              </Button>
-              
-              {/* OAuth Buttons */}
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    t('auth.createAccount')
+                  )}
+                </Button>
+              </form>
+
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm">Or sign up with</p>
                 <div className="grid grid-cols-3 gap-3">
-                  <Button
-                    onClick={() => handleOAuthLogin('google')}
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
-                    disabled={isLoading}
-                  >
-                    Google
-                  </Button>
-                  <Button
-                    onClick={() => handleOAuthLogin('facebook')}
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
-                    disabled={isLoading}
-                  >
-                    Facebook
-                  </Button>
-                  <Button
-                    onClick={() => handleOAuthLogin('vk')}
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white"
-                    disabled={isLoading}
-                  >
-                    VK
-                  </Button>
+                  <Button onClick={() => handleOAuthLogin('google')} variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Google</Button>
+                  <Button onClick={() => handleOAuthLogin('facebook')} variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
+                  <Button onClick={() => handleOAuthLogin('vk')} variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
                 </div>
               </div>
-              
+
               <div className="text-center">
                 <button
                   onClick={() => setShowRegister(false)}
