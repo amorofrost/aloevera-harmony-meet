@@ -143,78 +143,81 @@ const SettingsPage = () => {
             <Card className="profile-card">
               <CardHeader><CardTitle>Информация о профиле</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>{t('profile.name')}</Label>
-                  <Input
-                    {...(isEditing ? profileForm.register('name') : {})}
-                    defaultValue={user.name}
-                    disabled={!isEditing}
-                    className="mt-1"
-                  />
-                  {isEditing && profileForm.formState.errors.name && (
-                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.name.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>{t('profile.age')}</Label>
-                  <Input
-                    type="number"
-                    {...(isEditing ? profileForm.register('age', { valueAsNumber: true }) : {})}
-                    defaultValue={user.age}
-                    disabled={!isEditing}
-                    className="mt-1"
-                  />
-                  {isEditing && profileForm.formState.errors.age && (
-                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.age.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>{t('profile.location')}</Label>
-                  <Input
-                    {...(isEditing ? profileForm.register('location') : {})}
-                    defaultValue={user.location}
-                    disabled={!isEditing}
-                    className="mt-1"
-                  />
-                  {isEditing && profileForm.formState.errors.location && (
-                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.location.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>{t('profile.gender')}</Label>
-                  <Select value={user.gender} onValueChange={(v) => setUser({...user, gender: v as User['gender']})} disabled={!isEditing}>
-                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Мужской</SelectItem>
-                      <SelectItem value="female">Женский</SelectItem>
-                      <SelectItem value="non-binary">Небинарный</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>{t('profile.bio')}</Label>
-                  <Textarea
-                    {...(isEditing ? profileForm.register('bio') : {})}
-                    defaultValue={user.bio ?? ''}
-                    disabled={!isEditing}
-                    className="mt-1 min-h-[100px]"
-                  />
-                  {isEditing && profileForm.formState.errors.bio && (
-                    <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.bio.message}</p>
-                  )}
-                </div>
-                {isEditing && (
-                  <div className="flex gap-2 pt-4">
-                    <Button type="submit" onClick={handleSave} className="flex-1">{t('common.save')}</Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => { profileForm.reset(); setIsEditing(false); }}
-                      className="flex-1"
-                    >
-                      {t('common.cancel')}
-                    </Button>
+                <form onSubmit={handleSave} className="space-y-4">
+                  <div>
+                    <Label>{t('profile.name')}</Label>
+                    <Input
+                      {...(isEditing ? profileForm.register('name') : {})}
+                      defaultValue={user.name}
+                      disabled={!isEditing}
+                      className="mt-1"
+                    />
+                    {isEditing && profileForm.formState.errors.name && (
+                      <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.name.message}</p>
+                    )}
                   </div>
-                )}
+                  <div>
+                    <Label>{t('profile.age')}</Label>
+                    <Input
+                      type="number"
+                      {...(isEditing ? profileForm.register('age', { valueAsNumber: true }) : {})}
+                      defaultValue={user.age}
+                      disabled={!isEditing}
+                      className="mt-1"
+                    />
+                    {isEditing && profileForm.formState.errors.age && (
+                      <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.age.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>{t('profile.location')}</Label>
+                    <Input
+                      {...(isEditing ? profileForm.register('location') : {})}
+                      defaultValue={user.location}
+                      disabled={!isEditing}
+                      className="mt-1"
+                    />
+                    {isEditing && profileForm.formState.errors.location && (
+                      <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.location.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>{t('profile.gender')}</Label>
+                    <Select value={user.gender} onValueChange={(v) => setUser({...user, gender: v as User['gender']})} disabled={!isEditing}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Мужской</SelectItem>
+                        <SelectItem value="female">Женский</SelectItem>
+                        <SelectItem value="non-binary">Небинарный</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>{t('profile.bio')}</Label>
+                    <Textarea
+                      {...(isEditing ? profileForm.register('bio') : {})}
+                      defaultValue={user.bio ?? ''}
+                      disabled={!isEditing}
+                      className="mt-1 min-h-[100px]"
+                    />
+                    {isEditing && profileForm.formState.errors.bio && (
+                      <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.bio.message}</p>
+                    )}
+                  </div>
+                  {isEditing && (
+                    <div className="flex gap-2 pt-4">
+                      <Button type="submit" className="flex-1">{t('common.save')}</Button>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => { profileForm.reset(); setIsEditing(false); }}
+                        className="flex-1"
+                      >
+                        {t('common.cancel')}
+                      </Button>
+                    </div>
+                  )}
+                </form>
               </CardContent>
             </Card>
 
