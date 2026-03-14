@@ -20,6 +20,7 @@ const Talks = () => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
+  const [messageError, setMessageError] = useState('');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -67,7 +68,11 @@ const Talks = () => {
     new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(date);
 
   const handleSendMessage = () => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim()) {
+      setMessageError("Message can't be empty");
+      return;
+    }
+    setMessageError('');
     setMessageText('');
   };
 
@@ -122,12 +127,15 @@ const Talks = () => {
         </div>
         <div className="border-t p-4">
           <div className="flex gap-2">
-            <Input value={messageText} onChange={(e) => setMessageText(e.target.value)}
+            <Input value={messageText} onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
               placeholder="Введи сообщение..." onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1" />
             <Button onClick={handleSendMessage} disabled={!messageText.trim()}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
+          {messageError && (
+            <p className="text-xs text-destructive mt-1">{messageError}</p>
+          )}
         </div>
         <BottomNavigation />
       </div>
