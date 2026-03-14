@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pin, Send, ThumbsUp, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from '@/components/ui/sonner';
+import { replySchema, type ReplySchema } from '@/lib/validators';
+import { showApiError } from '@/lib/apiError';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { forumsApi } from '@/services/api';
@@ -17,8 +22,10 @@ interface TopicDetailProps {
 const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [topic, setTopic] = useState<TopicDetailType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [replyText, setReplyText] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const replyForm = useForm<ReplySchema>({
+    resolver: zodResolver(replySchema),
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,20 +38,30 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     load();
   }, [topicId]);
 
-  const handleSendReply = async () => {
-    if (!replyText.trim() || isSending) return;
+  const handleSendReply = replyForm.handleSubmit(async (data) => {
+    if (isSending) return;
     setIsSending(true);
-    const res = await forumsApi.createReply(topicId, replyText.trim());
-    if (res.success && res.data && topic) {
-      setTopic({
-        ...topic,
-        replies: [...topic.replies, res.data],
-        replyCount: topic.replyCount + 1,
-      });
-      setReplyText('');
+    try {
+      const res = await forumsApi.createReply(topicId, data.content);
+      if (!res.success) {
+        showApiError(res, 'Failed to post reply');
+        return;
+      }
+      if (res.data && topic) {
+        setTopic({
+          ...topic,
+          replies: [...topic.replies, res.data],
+          replyCount: topic.replyCount + 1,
+        });
+      }
+      replyForm.reset();
+      toast.success('Reply posted');
+    } catch (err) {
+      showApiError(err, 'Failed to post reply');
+    } finally {
+      setIsSending(false);
     }
-    setIsSending(false);
-  };
+  });
 
   const handleAuthorClick = (authorId?: string) => {
     if (authorId) {
@@ -149,18 +166,21 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
       </div>
 
       {/* Reply input */}
-      <div className="flex gap-2 pt-2 pb-4">
-        <Input
-          value={replyText}
-          onChange={(e) => setReplyText(e.target.value)}
-          placeholder="Написать ответ..."
-          onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-          className="flex-1"
-        />
-        <Button onClick={handleSendReply} disabled={!replyText.trim() || isSending}>
-          <Send className="w-4 h-4" />
-        </Button>
-      </div>
+      <form onSubmit={handleSendReply} className="pt-2 pb-4 space-y-1">
+        <div className="flex gap-2">
+          <Textarea
+            {...replyForm.register('content')}
+            placeholder="Написать ответ..."
+            className="flex-1 min-h-[40px] max-h-[120px] resize-y"
+          />
+          <Button type="submit" disabled={isSending}>
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+        {replyForm.formState.errors.content && (
+          <p className="text-xs text-destructive">{replyForm.formState.errors.content.message}</p>
+        )}
+      </form>
     </div>
   );
 };
