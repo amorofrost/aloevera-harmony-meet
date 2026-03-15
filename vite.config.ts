@@ -1,18 +1,31 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  server: { host: "::", port: 8080 },
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+  ].filter(Boolean),
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    alias: { "@": path.resolve(__dirname, "./src") },
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    globals: true,
+    env: {
+      VITE_API_MODE: "mock",
+    },
+    coverage: {
+      provider: "v8",
+      include: ["src/lib/**", "src/pages/Welcome.tsx"],
+    },
+    moduleNameMapper: {
+      "\\.(jpg|jpeg|png|gif|svg|webp)$": "/src/test/fileMock.ts",
     },
   },
 }));
