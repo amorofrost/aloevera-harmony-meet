@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '../apiError';
 
@@ -13,7 +12,7 @@ describe('showApiError', () => {
 
   it('calls toast.error with the ApiResponse error message', () => {
     const err = { error: { message: 'Server error' } };
-    showApiError(err);
+    showApiError(err, 'fallback');
     expect(toast.error).toHaveBeenCalledWith('Server error');
   });
 
