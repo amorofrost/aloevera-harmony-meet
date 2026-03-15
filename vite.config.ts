@@ -24,8 +24,5 @@ export default defineConfig(({ mode }) => ({
       provider: "v8",
       include: ["src/lib/**", "src/pages/Welcome.tsx"],
     },
-    moduleNameMapper: {
-      "\\.(jpg|jpeg|png|gif|svg|webp)$": "/src/test/fileMock.ts",
-    },
   },
 }));
