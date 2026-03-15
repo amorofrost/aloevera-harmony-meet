@@ -481,10 +481,10 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 | Category | Critical | High | Medium | Low | Total | Resolved |
 |----------|----------|------|--------|-----|-------|----------|
 | **Backend/Data** | 0 | 1 | 1 | 0 | 3 | #1, #3, #6, #17 |
-| **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 | — |
+| **TypeScript/Code Quality** | 0 | 2 | 1 | 1 | 4 | #5 |
 | **UX/Features** | 0 | 1 | 2 | 3 | 8 | #2, #9, #10 |
 | **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
-| **Total** | **0** | **5** | **5** | **7** | **16 open** | **#1, #2, #3, #6, #9, #10, #17** |
+| **Total** | **0** | **4** | **5** | **7** | **15 open** | **#1, #2, #3, #5, #6, #9, #10, #17** |
 
 ---
 

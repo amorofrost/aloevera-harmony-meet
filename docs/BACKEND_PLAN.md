@@ -2,8 +2,8 @@
 
 **AloeVera Harmony Meet** - Backend Development Roadmap
 
-**Last Updated**: February 18, 2026  
-**Status**: Active Development — Mock backend running with JWT auth; Azure Storage integration pending
+**Last Updated**: March 15, 2026
+**Status**: Full-stack deployed on Azure VM (`http://20.153.164.3:8080`). JWT auth, Azure Table Storage, Docker + nginx, token refresh, form validation, and error handling are all implemented. Chat and songs endpoints are pending.
 
 ---
 
@@ -339,10 +339,10 @@ _Detailed schema: See `@lovecraft/Lovecraft/docs/AZURE_STORAGE.md`_
 
 ### Security Measures
 - HTTPS only in production
-- Password hashing (BCrypt or Argon2)
-- Token expiration and refresh mechanism
-- Rate limiting on sensitive endpoints
-- CORS configuration for allowed origins
+- Password hashing (PBKDF2 + random salt, implemented in `PasswordHasher.cs`)
+- Token expiration and refresh mechanism (15 min access / 7 day refresh, rotation on use)
+- Rate limiting on sensitive endpoints (planned)
+- CORS configuration for allowed origins (localhost:8080, localhost:5173, Azure VM)
 
 ### Future: Multi-Client Auth
 - Web: JWT
@@ -536,34 +536,36 @@ LOGGING__LOGLEVEL__DEFAULT=Information
 
 ---
 
-### Phase 9: Frontend Integration 🔄 In Progress
+### Phase 9: Frontend Integration ✅ DONE
 **Goal**: Connect frontend to backend
 
 - [x] CORS configuration (localhost:8080, localhost:5173)
 - [x] Swagger/OpenAPI documentation
 - [x] Frontend API service layer (`src/services/api/`)
 - [x] Auth endpoints connected (login/register working)
-- [ ] Frontend AuthContext (token storage + auto-refresh)
-- [ ] Protected routes
-- [ ] Replace mock data in Friends, AloeVera, Talks pages
-- [ ] Error handling and loading states
+- [x] Token storage in `localStorage` via `apiClient` + silent refresh on 401
+- [x] Protected routes (`ProtectedRoute` wraps all content routes; proactive near-expiry refresh)
+- [x] All pages wired to API services (mock or real depending on `VITE_API_MODE`)
+- [x] User-visible error handling via sonner toasts (`showApiError` in `src/lib/apiError.ts`)
+- [x] Form validation on all forms (react-hook-form + Zod via `src/lib/validators.ts`)
 
-**Deliverables**: Working frontend-backend integration (in progress)
+**Deliverables**: ✅ Working full-stack integration (mock mode + live Azure backend)
 
 ---
 
-### Phase 10: Deployment & Polish (Week 14)
+### Phase 10: Deployment ✅ DONE
 **Goal**: Deploy to Azure
 
-- [ ] Azure Container Registry setup
-- [ ] Azure Container Instance/App Service setup
-- [ ] Azure Storage account setup
-- [ ] Environment variables configuration
-- [ ] SSL/HTTPS configuration
-- [ ] Monitoring and logging
-- [ ] Performance testing
+- [x] Docker Compose with nginx proxy (port 8080 only exposed)
+- [x] Azure VM deployment (`http://20.153.164.3:8080`)
+- [x] Azure Table Storage integrated (15 tables, seeder tool available)
+- [x] Environment variables configured via `.env` file
+- [x] nginx proxies `/api/` and `/swagger` to backend container
+- [ ] SSL/HTTPS — not yet configured (HTTP only)
+- [ ] Monitoring and logging — Application Insights not set up
+- [ ] Azure Container Registry — using Docker directly on VM
 
-**Deliverables**: Production deployment
+**Deliverables**: ✅ Running on Azure VM (HTTP, single VM)
 
 ---
 
@@ -770,11 +772,17 @@ Each client has its own repository and documentation:
 
 ---
 
-**Next Steps**: 
-1. Review this plan
-2. Create .NET solution in `@lovecraft/`
-3. Start with Phase 1 (Foundation)
-4. Detailed technical docs in `@lovecraft/Lovecraft/docs/`
+**Current Status**: Phases 1–10 are complete. The full stack is deployed and operational.
+
+**Remaining Work**:
+1. Chat and songs backend endpoints (frontend falls back to mock for these)
+2. Azure Blob Storage for image uploads
+3. Email service (SMTP/SendGrid — currently logs to console)
+4. OAuth integration (Google, Facebook, VK) — see [AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)
+5. Telegram Mini App authentication — planned
+6. Rate limiting and account lockout
+7. SSL/HTTPS on Azure VM
+8. SignalR for real-time chat (Phase 11)
 
 ---
 
