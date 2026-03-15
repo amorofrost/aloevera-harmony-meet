@@ -132,7 +132,7 @@ const Welcome = () => {
               <h2 className="text-2xl font-bold text-white mb-4">Sign In</h2>
 
               {loginForm.formState.errors.root && (
-                <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl backdrop-blur-md">
+                <div role="alert" className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl backdrop-blur-md">
                   <div className="flex items-center gap-2 text-white">
                     <AlertCircle className="w-5 h-5" />
                     <span className="text-sm">{loginForm.formState.errors.root.message}</span>
@@ -148,7 +148,7 @@ const Welcome = () => {
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading} />
                   {loginForm.formState.errors.email && (
-                    <p className="text-xs text-red-300">{loginForm.formState.errors.email.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{loginForm.formState.errors.email.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -158,7 +158,7 @@ const Welcome = () => {
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading} />
                   {loginForm.formState.errors.password && (
-                    <p className="text-xs text-red-300">{loginForm.formState.errors.password.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{loginForm.formState.errors.password.message}</p>
                   )}
                 </div>
 
@@ -215,7 +215,7 @@ const Welcome = () => {
                   />
                   <p className="text-xs text-white/60">Your email will be used as your login</p>
                   {registerForm.formState.errors.email && (
-                    <p className="text-xs text-red-300">{registerForm.formState.errors.email.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.email.message}</p>
                   )}
                 </div>
 
@@ -232,7 +232,7 @@ const Welcome = () => {
                     disabled={isLoading}
                   />
                   {registerForm.formState.errors.name && (
-                    <p className="text-xs text-red-300">{registerForm.formState.errors.name.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.name.message}</p>
                   )}
                 </div>
 
@@ -276,7 +276,7 @@ const Welcome = () => {
                     );
                   })()}
                   {registerForm.formState.errors.password && (
-                    <p className="text-xs text-red-300">{registerForm.formState.errors.password.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.password.message}</p>
                   )}
                 </div>
 
@@ -294,7 +294,7 @@ const Welcome = () => {
                       disabled={isLoading}
                     />
                     {registerForm.formState.errors.age && (
-                      <p className="text-xs text-red-300">{registerForm.formState.errors.age.message}</p>
+                      <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.age.message}</p>
                     )}
                   </div>
 
@@ -319,7 +319,7 @@ const Welcome = () => {
                       )}
                     />
                     {registerForm.formState.errors.gender && (
-                      <p className="text-xs text-red-300">{registerForm.formState.errors.gender.message}</p>
+                      <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.gender.message}</p>
                     )}
                   </div>
                 </div>
@@ -336,7 +336,7 @@ const Welcome = () => {
                     disabled={isLoading}
                   />
                   {registerForm.formState.errors.location && (
-                    <p className="text-xs text-red-300">{registerForm.formState.errors.location.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.location.message}</p>
                   )}
                 </div>
 
@@ -352,7 +352,7 @@ const Welcome = () => {
                     disabled={isLoading}
                   />
                   {registerForm.formState.errors.bio && (
-                    <p className="text-xs text-red-300">{registerForm.formState.errors.bio.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.bio.message}</p>
                   )}
                 </div>
 
