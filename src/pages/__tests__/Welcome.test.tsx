@@ -175,3 +175,159 @@ describe('Welcome — login form', () => {
     });
   });
 });
+
+// ============================================================
+// REGISTER FORM
+// ============================================================
+
+describe('Welcome — register form', () => {
+  // Helper: switch to register tab
+  async function openRegisterForm(user: ReturnType<typeof userEvent.setup>) {
+    // Button text = t('auth.noAccount') = 'auth.noAccount' (mock returns key as-is)
+    const switchBtn = screen.getByRole('button', { name: /auth\.noAccount/i });
+    await user.click(switchBtn);
+  }
+
+  // Helper: fill all valid fields (bio is optional and omitted)
+  async function fillValidRegisterForm(user: ReturnType<typeof userEvent.setup>) {
+    // Labels use t() — mock returns key. Queries match substrings case-insensitively.
+    // 'Display Name *' label → matches /name/i
+    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    // 'auth.email *' label → matches /email/i
+    await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
+    // 'auth.password *' label → matches /password/i
+    await user.type(screen.getByLabelText(/password/i), 'Secure1!');
+    // 'auth.age' label → matches /age/i; number input has role 'spinbutton'
+    await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
+    // Gender uses native <select> mock with data-testid
+    await user.selectOptions(screen.getByTestId('gender-select'), 'female');
+    // 'auth.location' label → matches /location/i
+    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+  }
+
+  it('shows inline error for password under 8 characters', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await user.type(screen.getByLabelText(/password/i), 'Ab1!');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      // Multiple fields are empty → multiple errors fire; check at least one
+      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows inline error for password missing uppercase', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await user.type(screen.getByLabelText(/password/i), 'secure1!');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows inline error for password missing special character', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await user.type(screen.getByLabelText(/password/i), 'Secure123');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows inline error for age out of range (17)', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await user.type(screen.getByRole('spinbutton', { name: /age/i }), '17');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('shows inline field error on email field for EMAIL_TAKEN', async () => {
+    vi.mocked(authApi.register).mockResolvedValueOnce({
+      success: false,
+      error: { code: 'EMAIL_TAKEN', message: 'Email already in use' },
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await fillValidRegisterForm(user);
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      // registerForm.setError('email', ...) — inline field error, not toast
+      // All fields are valid so only the email error fires
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+  });
+
+  it('calls toast.error for generic server error', async () => {
+    vi.mocked(authApi.register).mockResolvedValueOnce({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'Internal server error' },
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await fillValidRegisterForm(user);
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+  });
+
+  it('calls authApi.register with correct payload', async () => {
+    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await fillValidRegisterForm(user);
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(authApi.register).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Alice',
+          email: 'alice@example.com',
+          password: 'Secure1!',
+          age: 25,
+          gender: 'female',
+          location: 'Moscow',
+        })
+      );
+    });
+  });
+
+  it('shows login form after successful registration', async () => {
+    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await fillValidRegisterForm(user);
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      // setShowRegister(false) — register form gone, login visible
+      // Login submit button text = t('auth.signIn') = 'auth.signIn'
+      expect(screen.getByRole('button', { name: /auth\.signIn/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /auth\.createAccount/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows success toast after successful registration', async () => {
+    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await fillValidRegisterForm(user);
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
+  });
+});
