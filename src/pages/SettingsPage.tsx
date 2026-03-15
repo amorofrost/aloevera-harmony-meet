@@ -33,6 +33,7 @@ const SettingsPage = () => {
   const profileForm = useForm<ProfileEditSchema>({
     resolver: zodResolver(profileEditSchema),
   });
+  const [editStartUser, setEditStartUser] = useState<User | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -54,7 +55,7 @@ const SettingsPage = () => {
       setIsLoading(false);
     };
     load();
-  }, []);
+  }, [profileForm]);
 
   const scrollEvents = (direction: 'left' | 'right') => {
     const container = document.getElementById('events-scroll-container');
@@ -112,7 +113,10 @@ const SettingsPage = () => {
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">Настройки</h1>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}><Edit3 className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="sm" onClick={() => {
+              if (!isEditing) setEditStartUser(user);
+              setIsEditing(!isEditing);
+            }}><Edit3 className="w-5 h-5" /></Button>
           </div>
         </div>
       </div>
@@ -148,7 +152,7 @@ const SettingsPage = () => {
                     <Label>{t('profile.name')}</Label>
                     <Input
                       {...(isEditing ? profileForm.register('name') : {})}
-                      defaultValue={user.name}
+                      value={isEditing ? undefined : user.name}
                       disabled={!isEditing}
                       className="mt-1"
                     />
@@ -161,7 +165,7 @@ const SettingsPage = () => {
                     <Input
                       type="number"
                       {...(isEditing ? profileForm.register('age', { valueAsNumber: true }) : {})}
-                      defaultValue={user.age}
+                      value={isEditing ? undefined : user.age}
                       disabled={!isEditing}
                       className="mt-1"
                     />
@@ -173,7 +177,7 @@ const SettingsPage = () => {
                     <Label>{t('profile.location')}</Label>
                     <Input
                       {...(isEditing ? profileForm.register('location') : {})}
-                      defaultValue={user.location}
+                      value={isEditing ? undefined : user.location}
                       disabled={!isEditing}
                       className="mt-1"
                     />
@@ -196,7 +200,7 @@ const SettingsPage = () => {
                     <Label>{t('profile.bio')}</Label>
                     <Textarea
                       {...(isEditing ? profileForm.register('bio') : {})}
-                      defaultValue={user.bio ?? ''}
+                      value={isEditing ? undefined : (user.bio ?? '')}
                       disabled={!isEditing}
                       className="mt-1 min-h-[100px]"
                     />
@@ -210,7 +214,11 @@ const SettingsPage = () => {
                       <Button
                         variant="outline"
                         type="button"
-                        onClick={() => { profileForm.reset(); setIsEditing(false); }}
+                        onClick={() => {
+                          profileForm.reset();
+                          if (editStartUser) setUser(editStartUser);
+                          setIsEditing(false);
+                        }}
                         className="flex-1"
                       >
                         {t('common.cancel')}
