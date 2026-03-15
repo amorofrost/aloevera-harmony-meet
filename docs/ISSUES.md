@@ -119,30 +119,23 @@ dotnet run --project Lovecraft.Tools.Seeder
 
 ---
 
-### 5. No Testing Framework
-**Severity**: High  
+### ~~5. No Testing Framework~~ ✅ Resolved
+
+**Severity**: ~~High~~ → Resolved
 **Impact**: Code quality, reliability, refactoring confidence
 
-- No unit tests
-- No integration tests
-- No E2E tests
-- No test infrastructure
+**Implemented** (2026-03-15):
+- **Vitest** + jsdom — test runner with `globals: true`, config in `vite.config.ts`
+- **React Testing Library** — `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom/vitest`
+- **47 tests** across 4 files — all passing
 
-**Resolution**: Add testing setup:
-- **Vitest** for unit/integration tests (Vite-native)
-- **React Testing Library** for component tests
-- **Playwright** or **Cypress** for E2E tests
+**Coverage**:
+- `src/lib/validators.ts` — all 5 Zod schemas (22 tests)
+- `src/lib/apiError.ts` — `showApiError()` (5 tests)
+- `src/lib/utils.ts` — `cn()` (3 tests)
+- `src/pages/Welcome.tsx` — login + register forms (17 tests)
 
-**Recommended Structure**:
-```
-src/
-  __tests__/
-    unit/
-    integration/
-  pages/
-    __tests__/
-      Friends.test.tsx
-```
+**Remaining gaps**: Other page components, API services, `ProtectedRoute`, custom hooks. E2E (Playwright) deferred.
 
 ---
 
@@ -503,7 +496,7 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 4. ✔️~~**Backend: Azure Storage** (Issue #3)~~ ✅ Done (Azure Table Storage integrated, seeder tool available)
 5. ✔️~~**Full AuthContext with token refresh** (Issue #2 follow-up)~~ ✅ Done (silent refresh in `apiClient`, proactive refresh in `ProtectedRoute`, 13 new backend unit tests)
 6. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
-7. **Add Testing** (Issue #5) — Enables confident refactoring
+7. ✔️~~**Add Testing** (Issue #5)~~ ✅ Done (Vitest + RTL, 47 tests covering `src/lib/` and `Welcome.tsx`)
 8. **Complete i18n** (Issue #8) — Better UX
 9. ✅~~**Add Form Validation** (Issue #10)~~ ✅ Done (react-hook-form + Zod on all forms)
 10. ✅~~**Improve Error Handling** (Issue #9)~~ ✅ Done (sonner toasts via `showApiError`, success toasts on auth/save/reply)

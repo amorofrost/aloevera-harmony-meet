@@ -208,11 +208,14 @@ docker-compose up
 ## 📋 Available Scripts
 
 ```bash
-npm run dev         # Start development server (port 8080)
-npm run build       # Build for production
-npm run build:dev   # Build in development mode
-npm run lint        # Run ESLint
-npm run preview     # Preview production build
+npm run dev          # Start development server (port 8080)
+npm run build        # Build for production
+npm run build:dev    # Build in development mode
+npm run lint         # Run ESLint
+npm run preview      # Preview production build
+npm run test         # Run tests in watch mode
+npm run test:run     # Run tests once (CI)
+npm run test:coverage  # Run tests with coverage report
 ```
 
 ## 🔧 Development
@@ -232,7 +235,7 @@ Changes made via Lovable are automatically committed to the repository.
 
 - **TypeScript**: Loose settings (see ISSUES.md) - consider tightening
 - **ESLint**: Configured with React hooks and TypeScript rules
-- **No Testing**: Currently no test framework setup
+- **Testing**: Vitest + React Testing Library (47 tests across 4 files)
 
 ## 🚧 Known Issues
 
@@ -244,7 +247,7 @@ See [/docs/ISSUES.md](/docs/ISSUES.md) for a comprehensive list. Major issues in
 - ⚠️ No protected routes — pages accessible without login
 - ⚠️ Friends, Talks, AloeVera pages still use embedded mock data
 - ⚠️ Loose TypeScript configuration
-- ⚠️ No testing setup
+- ✅ Testing setup — Vitest + RTL, 47 tests covering `src/lib/` utilities and `Welcome.tsx`
 - ⚠️ Type inconsistencies (duplicate Message interface)
 
 ## 🗺️ Roadmap

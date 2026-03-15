@@ -565,42 +565,48 @@ POST   /forum/topics/{id}/replies
 
 ---
 
-## 🧪 Testing Strategy (To Be Implemented)
+## 🧪 Testing
 
-**Recommended Testing Pyramid**:
+**Stack**: Vitest + React Testing Library + jsdom. Config lives in `vite.config.ts` (not a separate `vitest.config.ts`) to inherit the `@` alias automatically.
+
+**Current coverage** (47 tests, 4 files):
+
+| File | Tests | What's covered |
+|---|---|---|
+| `src/lib/__tests__/validators.test.ts` | 22 | All 5 Zod schemas (`loginSchema`, `registerSchema`, `profileEditSchema`, `messageSchema`, `replySchema`) |
+| `src/lib/__tests__/apiError.test.ts` | 5 | `showApiError()` — ApiResponse error, plain Error, unknown, null/undefined |
+| `src/lib/__tests__/utils.test.ts` | 3 | `cn()` — merging, falsy omission, Tailwind conflict resolution |
+| `src/pages/__tests__/Welcome.test.tsx` | 17 | Login form (8) + Register form (9) |
+
+**Test helper**: `src/test/utils.tsx` exports `renderWithProviders(ui)` — wraps in `MemoryRouter` + `LanguageContext.Provider` with `t: key => key` mock (language-agnostic queries).
+
+**Key patterns**:
+- Mock API services via `vi.mock('@/services/api', ...)` (barrel index)
+- Mock toast via `vi.mock('@/components/ui/sonner', ...)` (local re-export, not `'sonner'`)
+- Spy on `apiClient` singleton methods via `vi.spyOn(apiClient, 'setAccessToken')`
+- Radix UI `<Select>` mocked as native `<select data-testid="gender-select">` (jsdom incompatibility)
+- Use `fireEvent.submit(form)` to bypass jsdom HTML5 email constraint validation
+
+**Running tests**:
+```bash
+npm run test:run      # Run once
+npm run test          # Watch mode
+npm run test:coverage # Coverage report (src/lib/** + src/pages/Welcome.tsx)
+```
+
+**Testing Pyramid** (current state → target):
 
 ```
         /\
-       /E2E\      ← Few (Playwright/Cypress)
+       /E2E\      ← Not yet implemented (Playwright deferred)
       /────\
-     /Integ.\    ← Some (React Testing Library)
+     /Integ.\    ← Welcome.tsx login/register flows ✅
     /────────\
-   /   Unit   \  ← Many (Vitest)
+   /   Unit   \  ← src/lib/** fully covered ✅
   /____________\
 ```
 
-**Unit Tests** (Vitest):
-- Utility functions
-- Custom hooks
-- Type guards
-- Formatters
-
-**Component Tests** (React Testing Library):
-- UI component behavior
-- User interactions
-- Conditional rendering
-- Props handling
-
-**Integration Tests**:
-- Page component flows
-- Context providers
-- Router navigation
-- Form submissions
-
-**E2E Tests** (Playwright):
-- User journeys (login → search → match → chat)
-- Critical paths
-- Cross-browser testing
+**Not yet covered**: `Friends.tsx`, `Talks.tsx`, `AloeVera.tsx`, `SettingsPage.tsx`, API services, `ProtectedRoute`, custom hooks. E2E (Playwright) deferred.
 
 ---
 
@@ -703,7 +709,7 @@ VITE_GA_ID=...
 
 **Phase 3: Enhancement** 🔄 In Progress
 1. ✔️~~**Token refresh**~~ — silent refresh in `apiClient` on 401, proactive near-expiry refresh in `ProtectedRoute`, `refresh_token` stored in `localStorage`, 13 new backend unit tests
-2. Add testing
+2. ✔️~~**Add testing**~~ — Vitest + RTL, 47 tests covering `src/lib/` utilities and `Welcome.tsx` auth forms
 3. Performance optimization
 4. Complete i18n (Issue #8)
 5. Add user-visible error handling (Issue #9)
