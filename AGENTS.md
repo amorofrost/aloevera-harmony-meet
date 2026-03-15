@@ -12,7 +12,7 @@ This document provides context and instructions for AI coding assistants (like C
 
 **Current State**: React application with full backend integration. The **LoveCraft** backend (`@lovecraft/`) is running with JWT auth and mock data. All pages are wired to `src/services/api/` service layer. Authentication is enforced — all content routes require a valid JWT stored in `localStorage`. The full stack runs end-to-end in Docker.
 
-**Tech Stack**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, React Router DOM
+**Tech Stack**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, React Router DOM, react-hook-form + Zod (forms), sonner (toasts)
 
 ---
 
@@ -56,6 +56,9 @@ aloevera-harmony-meet/
 │   ├── types/              # TypeScript type definitions
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/                # Utility functions
+│   │   ├── validators.ts   # Zod schemas: loginSchema, registerSchema, profileEditSchema, messageSchema, replySchema
+│   │   ├── apiError.ts     # showApiError(err, fallback) — extracts ApiResponse error message and calls toast.error()
+│   │   └── utils.ts        # cn() and other utilities
 │   ├── assets/             # Images and static assets
 │   ├── App.tsx             # Main app with routing (all routes except / are ProtectedRoute)
 │   ├── main.tsx            # Entry point
@@ -343,6 +346,56 @@ useEffect(() => {
 
 ---
 
+## 📋 Form Validation Pattern
+
+All forms that call real APIs use **react-hook-form + Zod** via `src/lib/validators.ts` and `src/lib/apiError.ts`.
+
+### Standard wired-form pattern
+
+```typescript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from '@/components/ui/sonner';
+import { mySchema, type MySchema } from '@/lib/validators';
+import { showApiError } from '@/lib/apiError';
+
+const form = useForm<MySchema>({
+  resolver: zodResolver(mySchema),
+  // mode: 'onBlur' for multi-field forms; default 'onSubmit' for simple ones
+});
+
+const handleSubmit = form.handleSubmit(async (data) => {
+  try {
+    const result = await someApi.doThing(data);
+    if (!result.success) throw result;
+    toast.success('Done!');
+  } catch (err) {
+    showApiError(err, 'Fallback message');
+  }
+});
+```
+
+- Inline field errors: `{form.formState.errors.field && <p className="text-xs text-destructive mt-1">{form.formState.errors.field.message}</p>}`
+- Root/API errors: `form.setError('root', { message: '...' })`
+- Known field-level API errors (e.g. EMAIL_TAKEN): `form.setError('email', { message: '...' })` (not toast)
+- Select fields (shadcn `<Select>`): use `<Controller>` — `<Select>` is not a native input and cannot use `register()`
+- Age and other numeric fields: use `valueAsNumber: true` on `register()` or `Controller`
+- Cancel button: call `form.reset(savedValues)` to restore original values
+
+### Lightweight inline validation (mock-only sends)
+
+For inputs that only send to mock state (no API call), skip react-hook-form:
+```typescript
+const [msgError, setMsgError] = useState('');
+const handleSend = () => {
+  if (!content.trim()) { setMsgError("Message can't be empty"); return; }
+  // do the mock send
+};
+// In JSX: onChange={() => setMsgError('')} to clear on keystroke
+```
+
+---
+
 ## 🐛 Known Issues
 
 **See [docs/ISSUES.md](./docs/ISSUES.md) for complete list.**
@@ -361,7 +414,8 @@ useEffect(() => {
 11. ⚠️ TypeScript is loosely configured (see tsconfig.json)
 12. ⚠️ No frontend testing framework
 13. ⚠️ Duplicate `Message` interface in types
-14. ⚠️ No user-visible error messages when API calls fail
+14. ✅ User-visible error handling: `showApiError` in `src/lib/apiError.ts` + sonner `<Toaster />` in `App.tsx`
+15. ✅ Form validation: react-hook-form + Zod on all auth, profile, and reply forms (see `src/lib/validators.ts`)
 
 **Don't Try to Fix Without Context**:
 - Type system strictness (requires codebase-wide changes)
@@ -557,7 +611,8 @@ if (isLoading) return null;
 - UI: shadcn/ui components (Radix UI)
 - Icons: lucide-react
 - Dates: date-fns
-- Forms: react-hook-form + zod (configured but not used yet)
+- Forms: react-hook-form + zod (in use — see `src/lib/validators.ts`)
+- Notifications: sonner (`toast.success()`, `toast.error()` via `showApiError` in `src/lib/apiError.ts`)
 - Animations: tailwindcss-animate
 
 **Don't add without discussion**:
@@ -695,7 +750,13 @@ A: In `localStorage` under the key `access_token`. `apiClient.setAccessToken()` 
 **Q: Should I fix TypeScript strict mode issues?**  
 A: No. This requires codebase-wide changes. It's in ISSUES.md as known technical debt.
 
-**Q: Should I add tests?**  
+**Q: How should I handle errors from API calls?**
+A: Import `showApiError` from `src/lib/apiError.ts` and call it in the catch block: `showApiError(err, 'Fallback message')`. For known field-level errors (e.g. email already taken), call `form.setError('fieldName', { message: '...' })` instead so the error appears inline next to the field.
+
+**Q: How do I add form validation to a new form?**
+A: Add a Zod schema to `src/lib/validators.ts`, infer the TypeScript type, then use `useForm<YourSchema>({ resolver: zodResolver(yourSchema) })`. See the Form Validation Pattern section above.
+
+**Q: Should I add tests?**
 A: Only if specifically requested. No testing framework is set up yet.
 
 **Q: Can I use a different UI library?**  

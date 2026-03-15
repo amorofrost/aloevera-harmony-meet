@@ -34,6 +34,8 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Seed tool | ✅ `Lovecraft.Tools.Seeder` — seeds all tables from mock data |
 | Docker deployment | ✅ nginx proxy on port 8080 (no need to expose port 5000) |
 | Token refresh | ✅ Silent refresh in `apiClient`; proactive refresh in `ProtectedRoute` |
+| Form validation | ✅ react-hook-form + Zod on all auth, profile, and reply forms (`src/lib/validators.ts`) |
+| User-visible error handling | ✅ sonner toasts via `showApiError` (`src/lib/apiError.ts`); success toasts on auth/save/reply |
 
 See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues and [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide.
 
@@ -85,12 +87,12 @@ The application will be available at `http://localhost:8080`
 - **React Context API** - Language/i18n management
 
 ### Form & Validation
-- **React Hook Form 7.61.1** - Form state management
-- **Zod 3.25.76** - Schema validation
+- **React Hook Form 7.61.1** - Form state management (login, register, profile edit, forum reply)
+- **Zod 3.25.76** - Schema validation (`src/lib/validators.ts`)
 
 ### Additional Libraries
 - **date-fns 3.6.0** - Date formatting
-- **sonner 1.7.4** - Toast notifications
+- **sonner 1.7.4** - Toast notifications (success/error feedback on all API actions; `src/lib/apiError.ts`)
 - **recharts 2.15.4** - Charts (for future analytics)
 - **embla-carousel-react** - Carousels
 
@@ -118,6 +120,8 @@ aloevera-harmony-meet/
 │   │   └── chat.ts         # Chat, Message types
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/                # Utilities
+│   │   ├── validators.ts   # Zod schemas for all forms
+│   │   └── apiError.ts     # showApiError() toast helper
 │   ├── assets/             # Images
 │   ├── App.tsx             # Main app with routing
 │   ├── main.tsx            # Entry point

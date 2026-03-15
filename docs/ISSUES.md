@@ -2,8 +2,8 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: February 24, 2026
-**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented.
+**Last Updated**: March 14, 2026
+**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented. Form validation (react-hook-form + Zod) and user-visible error handling (sonner toasts) implemented on all forms.
 
 ---
 
@@ -196,39 +196,42 @@ All mock data has been extracted from page components into `src/data/` files and
 
 ## 🟡 Medium Priority Issues
 
-### 9. Lack of Error Handling
-**Severity**: Medium  
-**Impact**: Poor UX when things go wrong
+### ~~9. Lack of Error Handling~~ ✅ RESOLVED
+**Resolved**: March 14, 2026
 
-**Partially resolved** (February 19, 2026): All page components now have:
-- `try/catch` blocks wrapping API calls
-- Loading state with spinner while data loads
-- Basic error logging to console
+**What was implemented**:
+- `src/lib/apiError.ts` — `showApiError(err, fallback)` helper: extracts `err.error.message` from ApiResponse shape, falls back to `Error.message`, then the fallback string, and calls `toast.error()`
+- `<Sonner position="bottom-center" richColors />` added to `App.tsx` (red for errors, green for success)
+- Auth actions: `toast.success('Welcome back!')` on login, `toast.success('Account created! Check your email to verify.')` on register
+- Profile save: `toast.success('Profile updated')` on success; `showApiError` on failure
+- Logout: `showApiError(err, 'Logout failed')` instead of silently swallowing the error
+- Forum replies: `toast.success('Reply posted')` on success; `showApiError` on failure
+- Unexpected API failures (network errors, etc.) surfaced via `showApiError` in all wired forms
 
 **Still missing**:
 - React Error Boundaries (component-level crashes)
-- User-visible error messages (toast / inline alerts) for failed API calls
-- Retry logic
-- Fallback UI when network is unavailable
-
-**Resolution**:
-- Add React Error Boundaries
-- Surface errors with toast notifications (shadcn/ui `toast` is already available)
-- Add retry buttons on error states
+- Retry logic / fallback UI when network is unavailable
 
 ---
 
-### 10. No Validation on Forms
-**Severity**: Medium  
-**Impact**: Data quality, UX
+### ~~10. No Validation on Forms~~ ✅ RESOLVED
+**Resolved**: March 14, 2026
 
-While React Hook Form and Zod are included in dependencies, they're not actually used in any forms:
-- Login/register forms have no validation
-- Profile edit forms have no validation
-- Message inputs have no validation
-- Settings changes have no validation
+**What was implemented** — `src/lib/validators.ts` (new) contains all Zod schemas:
+- `loginSchema` — email (valid format), password (non-empty)
+- `registerSchema` — email, password (≥8 chars + uppercase + lowercase + digit + special char), name, age (18–99 int), location, gender, bio (optional, max 500 chars)
+- `profileEditSchema` — name, age (18–99), location, bio (optional, max 500 chars)
+- `messageSchema` — content (non-empty after trim, max 2000 chars)
+- `replySchema` — content (non-empty after trim, max 5000 chars)
 
-**Resolution**: Implement form validation with React Hook Form + Zod schemas.
+**Forms migrated to `useForm<T>` + `zodResolver`**:
+- `Welcome.tsx` — login (`mode: onSubmit`, root error for wrong credentials) + register (`mode: onBlur`, EMAIL_TAKEN mapped to field-level `setError('email', ...)`)
+- `SettingsPage.tsx` — profile edit (`reset()` on cancel, `editStartUser` captures state at edit start to restore gender on cancel)
+- `TopicDetail.tsx` — forum reply (single textarea, inline error below)
+
+**Lightweight inline validation** (no react-hook-form, send is mock-only):
+- `Friends.tsx` — message input: blocks empty/whitespace, inline `"Message can't be empty"` error, clears on keystroke
+- `Talks.tsx` — same pattern
 
 ---
 
@@ -486,9 +489,9 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 |----------|----------|------|--------|-----|-------|----------|
 | **Backend/Data** | 0 | 1 | 1 | 0 | 3 | #1, #3, #6, #17 |
 | **TypeScript/Code Quality** | 0 | 3 | 1 | 1 | 5 | — |
-| **UX/Features** | 0 | 1 | 4 | 3 | 8 | #2 |
+| **UX/Features** | 0 | 1 | 2 | 3 | 8 | #2, #9, #10 |
 | **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
-| **Total** | **0** | **5** | **7** | **7** | **18 open** | **#1, #2, #3, #6, #17** |
+| **Total** | **0** | **5** | **5** | **7** | **16 open** | **#1, #2, #3, #6, #9, #10, #17** |
 
 ---
 
@@ -502,8 +505,8 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 6. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
 7. **Add Testing** (Issue #5) — Enables confident refactoring
 8. **Complete i18n** (Issue #8) — Better UX
-9. **Add Form Validation** (Issue #10) — Data quality
-10. **Improve Error Handling** (Issue #9) — User-visible error messages, error boundaries
+9. ✅~~**Add Form Validation** (Issue #10)~~ ✅ Done (react-hook-form + Zod on all forms)
+10. ✅~~**Improve Error Handling** (Issue #9)~~ ✅ Done (sonner toasts via `showApiError`, success toasts on auth/save/reply)
 11. **Implement State Management** (Issue #12) — Scalability
 12. **Improve Swipe UX** (Issue #13) — Core feature polish
 13. **Everything else** — Based on priority
@@ -525,3 +528,5 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 ---
 
 **Next Steps**: Fix Type Issues (#4, #7) and add frontend test framework (#5). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.
+
+**March 2026 update**: Issues #9 (error handling) and #10 (form validation) are fully resolved. All forms use react-hook-form + Zod. User-facing errors and successes surface via sonner toasts. See `src/lib/validators.ts` and `src/lib/apiError.ts`.
