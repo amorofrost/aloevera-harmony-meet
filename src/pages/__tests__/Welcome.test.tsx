@@ -56,8 +56,9 @@ vi.mock('@/components/ui/select', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.spyOn(apiClient, 'setAccessToken');
-  vi.spyOn(apiClient, 'setRefreshToken');
+  localStorage.clear();
+  vi.spyOn(apiClient, 'setAccessToken').mockImplementation(() => {});
+  vi.spyOn(apiClient, 'setRefreshToken').mockImplementation(() => {});
 });
 
 // ============================================================
@@ -76,14 +77,14 @@ describe('Welcome — login form', () => {
   it('shows inline error when email is invalid', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Welcome />);
-    const emailInput = screen.getByRole('textbox', { name: /email/i });
-    await user.type(emailInput, 'bad-email');
-    // fireEvent.submit bypasses jsdom's native HTML5 constraint validation on
-    // type="email" inputs, allowing react-hook-form / Zod to report the error.
-    fireEvent.submit(emailInput.closest('form')!);
+    await user.type(screen.getByRole('textbox', { name: /email/i }), 'bad-email');
+    // Pre-fill a valid password so only the email error fires
+    await user.type(screen.getByLabelText(/password/i), 'secret');
+    // fireEvent.submit bypasses jsdom's native HTML5 email constraint validation
+    // which would block the submit event before react-hook-form can run
+    fireEvent.submit(screen.getByRole('button', { name: /auth\.signIn/i }).closest('form')!);
     await waitFor(() => {
-      // Both email and password errors fire — use getAllByRole
-      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
 
@@ -170,7 +171,7 @@ describe('Welcome — login form', () => {
     await user.type(screen.getByLabelText(/password/i), 'secret');
     await user.click(screen.getByRole('button', { name: /auth\.signIn/i }));
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith('/friends');
     });
   });
 });
