@@ -1,20 +1,55 @@
-import type { ApiResponse } from './apiClient';
-import { mockEventChats, mockPrivateChats, type PrivateChatWithUser } from '@/data/mockChats';
-import type { GroupChat } from '@/types/chat';
+import { isApiMode } from '@/config/api.config';
+import { apiClient } from './apiClient';
+import { mockPrivateChats, mockChatUsers } from '@/data/mockChats';
+import type { ChatDto, MessageDto, PrivateChatWithUser } from '@/types/chat';
+import type { User } from '@/types/user';
 
-// Chat endpoints are not yet implemented in the backend.
-// This service always uses mock data regardless of mode.
+// Suppress unused import warning — mockChatUsers may be used in future mock helpers
+void (mockChatUsers as unknown as Record<string, User>);
 
-function mockSuccess<T>(data: T): ApiResponse<T> {
-  return { success: true, data, timestamp: new Date().toISOString() };
+function mockSuccess<T>(data: T) {
+  return { success: true as const, data };
 }
 
 export const chatsApi = {
-  async getEventChats(): Promise<ApiResponse<GroupChat[]>> {
-    return mockSuccess(mockEventChats);
+  async getChats() {
+    if (!isApiMode()) {
+      return mockSuccess(mockPrivateChats);
+    }
+    return apiClient.get<ChatDto[]>('/api/v1/chats');
   },
 
-  async getPrivateChats(): Promise<ApiResponse<PrivateChatWithUser[]>> {
-    return mockSuccess(mockPrivateChats);
+  async getMessages(chatId: string, page = 1) {
+    if (!isApiMode()) {
+      return mockSuccess([] as MessageDto[]);
+    }
+    return apiClient.get<MessageDto[]>(`/api/v1/chats/${chatId}/messages?page=${page}`);
+  },
+
+  async getOrCreateChat(targetUserId: string) {
+    if (!isApiMode()) {
+      const existing = mockPrivateChats.find(c => c.participants.includes(targetUserId));
+      return mockSuccess(existing ?? mockPrivateChats[0]);
+    }
+    return apiClient.post<ChatDto>('/api/v1/chats', { targetUserId });
+  },
+
+  async sendMessage(chatId: string, content: string) {
+    if (!isApiMode()) {
+      const msg: MessageDto = {
+        id: crypto.randomUUID(),
+        chatId,
+        senderId: 'current-user',
+        content,
+        timestamp: new Date(),
+        read: false,
+        type: 'text',
+      };
+      return mockSuccess(msg);
+    }
+    return apiClient.post<MessageDto>(`/api/v1/chats/${chatId}/messages`, { content });
   },
 };
+
+// Re-export PrivateChatWithUser for consumers that import it from here
+export type { PrivateChatWithUser };

@@ -1,3 +1,5 @@
+import type { Message } from './chat';
+
 export interface AloeVeraSong {
   id: string;
   title: string;
@@ -41,15 +43,6 @@ export interface Match {
   lastMessage?: Message;
 }
 
-export interface Message {
-  id: string;
-  matchId: string;
-  senderId: string;
-  content: string;
-  timestamp: Date;
-  read: boolean;
-}
-
 export interface Like {
   id: string;
   fromUserId: string;
@@ -72,4 +65,5 @@ export interface Event {
   price?: number;
   organizer: string;
   isSecret?: boolean;
+  forumTopicId?: string;
 }
