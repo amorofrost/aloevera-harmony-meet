@@ -1,6 +1,21 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import { mockForumSections, mockTopicDetails, type ForumSection, type ForumTopic, type ForumTopicDetail, type ForumReply } from '@/data/mockForumData';
 
+// TODO: Import ForumTopicDto from backend types once available
+interface ForumTopicDto {
+  id: string;
+  sectionId: string;
+  title: string;
+  content: string;
+  authorId?: string;
+  authorName: string;
+  authorAvatar?: string;
+  createdAt: string;
+  updatedAt: string;
+  replyCount: number;
+  isPinned: boolean;
+}
+
 function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
 }
@@ -173,7 +188,7 @@ export const forumsApi = {
       return mockSuccess(topicDetail);
     }
 
-    const response = await apiClient.post<any>(
+    const response = await apiClient.post<ForumTopicDto>(
       `/api/v1/forum/sections/${sectionId}/topics`,
       { title, content }
     );
