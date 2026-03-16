@@ -9,7 +9,7 @@
 
 These issues must be resolved before the app serves real users.
 
-### 26. Email Service Missing
+### PB.1. Email Service Missing
 **Impact**: Account recovery impossible; password reset non-functional
 
 Email verification tokens are logged to the console only. Because `registerSchema` enforces a valid email address (treating email as first-class identity), email verification and account recovery must work at launch. Users who lose their password have no recourse.
@@ -18,7 +18,7 @@ Email verification tokens are logged to the console only. Because `registerSchem
 
 ---
 
-### 27. No HTTPS on Azure VM
+### PB.2. No HTTPS on Azure VM
 **Impact**: JWT tokens and credentials travel in plaintext
 
 All traffic between the browser and the Azure VM is unencrypted. JWT tokens stored in `localStorage` are readable in transit.
@@ -27,7 +27,7 @@ All traffic between the browser and the Azure VM is unencrypted. JWT tokens stor
 
 ---
 
-### 28. No Rate Limiting on Auth Endpoints
+### PB.3. No Rate Limiting on Auth Endpoints
 **Impact**: Brute-force login attacks unprotected
 
 `/api/v1/auth/login`, `/api/v1/auth/register`, and `/api/v1/auth/forgot-password` have no rate limiting. Attackers can make unlimited requests.
@@ -36,7 +36,7 @@ All traffic between the browser and the Azure VM is unencrypted. JWT tokens stor
 
 ---
 
-### 29. No Account Lockout
+### PB.4. No Account Lockout
 **Impact**: Unlimited failed login attempts with no lockout
 
 There is no tracking of failed login attempts and no temporary lockout mechanism.
@@ -45,10 +45,10 @@ There is no tracking of failed login attempts and no temporary lockout mechanism
 
 ---
 
-### 30. No Input Sanitization on User-Generated Content
+### PB.5. No Input Sanitization on User-Generated Content
 **Impact**: XSS risk when rich text rendering is introduced
 
-Forum replies, chat messages, and bio fields are stored without sanitisation. React escapes plain string output by default, so the XSS surface is limited today — but this becomes a direct vulnerability when rich text rendering (#40) is implemented. Sanitisation must be in place before that feature ships.
+Forum replies, chat messages, and bio fields are stored without sanitisation. React escapes plain string output by default, so the XSS surface is limited today — but this becomes a direct vulnerability when rich text rendering (MCF.11) is implemented. Sanitisation must be in place before that feature ships.
 
 **Resolution**: Add server-side HTML sanitisation (e.g. HtmlSanitizer NuGet package) to `ForumService.CreateReplyAsync`, `ChatService.SendMessageAsync`, and `UserService.UpdateUserAsync` (bio field) in the backend.
 
@@ -56,7 +56,7 @@ Forum replies, chat messages, and bio fields are stored without sanitisation. Re
 
 ## 🟠 Missing Core Features
 
-### 15. Desktop Navigation *(escalated from UX/Polish)*
+### MCF.1. Desktop Navigation *(escalated from UX/Polish)*
 **Impact**: App is functionally unusable on desktop viewports
 
 Bottom navigation is mobile-only. No navigation element exists on large screens. Desktop users have no way to switch between pages.
@@ -65,7 +65,7 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 ---
 
-### 31. Forum Topic Creation
+### MCF.2. Forum Topic Creation
 **Impact**: Community feature is read-only for new content
 
 Users can only reply to existing topics. There is no UI, no `forumsApi.createTopic()` method, and no backend endpoint for creating new topics. The entire forum is seeded-only content.
@@ -77,7 +77,7 @@ Users can only reply to existing topics. There is no UI, no `forumsApi.createTop
 
 ---
 
-### 32. Profile Image Upload
+### MCF.3. Profile Image Upload
 **Impact**: Users cannot set their own profile photo
 
 Profile images are hardcoded Unsplash URLs. Azure Blob Storage is not integrated. `UserDto.profileImage` is always an external URL.
@@ -88,7 +88,7 @@ Profile images are hardcoded Unsplash URLs. Azure Blob Storage is not integrated
 
 ---
 
-### 33. Notification System
+### MCF.4. Notification System
 **Impact**: No engagement hooks — users are never informed of new activity
 
 There are no notifications for: new match, received like, reply to a forum post you authored, new message. Users must manually refresh to discover activity.
@@ -97,7 +97,7 @@ There are no notifications for: new match, received like, reply to a forum post 
 
 ---
 
-### 34. Songs Backend Endpoint
+### MCF.5. Songs Backend Endpoint
 **Impact**: Favorite songs on user profiles are disconnected from real data
 
 `src/services/api/songsApi.ts` always returns mock data regardless of `VITE_API_MODE`. There is no backend endpoint for songs.
@@ -106,7 +106,7 @@ There are no notifications for: new match, received like, reply to a forum post 
 
 ---
 
-### 35. Pagination on List Views
+### MCF.6. Pagination on List Views
 **Impact**: All list views load full datasets; will degrade at scale
 
 Events, blog posts, forum topics, store items, and user search results all fetch everything at once. No `page`/`pageSize` parameters are used on the frontend.
@@ -115,7 +115,7 @@ Events, blog posts, forum topics, store items, and user search results all fetch
 
 ---
 
-### 36. Advanced User Search & Filtering
+### MCF.7. Advanced User Search & Filtering
 **Impact**: User discovery has no filters; swipe deck shows all users
 
 User preferences (age range, gender, location) exist in `UserPreferencesDto` and `SettingsPage.tsx` but are not sent to or honoured by `GET /api/v1/users`. The matching swipe deck shows every user regardless of preferences.
@@ -127,7 +127,7 @@ User preferences (age range, gender, location) exist in `UserPreferencesDto` and
 
 ---
 
-### 37. Anonymous Likes
+### MCF.8. Anonymous Likes
 **Impact**: Core privacy feature absent from the matching system
 
 Currently all likes are visible to the recipient. A user sending an anonymous like has their identity stored in the system but not surfaced to the recipient. The sender is revealed only when the recipient also sends a like, creating a mutual (non-anonymous) match.
@@ -138,7 +138,7 @@ Currently all likes are visible to the recipient. A user sending an anonymous li
 
 ---
 
-### 38. Event Sub-Groups
+### MCF.9. Event Sub-Groups
 **Impact**: No way to organise attendees into sub-groups within an event
 
 For events like yachting trips, attendees may be split into boats or other groups. Each group needs its own forum topic and roster, while remaining transparent — all event attendees can see and interact with all sub-groups.
@@ -149,10 +149,10 @@ For events like yachting trips, attendees may be split into boats or other group
 
 ---
 
-### 39. Gated Registration via Access Codes
+### MCF.10. Gated Registration via Access Codes
 **Impact**: No way to restrict who can create accounts
 
-When enabled, only users with a valid access code can complete registration. Codes are time-limited and distributed at real-world events (printed QR codes or short keywords). Controlled via the admin panel (#45).
+When enabled, only users with a valid access code can complete registration. Codes are time-limited and distributed at real-world events (printed QR codes or short keywords). Controlled via the admin panel (MCF.16).
 
 **Resolution**:
 - Backend: Add `AccessCode` entity and table. Add `POST /api/v1/admin/access-codes` (create), `GET /api/v1/admin/access-codes` (list), `POST /api/v1/auth/validate-code` (validate before registration). Check for valid code during `RegisterAsync` when gating is enabled via feature flag
@@ -160,7 +160,7 @@ When enabled, only users with a valid access code can complete registration. Cod
 
 ---
 
-### 40. Rich Text and Media in Forum & Chat
+### MCF.11. Rich Text and Media in Forum & Chat
 **Impact**: Forum posts and messages are plain text only; no images or formatting
 
 Users cannot bold text, create lists, or attach images in forum replies or private messages. This is a baseline expectation for a community platform.
@@ -168,12 +168,12 @@ Users cannot bold text, create lists, or attach images in forum replies or priva
 **Resolution**:
 - Choose a rich text editor (e.g. TipTap or Quill) for the frontend
 - Replace the plain `<textarea>` in `src/components/forum/TopicDetail.tsx` and the message input in `src/pages/Friends.tsx` with the editor component
-- Backend: Store content as HTML or a safe subset (Markdown). Apply server-side sanitisation (see #30) before storage
-- Add image upload support via Azure Blob Storage (see #32)
+- Backend: Store content as HTML or a safe subset (Markdown). Apply server-side sanitisation (see PB.5) before storage
+- Add image upload support via Azure Blob Storage (see MCF.3)
 
 ---
 
-### 41. Ranking & Badges System
+### MCF.12. Ranking & Badges System
 **Impact**: Community engagement has no visible progression or recognition
 
 Active users receive no visible acknowledgement for their participation. No ranks, no badges, no profile distinction between a new user and a long-term community member.
@@ -186,7 +186,7 @@ Active users receive no visible acknowledgement for their participation. No rank
 
 ---
 
-### 42. Event Group Chat (Real Implementation)
+### MCF.13. Event Group Chat (Real Implementation)
 **Impact**: Event discussions are routed through a forum topic workaround, not a real group chat
 
 `src/pages/Talks.tsx` event chat tab uses a forum topic as a group chat proxy. This produces a poor UX (forum reply format instead of chat bubbles) and limits real-time features.
@@ -195,7 +195,7 @@ Active users receive no visible acknowledgement for their participation. No rank
 
 ---
 
-### 43. Public Metrics Dashboard
+### MCF.14. Public Metrics Dashboard
 **Impact**: No visibility into platform activity for users
 
 Users have no way to see how active the platform is — total members, who is online, recent sign-ups.
@@ -206,33 +206,33 @@ Users have no way to see how active the platform is — total members, who is on
 
 ---
 
-### 44. AI Content Moderation
+### MCF.15. AI Content Moderation
 **Impact**: No automated protection against spam or inappropriate content
 
 Forum posts and chat messages are not screened. A single bad actor can flood the platform before a moderator notices.
 
-**Resolution**: Integrate an AI moderation API (e.g. OpenAI Moderation, Azure Content Safety) at the point of content creation in the backend (`ForumService.CreateReplyAsync`, `ChatService.SendMessageAsync`). Flag content above a configurable threshold. Route flagged content to the admin panel (#45) for human review rather than blocking automatically.
+**Resolution**: Integrate an AI moderation API (e.g. OpenAI Moderation, Azure Content Safety) at the point of content creation in the backend (`ForumService.CreateReplyAsync`, `ChatService.SendMessageAsync`). Flag content above a configurable threshold. Route flagged content to the admin panel (MCF.16) for human review rather than blocking automatically.
 
 ---
 
-### 45. Admin & Moderator Panel
+### MCF.16. Admin & Moderator Panel
 **Impact**: No interface for managing the platform — feature flags, user blocking, content removal
 
-There is no admin interface. A rogue user or spammer can only be stopped by directly modifying the database. Feature flags (e.g. gated registration from #39) have no toggle UI.
+There is no admin interface. A rogue user or spammer can only be stopped by directly modifying the database. Feature flags (e.g. gated registration from MCF.10) have no toggle UI.
 
 **Scope**:
 - Feature flag management (enable/disable gated registration, maintenance mode, etc.)
 - User management: view, block, unblock accounts
 - Content management: delete forum posts and replies, clear chat messages
-- Access code management (for #39)
-- AI moderation review queue (for #44)
-- Platform metrics view (for #43)
+- Access code management (for MCF.10)
+- AI moderation review queue (for MCF.15)
+- Platform metrics view (for MCF.14)
 
 **Architecture note**: Consider a separate web application (`@aloevera-admin/`) with its own authentication (admin-only JWT role) for security isolation. Alternatively, add admin routes to the existing frontend behind a role check.
 
 ---
 
-### 46. Telegram Mini App
+### MCF.17. Telegram Mini App
 **Impact**: Users who prefer Telegram have no native way to access the platform
 
 A Telegram Mini App would let users interact with AloeVera Harmony Meet without leaving Telegram. Planned as a separate repository (`@aloevera-telegram-bot/`).
@@ -243,7 +243,7 @@ A Telegram Mini App would let users interact with AloeVera Harmony Meet without 
 
 ---
 
-### 47. aloeband.ru Scraper
+### MCF.18. aloeband.ru Scraper
 **Impact**: Events and store items require manual data entry; may fall out of sync with the official site
 
 Upcoming concerts, events, and merchandise listed on `aloeband.ru` are not automatically reflected in the app. App events and store items should include a forward link to the official site for ticket and merchandise purchases.
@@ -256,7 +256,7 @@ Upcoming concerts, events, and merchandise listed on `aloeband.ru` are not autom
 
 ## 🟡 Technical Debt & Infrastructure
 
-### 4. Loose TypeScript Configuration
+### TD.1. Loose TypeScript Configuration
 **Impact**: Type safety compromised; potential runtime errors
 
 Current `tsconfig.json` has `strictNullChecks: false`, `noImplicitAny: false`, `noUnusedLocals: false`, `noUnusedParameters: false`.
@@ -265,7 +265,7 @@ Current `tsconfig.json` has `strictNullChecks: false`, `noImplicitAny: false`, `
 
 ---
 
-### 8. Incomplete Internationalization
+### TD.2. Incomplete Internationalization
 **Impact**: Non-Russian speakers see untranslated UI
 
 Many strings are hardcoded in Russian instead of using `t()` from `src/contexts/LanguageContext.tsx`. Affected areas: forum section names, store categories, event categories, chat placeholders, system messages.
@@ -274,7 +274,7 @@ Many strings are hardcoded in Russian instead of using `t()` from `src/contexts/
 
 ---
 
-### 12. No Global State Management Strategy
+### TD.3. No Global State Management Strategy
 **Impact**: State cannot be shared between pages; TanStack Query is configured but unused
 
 User profile, auth state, match/like counts, and cart state are all managed in local component state and cannot be shared across routes.
@@ -283,7 +283,7 @@ User profile, auth state, match/like counts, and cart state are all managed in l
 
 ---
 
-### 48. No React Error Boundaries
+### TD.4. No React Error Boundaries
 **Impact**: Any unhandled component error crashes the entire app with a blank screen
 
 There are no `ErrorBoundary` components anywhere in the React tree. A runtime error in any component unmounts the full UI.
@@ -292,7 +292,7 @@ There are no `ErrorBoundary` components anywhere in the React tree. A runtime er
 
 ---
 
-### 49. No Structured Logging or Monitoring in Production
+### TD.5. No Structured Logging or Monitoring in Production
 **Impact**: Impossible to diagnose issues after deployment; no alerting
 
 The backend has no Serilog output configured for production and no Application Insights integration. There is no frontend error tracking (Sentry or equivalent).
@@ -303,7 +303,7 @@ The backend has no Serilog output configured for production and no Application I
 
 ---
 
-### 50. No CI/CD Pipeline
+### TD.6. No CI/CD Pipeline
 **Impact**: Tests are never run automatically; deployment is fully manual
 
 There are no GitHub Actions (or equivalent) workflows. A breaking change can be pushed to the repo without any automated gate. Deployment requires SSH-ing into the Azure VM and running `docker compose up --build` manually.
@@ -314,20 +314,20 @@ There are no GitHub Actions (or equivalent) workflows. A breaking change can be 
 
 ---
 
-### 51. `localStorage` Token Security
+### TD.7. `localStorage` Token Security
 **Impact**: Access tokens in `localStorage` are readable by any JavaScript on the page
 
 Storing the access token in `localStorage` is vulnerable to XSS. The more secure pattern is: access token in memory (React state/context), refresh token in an HttpOnly cookie.
 
-**Dependency**: Requires #27 (HTTPS) to be resolved first — the `Secure` cookie flag only works over HTTPS. The backend already supports the HttpOnly cookie flow conditionally on `Request.IsHttps`.
+**Dependency**: Requires PB.2 (HTTPS) to be resolved first — the `Secure` cookie flag only works over HTTPS. The backend already supports the HttpOnly cookie flow conditionally on `Request.IsHttps`.
 
-**Resolution**: After #27 is resolved, move `access_token` out of `localStorage` and into a React context (or Zustand store). The refresh flow in `apiClient.ts` continues to work — it reads from the context instead of `localStorage`.
+**Resolution**: After PB.2 is resolved, move `access_token` out of `localStorage` and into a React context (or Zustand store). The refresh flow in `apiClient.ts` continues to work — it reads from the context instead of `localStorage`.
 
 ---
 
 ## 🟢 UX / Polish
 
-### 11. Accessibility Issues
+### UX.1. Accessibility Issues
 **Impact**: Users with disabilities, SEO
 
 Missing semantic HTML, ARIA labels, keyboard navigation support, focus management, alt text on some images.
@@ -336,7 +336,7 @@ Missing semantic HTML, ARIA labels, keyboard navigation support, focus managemen
 
 ---
 
-### 13. Swipe Functionality Incomplete
+### UX.2. Swipe Functionality Incomplete
 **Impact**: Core dating feature UX
 
 `src/components/ui/swipe-card.tsx` exists but swipe gestures may not be smooth on all devices, there is no animation feedback, and no undo.
@@ -345,16 +345,16 @@ Missing semantic HTML, ARIA labels, keyboard navigation support, focus managemen
 
 ---
 
-### 14. Image Handling Issues
+### UX.3. Image Handling Issues
 **Impact**: Performance, UX
 
 All images are external Unsplash URLs. No lazy loading, no optimisation, no unique images per user.
 
-**Resolution**: Once #32 (profile image upload) is resolved, migrate to user-uploaded images. Add `loading="lazy"` to all `<img>` elements. Add skeleton loaders.
+**Resolution**: Once MCF.3 (profile image upload) is resolved, migrate to user-uploaded images. Add `loading="lazy"` to all `<img>` elements. Add skeleton loaders.
 
 ---
 
-### 16. package.json Name Mismatch
+### UX.4. package.json Name Mismatch
 **Impact**: Project identity confusion
 
 `package.json` has `"name": "vite_react_shadcn_ts"` (default template name).
@@ -363,32 +363,32 @@ All images are external Unsplash URLs. No lazy loading, no optimisation, no uniq
 
 ---
 
-### 18. No .env.example File
+### UX.5. No .env.example File
 **Impact**: New developers don't know which environment variables are required
 
 **Resolution**: Add `.env.example` listing all required `VITE_*` variables with placeholder values. Commit it. Keep `.env.development` and `.env.production` in `.gitignore`.
 
 ---
 
-### 19. Unused Dependencies
+### UX.6. Unused Dependencies
 **Impact**: Bundle size, maintenance overhead
 
 Unused packages: `recharts` (no charts), `next-themes` (dark mode not implemented), `react-resizable-panels`, `vaul`, `cmdk`.
 
-**Resolution**: Remove unused packages with `npm uninstall <package>`. Exception: keep `@tanstack/react-query` — it will be used when #12 is addressed.
+**Resolution**: Remove unused packages with `npm uninstall <package>`. Exception: keep `@tanstack/react-query` — it will be used when TD.3 is addressed.
 
 ---
 
-### 20. No Analytics or Monitoring
+### UX.7. No Analytics or Monitoring
 **Impact**: No business insights
 
 No analytics (GA, Mixpanel), no error tracking (Sentry), no performance monitoring.
 
-**Resolution**: Add analytics when there are real users. Add Sentry for error tracking (see #49 — handled together with structured logging).
+**Resolution**: Add analytics when there are real users. Add Sentry for error tracking (see TD.5 — handled together with structured logging).
 
 ---
 
-### 21. No PWA Support
+### UX.8. No PWA Support
 **Impact**: Mobile experience, offline functionality
 
 No service worker, no offline support, no install prompt.
@@ -397,7 +397,7 @@ No service worker, no offline support, no install prompt.
 
 ---
 
-### 22. Inconsistent Date Formatting
+### UX.9. Inconsistent Date Formatting
 **Impact**: Code inconsistency, maintenance
 
 Date formatting is duplicated across `Friends.tsx` (`formatDateShort`, `formatTime`, `formatChatDate`) and `AloeVera.tsx` (`formatDate`, `formatBlogDate`).
@@ -406,7 +406,7 @@ Date formatting is duplicated across `Friends.tsx` (`formatDateShort`, `formatTi
 
 ---
 
-### 23. Missing SEO Metadata
+### UX.10. Missing SEO Metadata
 **Impact**: SEO, social sharing
 
 `index.html` has no Open Graph tags, no Twitter Card tags, generic title/description, no structured data.
@@ -415,16 +415,16 @@ Date formatting is duplicated across `Friends.tsx` (`formatDateShort`, `formatTi
 
 ---
 
-### 24. No Content Moderation UI Placeholder
+### UX.11. No Content Moderation UI Placeholder
 **Impact**: No user-facing reporting mechanism
 
-Users cannot report another user or flag a forum post. Only admin-side moderation (#45) is planned.
+Users cannot report another user or flag a forum post. Only admin-side moderation (MCF.16) is planned.
 
-**Resolution**: Add a "Report" option to user cards and forum posts. Store reports in a backend table. Surface in the admin panel (#45).
+**Resolution**: Add a "Report" option to user cards and forum posts. Store reports in a backend table. Surface in the admin panel (MCF.16).
 
 ---
 
-### 25. Event Postmark Component Underutilised
+### UX.12. Event Postmark Component Underutilised
 **Impact**: Visual design opportunity missed
 
 `src/components/ui/event-postmark.tsx` is only shown on event cards in `AloeVera.tsx`. It could serve as a collectible stamp on user profiles showing events attended.
@@ -448,7 +448,9 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 
 ## 📝 Changelog
 
-**March 16, 2026** — Full restructure. Switched from severity-based to type-based sections. Resolved issues (#1, #2, #3, #5, #6, #7, #9, #10, #17) moved to `RESOLVED_ISSUES.md`. Added new issues from audit: production blockers (#26–#30), missing core features (#31–#47), tech debt (#48–#51). Escalated #15 (desktop navigation) from UX/Polish to Missing Core Features. Removed "Recommended Priority Order" section — section ordering communicates priority.
+**March 16, 2026** — Renumbered all issues with section prefixes (PB.1–PB.5, MCF.1–MCF.18, TD.1–TD.7, UX.1–UX.12). Updated all cross-references within the file.
+
+**March 16, 2026** — Full restructure. Switched from severity-based to type-based sections. Resolved issues (#1, #2, #3, #5, #6, #7, #9, #10, #17) moved to `RESOLVED_ISSUES.md`. Added new issues from audit: production blockers, missing core features, tech debt. Escalated desktop navigation from UX/Polish to Missing Core Features. Removed "Recommended Priority Order" section — section ordering communicates priority.
 
 **March 15, 2026** — Issues #5 (testing) and #7 (duplicate Message interface) resolved. Chat REST + SignalR implemented.
 
