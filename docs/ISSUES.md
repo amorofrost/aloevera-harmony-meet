@@ -2,8 +2,8 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: March 14, 2026
-**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented. Form validation (react-hook-form + Zod) and user-visible error handling (sonner toasts) implemented on all forms.
+**Last Updated**: March 15, 2026
+**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented. Form validation (react-hook-form + Zod) and user-visible error handling (sonner toasts) implemented on all forms. Chat system (REST + SignalR) implemented on backend and frontend.
 
 ---
 
@@ -20,7 +20,7 @@ All pages are now wired to the backend API (in API mode) via dedicated service f
 - `blogApi.ts` — Blog posts list and detail
 - `forumsApi.ts` — Forum sections and topics
 - `matchingApi.ts` — Search profiles, matches, sent/received likes
-- `chatsApi.ts` — Event group chats and private chats (mock-only; backend endpoint pending)
+- `chatsApi.ts` — Private chats (dual-mode; backend REST + SignalR implemented as of March 15, 2026)
 - `songsApi.ts` — AloeVera songs (mock-only; backend endpoint pending)
 
 **Mock data centralized** in `src/data/`:
@@ -30,7 +30,7 @@ All pages are now wired to the backend API (in API mode) via dedicated service f
 **Pages updated** to use `useEffect` + API services with loading states:
 - `Friends.tsx`, `AloeVera.tsx`, `Talks.tsx`, `EventDetails.tsx`, `BlogPost.tsx`, `StoreItem.tsx`, `SettingsPage.tsx`
 
-**Remaining**: Chat (private/group) send-message endpoints not yet backed by real API; songs endpoint not on backend.
+**Remaining**: Songs endpoint not on backend.
 
 **Forum topic detail** (added Feb 19, 2026):
 - `src/components/forum/TopicDetail.tsx` — renders topic content, replies, and reply input
@@ -146,20 +146,13 @@ All mock data has been extracted from page components into `src/data/` files and
 
 ---
 
-### 7. Type Inconsistencies
-**Severity**: High  
-**Impact**: Type safety, potential bugs
+### ~~7. Type Inconsistencies~~ ✅ RESOLVED
+**Resolved**: March 15, 2026
 
 **Duplicate `Message` interface**:
-- Defined in both `src/types/user.ts` (lines 43-50) and `src/types/chat.ts` (lines 12-20)
-- Different properties and structure
-- Creates confusion about which to use
-
-**Resolution**: 
-- Remove `Message` from `user.ts`
-- Use only the `Message` interface from `chat.ts`
-- Update imports in all files
-- Ensure `Match` interface properly references the correct `Message` type
+- ~~Defined in both `src/types/user.ts` and `src/types/chat.ts`~~ — removed from `user.ts`
+- `user.ts` now imports `Message` from `chat.ts`
+- `chat.ts` is the single source of truth for `Message`, `ChatDto`, `MessageDto` (type aliases), and `PrivateChatWithUser`
 
 ---
 
@@ -481,10 +474,10 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 | Category | Critical | High | Medium | Low | Total | Resolved |
 |----------|----------|------|--------|-----|-------|----------|
 | **Backend/Data** | 0 | 1 | 1 | 0 | 3 | #1, #3, #6, #17 |
-| **TypeScript/Code Quality** | 0 | 2 | 1 | 1 | 4 | #5 |
+| **TypeScript/Code Quality** | 0 | 1 | 1 | 1 | 4 | #5, #7 |
 | **UX/Features** | 0 | 1 | 2 | 3 | 8 | #2, #9, #10 |
 | **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
-| **Total** | **0** | **4** | **5** | **7** | **15 open** | **#1, #2, #3, #5, #6, #9, #10, #17** |
+| **Total** | **0** | **3** | **5** | **7** | **14 open** | **#1, #2, #3, #5, #6, #7, #9, #10, #17** |
 
 ---
 
@@ -495,7 +488,7 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 3. ✔️~~**Wire remaining pages to API** (Issue #1)~~ ✅ Done (all pages use API services)
 4. ✔️~~**Backend: Azure Storage** (Issue #3)~~ ✅ Done (Azure Table Storage integrated, seeder tool available)
 5. ✔️~~**Full AuthContext with token refresh** (Issue #2 follow-up)~~ ✅ Done (silent refresh in `apiClient`, proactive refresh in `ProtectedRoute`, 13 new backend unit tests)
-6. **Fix Type Issues** (Issues #4, #7) — Prevents bugs during development
+6. **Fix Type Issues** (Issue #4) — Prevents bugs during development
 7. ✔️~~**Add Testing** (Issue #5)~~ ✅ Done (Vitest + RTL, 47 tests covering `src/lib/` and `Welcome.tsx`)
 8. **Complete i18n** (Issue #8) — Better UX
 9. ✅~~**Add Form Validation** (Issue #10)~~ ✅ Done (react-hook-form + Zod on all forms)
@@ -509,7 +502,7 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 ## 📝 Notes
 
 - Application was bootstrapped with Lovable, then manually extended
-- Backend (`@lovecraft/`) is a working .NET 10 API with full JWT auth, Azure Table Storage, and 35 unit tests
+- Backend (`@lovecraft/`) is a working .NET 10 API with full JWT auth, Azure Table Storage, SignalR chat, and 53 unit tests
 - All pages are now wired to the API service layer — the full stack can be run end-to-end in Docker
 - Auth is enforced on all backend content endpoints (`[Authorize]`); the frontend protects routes via `ProtectedRoute`
 - Token refresh is fully implemented: silent refresh on 401 (with concurrent-request deduplication), proactive refresh in `ProtectedRoute`, and 13 dedicated unit tests in `RefreshTokenTests.cs`
@@ -520,6 +513,8 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 
 ---
 
-**Next Steps**: Fix Type Issues (#4, #7) and add frontend test framework (#5). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.
+**Next Steps**: Fix Type Issues (#4) and complete i18n (#8). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.
 
-**March 2026 update**: Issues #9 (error handling) and #10 (form validation) are fully resolved. All forms use react-hook-form + Zod. User-facing errors and successes surface via sonner toasts. See `src/lib/validators.ts` and `src/lib/apiError.ts`.
+**March 14, 2026 update**: Issues #9 (error handling) and #10 (form validation) are fully resolved. All forms use react-hook-form + Zod. User-facing errors and successes surface via sonner toasts. See `src/lib/validators.ts` and `src/lib/apiError.ts`.
+
+**March 15, 2026 update**: Issues #5 (frontend testing, 47 tests) and #7 (duplicate Message interface) resolved. Chat system (REST + SignalR) implemented on both backend and frontend — `chatsApi.ts` is now dual-mode, `Friends.tsx` uses live messages, `Talks.tsx` uses forum topics for event discussion with real-time reply broadcasting. See `docs/superpowers/plans/2026-03-15-chat-signalr.md` and `@lovecraft/Lovecraft/docs/CHAT_ARCHITECTURE.md`.

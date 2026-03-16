@@ -496,17 +496,17 @@ LOGGING__LOGLEVEL__DEFAULT=Information
 
 ---
 
-### Phase 6: Basic Messaging 🔜 Planned
+### Phase 6: Basic Messaging ✅ DONE
 **Goal**: REST-based messaging (no real-time yet)
 
-- [ ] Create Chat and Message entities
-- [ ] Implement ChatRepository and MessageRepository
-- [ ] Build ChatsController
-- [ ] Message CRUD operations
-- [ ] Chat list and details
-- [ ] Unit tests
+- [x] Create Chat and Message entities (`ChatEntity`, `UserChatEntity`, `MessageEntity`)
+- [x] Implement `MockChatService` and `AzureChatService`
+- [x] Build `ChatsController` (GET chats, GET messages, POST chat, POST message)
+- [x] Message CRUD operations
+- [x] Chat list and details
+- [x] 13 unit tests for `MockChatService` + 5 hub-path tests
 
-**Deliverables**: Basic REST messaging
+**Deliverables**: ✅ Basic REST messaging + SignalR real-time layer (see Phase 11)
 
 ---
 
@@ -569,18 +569,22 @@ LOGGING__LOGLEVEL__DEFAULT=Information
 
 ---
 
-### Phase 11: Real-time Messaging (Weeks 15-16)
+### Phase 11: Real-time Messaging 🔄 Partially Done
 **Goal**: Add SignalR for real-time chat
 
-- [ ] Add SignalR to backend
-- [ ] Implement ChatHub
-- [ ] Online presence tracking
-- [ ] Typing indicators
-- [ ] Real-time message delivery
-- [ ] Frontend SignalR integration
-- [ ] Testing
+- [x] Add SignalR to backend (`AddSignalR()`, `MapHub<ChatHub>`)
+- [x] Implement `ChatHub` (JoinChat, JoinTopic, LeaveGroup, SendMessage)
+- [x] JWT query-string token for WebSocket auth (`JwtBearerEvents.OnMessageReceived`)
+- [x] Real-time message delivery via `Clients.OthersInGroup`
+- [x] Forum reply broadcasting via `IHubContext<ChatHub>` in `ForumController`
+- [x] Frontend SignalR integration (`chatConnection.ts` singleton, `useChatSignalR` hook)
+- [x] nginx WebSocket proxy config (`/hubs/` location block)
+- [x] 18 unit tests for chat service + hub paths
+- [ ] Online presence tracking (future)
+- [ ] Typing indicators (future)
+- [ ] Unread count updates pushed to client (future)
 
-**Deliverables**: Real-time chat functionality
+**Deliverables**: ✅ Real-time private chat and forum reply notifications. See [CHAT_ARCHITECTURE.md](../../lovecraft/Lovecraft/docs/CHAT_ARCHITECTURE.md)
 
 ---
 
@@ -772,17 +776,17 @@ Each client has its own repository and documentation:
 
 ---
 
-**Current Status**: Phases 1–10 are complete. The full stack is deployed and operational.
+**Current Status**: Phases 1–11 are complete or partially complete. The full stack is deployed and operational with real-time chat.
 
 **Remaining Work**:
-1. Chat and songs backend endpoints (frontend falls back to mock for these)
+1. Songs backend endpoint (frontend falls back to mock)
 2. Azure Blob Storage for image uploads
 3. Email service (SMTP/SendGrid — currently logs to console)
 4. OAuth integration (Google, Facebook, VK) — see [AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)
 5. Telegram Mini App authentication — planned
 6. Rate limiting and account lockout
 7. SSL/HTTPS on Azure VM
-8. SignalR for real-time chat (Phase 11)
+8. SignalR enhancements: online presence, typing indicators, unread push updates
 
 ---
 

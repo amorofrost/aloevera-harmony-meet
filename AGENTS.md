@@ -30,18 +30,20 @@ aloevera-harmony-meet/
 │   ├── config/
 │   │   └── api.config.ts   # API mode (mock/api) and base URL config
 │   ├── services/
-│   │   └── api/            # API service layer
-│   │       ├── apiClient.ts    # Base HTTP client (auth headers, 401 handling, localStorage token)
-│   │       ├── authApi.ts      # Auth endpoints (login/register/logout/refresh)
-│   │       ├── usersApi.ts     # User endpoints (getCurrentUser, getUsers, updateUser)
-│   │       ├── eventsApi.ts    # Events (list, detail, register/unregister)
-│   │       ├── storeApi.ts     # Store items (list, detail)
-│   │       ├── blogApi.ts      # Blog posts (list, detail)
-│   │       ├── forumsApi.ts    # Forum sections, topics, topic detail, and replies
-│   │       ├── matchingApi.ts  # Search profiles, matches, likes
-│   │       ├── chatsApi.ts     # Event group chats and private chats (mock-only)
-│   │       ├── songsApi.ts     # AloeVera songs (mock-only)
-│   │       └── index.ts        # Central exports
+│   │   ├── api/            # API service layer
+│   │   │   ├── apiClient.ts    # Base HTTP client (auth headers, 401 handling, localStorage token)
+│   │   │   ├── authApi.ts      # Auth endpoints (login/register/logout/refresh)
+│   │   │   ├── usersApi.ts     # User endpoints (getCurrentUser, getUsers, updateUser)
+│   │   │   ├── eventsApi.ts    # Events (list, detail, register/unregister)
+│   │   │   ├── storeApi.ts     # Store items (list, detail)
+│   │   │   ├── blogApi.ts      # Blog posts (list, detail)
+│   │   │   ├── forumsApi.ts    # Forum sections, topics, topic detail, and replies
+│   │   │   ├── matchingApi.ts  # Search profiles, matches, likes
+│   │   │   ├── chatsApi.ts     # Private chats — dual-mode (mock + real backend REST)
+│   │   │   ├── songsApi.ts     # AloeVera songs (mock-only)
+│   │   │   └── index.ts        # Central exports
+│   │   └── signalr/        # SignalR layer
+│   │       └── chatConnection.ts  # Module-level singleton; no-op in mock mode
 │   ├── data/               # Centralized mock data (used by API services in mock mode)
 │   │   ├── mockUsers.ts
 │   │   ├── mockCurrentUser.ts
@@ -54,7 +56,7 @@ aloevera-harmony-meet/
 │   │   └── mockSongs.ts
 │   ├── contexts/           # React Context providers (LanguageContext)
 │   ├── types/              # TypeScript type definitions
-│   ├── hooks/              # Custom React hooks
+│   ├── hooks/              # Custom React hooks (useChatSignalR)
 │   ├── lib/                # Utility functions
 │   │   ├── validators.ts   # Zod schemas: loginSchema, registerSchema, profileEditSchema, messageSchema, replySchema
 │   │   ├── apiError.ts     # showApiError(err, fallback) — extracts ApiResponse error message and calls toast.error()
@@ -249,10 +251,7 @@ const Component = () => {
 - `user.ts` - User, Event, Match, Like, AloeVeraSong
 - `chat.ts` - Chat, Message, GroupChat, PrivateChat
 
-**Known Issues**:
-- ⚠️ `Message` interface is duplicated in both files (different structures)
-- Use `Message` from `chat.ts` for messaging features
-- Use types from `user.ts` for match-related features
+**Note**: `Message` interface was previously duplicated; now only in `chat.ts`. `user.ts` imports it from `chat.ts`. `chat.ts` also exports `ChatDto`, `MessageDto` (aliases), and `PrivateChatWithUser`.
 
 **Type Guidelines**:
 - Use interfaces for object shapes
@@ -396,6 +395,48 @@ const handleSend = () => {
 
 ---
 
+## 🔌 SignalR Real-Time Pattern
+
+The chat system uses a module-level singleton (`src/services/signalr/chatConnection.ts`) and a React hook (`src/hooks/useChatSignalR.ts`).
+
+### `chatConnection` singleton
+
+- Is a no-op in mock mode (`isApiMode()` guard on every method)
+- Token read from `localStorage.getItem('access_token')` at connect time
+- All methods are async and safe to call even before `connect()` is awaited
+
+```typescript
+import { chatConnection } from '@/services/signalr/chatConnection';
+
+await chatConnection.connect();           // idempotent — safe to call multiple times
+await chatConnection.joinChat(chatId);    // join a private chat group
+await chatConnection.joinTopic(topicId); // join a forum topic group
+await chatConnection.leaveGroup(groupId);
+await chatConnection.sendMessage(chatId, content); // real-time send
+chatConnection.on('MessageReceived', handler);
+chatConnection.off('MessageReceived', handler);
+chatConnection.isConnected; // boolean
+```
+
+### `useChatSignalR(type, id)` hook
+
+Manages join/leave lifecycle. Use `onEvent` to subscribe to hub events — **it returns a cleanup function** that must be returned from `useEffect`:
+
+```typescript
+const { sendMessage, isConnected, onEvent } = useChatSignalR('chat', chatId);
+// or: useChatSignalR('topic', topicId)
+
+useEffect(() => {
+  return onEvent('MessageReceived', (msg, cid) => {
+    setMessages(prev => [...prev, msg]);
+  });
+}, [onEvent]);
+```
+
+The `useChatSignalR` hook's own `useEffect` handles `connect()` → `joinChat/joinTopic` on mount and `leaveGroup` on unmount. Do not call these manually in the consumer component.
+
+---
+
 ## 🐛 Known Issues
 
 **See [docs/ISSUES.md](./docs/ISSUES.md) for complete list.**
@@ -412,10 +453,11 @@ const handleSend = () => {
 9. ✅ All mock data centralized in `src/data/`
 10. ❌ **No data persistence in mock mode** — `MockAuthService` uses in-memory storage, data resets on restart (Azure Storage mode persists)
 11. ⚠️ TypeScript is loosely configured (see tsconfig.json)
-12. ⚠️ No frontend testing framework
-13. ⚠️ Duplicate `Message` interface in types
+12. ✅ Frontend testing: Vitest + RTL, 50 tests (47 existing + 3 new chatsApi tests)
+13. ✅ Duplicate `Message` interface — removed from `user.ts`; single source in `chat.ts`
 14. ✅ User-visible error handling: `showApiError` in `src/lib/apiError.ts` + sonner `<Toaster />` in `App.tsx`
 15. ✅ Form validation: react-hook-form + Zod on all auth, profile, and reply forms (see `src/lib/validators.ts`)
+16. ✅ Real-time chat: `chatConnection.ts` singleton + `useChatSignalR` hook + backend SignalR hub at `/hubs/chat`
 
 **Don't Try to Fix Without Context**:
 - Type system strictness (requires codebase-wide changes)
@@ -652,8 +694,8 @@ export function AuthProvider({ children }) {
 #### 2. Azure Storage (Issue #3)
 Replace in-memory `Mock*Service` implementations in the backend with real Azure Table Storage / Blob Storage. See `@lovecraft/Lovecraft/docs/AZURE_STORAGE.md`.
 
-#### 3. Backend endpoints for chats and songs
-`chatsApi.ts` and `songsApi.ts` always return mock data — the backend has no endpoints for these yet.
+#### 3. Backend endpoints for songs
+`songsApi.ts` still returns mock data — the backend has no songs endpoint yet. `chatsApi.ts` is now dual-mode (REST + SignalR backend implemented as of March 15, 2026).
 
 **See [docs/API_INTEGRATION.md](./docs/API_INTEGRATION.md) and [docs/FRONTEND_AUTH_GUIDE.md](./docs/FRONTEND_AUTH_GUIDE.md) for details.**
 
@@ -757,7 +799,7 @@ A: Import `showApiError` from `src/lib/apiError.ts` and call it in the catch blo
 A: Add a Zod schema to `src/lib/validators.ts`, infer the TypeScript type, then use `useForm<YourSchema>({ resolver: zodResolver(yourSchema) })`. See the Form Validation Pattern section above.
 
 **Q: Should I add tests?**
-A: Only if specifically requested. No testing framework is set up yet.
+A: Yes — Vitest + RTL is configured. Run `npx vitest run`. Add test files as `*.test.ts(x)` alongside the source. Follow the pattern in `src/services/api/chatsApi.test.ts` for service tests.
 
 **Q: Can I use a different UI library?**  
 A: No. This project uses shadcn/ui exclusively. Use existing components or create custom ones.
@@ -823,5 +865,7 @@ A: Only if specifically requested or if making changes that naturally lead to re
 ---
 
 **Remember**: This is a fully integrated full-stack application. All pages are wired to the LoveCraft backend. All content requires authentication. The API service layer (`src/services/api/`) is the bridge — use it for all data access, keep mock data in `src/data/`, and maintain the mock/API dual-mode pattern for any new features.
+
+For real-time features, use `chatConnection.ts` + `useChatSignalR` hook. The hook is a no-op in mock mode — no special handling needed in mock-mode consumers. See the **SignalR Real-Time Pattern** section above and `@lovecraft/Lovecraft/docs/CHAT_ARCHITECTURE.md` for the backend design.
 
 Good luck! 🚀
