@@ -36,3 +36,4 @@ ssl/
 *.njsproj
 *.sln
 *.sw?
+.superpowers/
