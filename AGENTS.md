@@ -69,7 +69,8 @@ aloevera-harmony-meet/
 │   ├── ARCHITECTURE.md     # Technical architecture
 │   ├── API_INTEGRATION.md  # API service layer guide
 │   ├── FRONTEND_AUTH_GUIDE.md # Auth integration guide
-│   ├── ISSUES.md           # Known issues and technical debt
+│   ├── ISSUES.md           # Active issues and technical debt
+│   ├── RESOLVED_ISSUES.md  # Archive of resolved issues
 │   ├── FEATURES.md         # Feature specifications
 │   └── BACKEND_PLAN.md     # Backend implementation roadmap
 ├── .env.development        # VITE_API_MODE=mock (default)
@@ -457,7 +458,7 @@ Use this anywhere you need the current user's ID (e.g. filtering match partners,
 
 ## 🐛 Known Issues
 
-**See [docs/ISSUES.md](./docs/ISSUES.md) for complete list.**
+**See [docs/ISSUES.md](./docs/ISSUES.md) for active issues. Resolved issues are archived in [docs/RESOLVED_ISSUES.md](./docs/RESOLVED_ISSUES.md).**
 
 **Current State**:
 1. ✅ Backend exists (`@lovecraft/`) with JWT auth and mock services
