@@ -9,8 +9,12 @@ import { Input } from '@/components/ui/input';
 import SwipeCard from '@/components/ui/swipe-card';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
-import { matchingApi, chatsApi, usersApi } from '@/services/api';
+import type { MessageDto } from '@/types/chat';
+import { matchingApi, usersApi } from '@/services/api';
+import { chatsApi } from '@/services/api/chatsApi';
+import { useChatSignalR } from '@/hooks/useChatSignalR';
 import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
 import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -37,6 +41,24 @@ const Friends = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
 
+  // Chat message state
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<MessageDto[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagePage, setMessagePage] = useState(1);
+
+  // SignalR live updates
+  const { sendMessage: signalRSend, isConnected, onEvent } = useChatSignalR(
+    'chat', activeChatId ?? ''
+  );
+
+  useEffect(() => {
+    if (!activeChatId) return;
+    return onEvent('MessageReceived', (msg: unknown) => {
+      setMessages(prev => [...prev, msg as MessageDto]);
+    });
+  }, [activeChatId, onEvent]);
+
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
@@ -45,13 +67,13 @@ const Friends = () => {
         matchingApi.getMatches(),
         matchingApi.getSentLikes(),
         matchingApi.getReceivedLikes(),
-        chatsApi.getPrivateChats(),
+        chatsApi.getChats(),
       ]);
       if (profilesRes.success && profilesRes.data) setSearchProfiles(profilesRes.data);
       if (matchesRes.success && matchesRes.data) setMatches(matchesRes.data);
       if (sentRes.success && sentRes.data) setSentLikes(sentRes.data);
       if (receivedRes.success && receivedRes.data) setReceivedLikes(receivedRes.data);
-      if (chatsRes.success && chatsRes.data) setPrivateChats(chatsRes.data);
+      if (chatsRes.success && chatsRes.data) setPrivateChats(chatsRes.data as unknown as PrivateChatWithUser[]);
       setIsLoading(false);
     };
     load();
@@ -90,13 +112,50 @@ const Friends = () => {
     return formatDateShort(date);
   };
 
-  const handleSendMessage = () => {
+  const handleOpenChat = async (targetUserId: string) => {
+    setMessagesLoading(true);
+    const chatResult = await chatsApi.getOrCreateChat(targetUserId);
+    if (chatResult.success && chatResult.data) {
+      const chatId = chatResult.data.id;
+      setActiveChatId(chatId);
+      setSelectedChat(chatId);
+      const msgsResult = await chatsApi.getMessages(chatId, 1);
+      if (msgsResult.success && msgsResult.data) {
+        setMessages(msgsResult.data);
+        setMessagePage(1);
+      }
+    }
+    setMessagesLoading(false);
+  };
+
+  const handleOpenChatById = async (chatId: string) => {
+    setSelectedChat(chatId);
+    setActiveChatId(chatId);
+    setMessagesLoading(true);
+    const msgsResult = await chatsApi.getMessages(chatId, 1);
+    if (msgsResult.success && msgsResult.data) {
+      setMessages(msgsResult.data);
+      setMessagePage(1);
+    }
+    setMessagesLoading(false);
+  };
+
+  const handleSendMessage = async (content: string) => {
+    if (!content.trim() || !activeChatId) return;
+    const result = await chatsApi.sendMessage(activeChatId, content);
+    if (result.success && result.data) {
+      setMessages(prev => [...prev, result.data!]);
+    }
+  };
+
+  const handleSendClick = () => {
     if (!messageText.trim()) {
       setMessageError("Message can't be empty");
       return;
     }
     if (!selectedChat) return;
     setMessageError('');
+    handleSendMessage(messageText);
     setMessageText('');
   };
 
@@ -111,7 +170,7 @@ const Friends = () => {
         </div>
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
           <div className="flex items-center gap-3 p-4">
-            <Button variant="ghost" size="sm" onClick={() => setSelectedChat(null)}><ArrowLeft className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="sm" onClick={() => { setSelectedChat(null); setActiveChatId(null); setMessages([]); }}><ArrowLeft className="w-5 h-5" /></Button>
             <div className="flex items-center gap-3 flex-1">
               <div className="relative">
                 <img src={chat.otherUser.profileImage} alt={chat.otherUser.name} className="w-10 h-10 rounded-full object-cover" />
@@ -127,21 +186,49 @@ const Friends = () => {
         </div>
         <div className="flex-1 p-4 space-y-4 overflow-y-auto relative z-10">
           <div className="text-center"><p className="text-sm text-muted-foreground">Начало переписки с {chat.otherUser.name}</p></div>
-          {chat.lastMessage && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><span className="text-xs font-medium">{chat.otherUser.name[0]}</span></div>
-              <div className="flex-1">
-                <div className="bg-muted rounded-lg p-3 max-w-xs"><p className="text-sm">{chat.lastMessage.content}</p></div>
-                <p className="text-xs text-muted-foreground mt-1">{formatTime(chat.lastMessage.timestamp)}</p>
+          {activeChatId && messagePage > 0 && (
+            <button
+              className="text-xs text-muted-foreground underline py-2"
+              onClick={async () => {
+                const next = messagePage + 1;
+                const r = await chatsApi.getMessages(activeChatId!, next);
+                if (r.success && r.data && r.data.length > 0) {
+                  setMessages(prev => [...r.data!, ...prev]);
+                  setMessagePage(next);
+                }
+              }}
+            >
+              Load older messages
+            </button>
+          )}
+          {messagesLoading ? (
+            <div className="text-center py-4 text-muted-foreground text-sm">Загрузка сообщений...</div>
+          ) : messages.length > 0 ? (
+            messages.map(msg => (
+              <div key={msg.id} className={cn('flex', msg.senderId === 'current-user' ? 'justify-end' : 'justify-start')}>
+                <div className={cn('rounded-lg px-3 py-2 max-w-[75%] text-sm',
+                  msg.senderId === 'current-user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                  {msg.content}
+                </div>
               </div>
-            </div>
+            ))
+          ) : (
+            chat.lastMessage && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"><span className="text-xs font-medium">{chat.otherUser.name[0]}</span></div>
+                <div className="flex-1">
+                  <div className="bg-muted rounded-lg p-3 max-w-xs"><p className="text-sm">{chat.lastMessage.content}</p></div>
+                  <p className="text-xs text-muted-foreground mt-1">{formatTime(chat.lastMessage.timestamp)}</p>
+                </div>
+              </div>
+            )
           )}
         </div>
         <div className="border-t p-4">
           <div className="flex gap-2">
             <Input value={messageText} onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }} placeholder="Введи сообщение..."
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1" />
-            <Button onClick={handleSendMessage} disabled={!messageText.trim()}><Send className="w-4 h-4" /></Button>
+              onKeyPress={(e) => e.key === 'Enter' && handleSendClick()} className="flex-1" />
+            <Button onClick={handleSendClick} disabled={!messageText.trim()}><Send className="w-4 h-4" /></Button>
           </div>
           {messageError && (
             <p className="text-xs text-destructive mt-1">{messageError}</p>
@@ -306,7 +393,7 @@ const Friends = () => {
               <TabsContent value="matches" className="mt-4">
                 {matches.map((match) => (
                   <UserCard key={match.id} user={match.otherUser} subtitle={`Взаимность ${formatDateShort(match.createdAt)}`}
-                    actionButton={<Button size="sm" onClick={() => navigate('/friends')} className="btn-match"><MessageCircle className="w-4 h-4" /></Button>} />
+                    actionButton={<Button size="sm" onClick={() => handleOpenChat(match.otherUser.id)} className="btn-match"><MessageCircle className="w-4 h-4" /></Button>} />
                 ))}
               </TabsContent>
               <TabsContent value="sent" className="mt-4">
@@ -337,7 +424,7 @@ const Friends = () => {
               <div className="space-y-3">
                 {privateChats.map((chat) => (
                   <Card key={chat.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => setSelectedChat(chat.id)}>
+                    onClick={() => handleOpenChatById(chat.id)}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="relative">
