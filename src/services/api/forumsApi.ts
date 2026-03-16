@@ -127,6 +127,62 @@ export const forumsApi = {
     return mockSuccess(detail ? detail.replies : []);
   },
 
+  async createTopic(
+    sectionId: string,
+    title: string,
+    content: string
+  ): Promise<ApiResponse<ForumTopicDetail>> {
+    if (!isApiMode()) {
+      const newId = `topic-${Date.now()}`;
+      const now = new Date();
+
+      const topicDetail: ForumTopicDetail = {
+        id: newId,
+        sectionId,
+        title,
+        content,
+        authorId: 'current-user',
+        authorName: 'Вы',
+        authorAvatar: undefined,
+        isPinned: false,
+        replyCount: 0,
+        createdAt: now,
+        lastActivity: now,
+        replies: [],
+      };
+
+      const topicStub: ForumTopic = {
+        id: newId,
+        sectionId,
+        title,
+        authorName: 'Вы',
+        replyCount: 0,
+        lastActivity: now,
+        isPinned: false,
+        preview: content.substring(0, 100),
+      };
+
+      const section = mockForumSections.find(s => s.id === sectionId);
+      if (section) {
+        section.topics.push(topicStub);
+        section.topicCount++;
+      }
+
+      mockTopicDetails[newId] = topicDetail;
+
+      return mockSuccess(topicDetail);
+    }
+
+    const response = await apiClient.post<any>(
+      `/api/v1/forum/sections/${sectionId}/topics`,
+      { title, content }
+    );
+    return {
+      ...response,
+      data: response.data ? mapTopicDetailFromApi(response.data, []) : null,
+    };
+  },
+
   async createReply(topicId: string, content: string): Promise<ApiResponse<ForumReply>> {
     if (isApiMode()) {
       return apiClient.post<ForumReply>(`/api/v1/forum/topics/${topicId}/replies`, { content });
