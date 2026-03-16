@@ -37,3 +37,4 @@ ssl/
 *.sln
 *.sw?
 .superpowers/
+.worktrees/
