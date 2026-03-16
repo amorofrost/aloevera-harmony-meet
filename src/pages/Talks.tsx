@@ -11,8 +11,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { eventsApi } from '@/services/api/eventsApi';
 import { forumsApi } from '@/services/api/forumsApi';
 import { useChatSignalR } from '@/hooks/useChatSignalR';
-import type { ForumSection, ForumReply } from '@/data/mockForumData';
+import type { ForumSection, ForumReply, ForumTopicDetail } from '@/data/mockForumData';
 import TopicDetail from '@/components/forum/TopicDetail';
+import { CreateTopicModal } from '@/components/forum/CreateTopicModal';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const Talks = () => {
@@ -27,6 +28,7 @@ const Talks = () => {
 
   const [forumSections, setForumSections] = useState<ForumSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Event discussion state
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
@@ -108,6 +110,33 @@ const Talks = () => {
     if (result.success && result.data) {
       setTopicReplies(prev => [...prev, result.data!]);
     }
+  };
+
+  const handleTopicCreated = (topic: ForumTopicDetail) => {
+    setForumSections(prev =>
+      prev.map(section => {
+        if (section.id !== selectedSection) return section;
+        return {
+          ...section,
+          topicCount: section.topicCount + 1,
+          topics: [
+            {
+              id: topic.id,
+              sectionId: selectedSection!,
+              title: topic.title,
+              authorName: topic.authorName,
+              replyCount: 0,
+              lastActivity: new Date(topic.createdAt),
+              isPinned: false,
+              preview: topic.content.substring(0, 100),
+            },
+            ...section.topics,
+          ],
+        };
+      })
+    );
+    setSelectedTopic(topic.id);
+    setCreateModalOpen(false);
   };
 
   // Event discussion panel
@@ -214,6 +243,14 @@ const Talks = () => {
           <h1 className="text-2xl font-bold text-foreground flex-1">
             {currentSection ? currentSection.name : t('nav.talks')}
           </h1>
+          {selectedSection && !selectedTopic && (
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              className="text-xs px-3 py-1.5 rounded bg-[var(--aloe-gold)] text-black font-semibold hover:opacity-90 transition-opacity"
+            >
+              {t('forum.newTopic')}
+            </button>
+          )}
           <MessageSquare className="w-6 h-6 text-primary" />
         </div>
       </div>
@@ -302,6 +339,16 @@ const Talks = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {selectedSection && (
+        <CreateTopicModal
+          sectionId={selectedSection}
+          sectionName={currentSection?.name ?? ''}
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          onCreated={handleTopicCreated}
+        />
+      )}
 
       <BottomNavigation />
     </div>

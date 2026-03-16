@@ -113,6 +113,7 @@ const translations = {
     'forum.createTopic.contentPlaceholder': 'Напишите ваш пост...',
     'forum.createTopic.posting': 'Публикация...',
     'forum.createTopic.post': 'Опубликовать',
+    'forum.newTopic': '+ Новая тема',
   },
   en: {
     // Navigation
@@ -208,6 +209,7 @@ const translations = {
     'forum.createTopic.contentPlaceholder': 'Write your post...',
     'forum.createTopic.posting': 'Posting...',
     'forum.createTopic.post': 'Post Topic',
+    'forum.newTopic': '+ New Topic',
   },
 };
 
