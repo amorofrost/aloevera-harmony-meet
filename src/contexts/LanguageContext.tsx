@@ -104,6 +104,15 @@ const translations = {
     'auth.male': 'Мужской',
     'auth.female': 'Женский',
     'auth.other': 'Другой',
+
+    // Forum
+    'forum.createTopic.titlePrefix': 'Новая тема в',
+    'forum.createTopic.titleLabel': 'Заголовок',
+    'forum.createTopic.titlePlaceholder': 'Заголовок темы...',
+    'forum.createTopic.contentLabel': 'Содержание',
+    'forum.createTopic.contentPlaceholder': 'Напишите ваш пост...',
+    'forum.createTopic.posting': 'Публикация...',
+    'forum.createTopic.post': 'Опубликовать',
   },
   en: {
     // Navigation
@@ -190,6 +199,15 @@ const translations = {
     'auth.male': 'Male',
     'auth.female': 'Female',
     'auth.other': 'Other',
+
+    // Forum
+    'forum.createTopic.titlePrefix': 'New Topic in',
+    'forum.createTopic.titleLabel': 'Title',
+    'forum.createTopic.titlePlaceholder': 'Topic title...',
+    'forum.createTopic.contentLabel': 'Content',
+    'forum.createTopic.contentPlaceholder': 'Write your post...',
+    'forum.createTopic.posting': 'Posting...',
+    'forum.createTopic.post': 'Post Topic',
   },
 };
 
