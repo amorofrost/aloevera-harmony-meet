@@ -119,6 +119,18 @@ const Friends = () => {
       const chatId = chatResult.data.id;
       setActiveChatId(chatId);
       setSelectedChat(chatId);
+
+      // If this chat isn't in privateChats yet (just created), add it so the chat view renders
+      if (!privateChats.find(c => c.id === chatId)) {
+        const otherUser =
+          matches.find(m => m.otherUser.id === targetUserId)?.otherUser ??
+          receivedLikes.find(l => l.fromUser.id === targetUserId)?.fromUser ??
+          searchProfiles.find(u => u.id === targetUserId);
+        if (otherUser) {
+          setPrivateChats(prev => [...prev, { ...chatResult.data!, otherUser }]);
+        }
+      }
+
       const msgsResult = await chatsApi.getMessages(chatId, 1);
       if (msgsResult.success && msgsResult.data) {
         setMessages(msgsResult.data);
