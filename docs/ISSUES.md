@@ -2,8 +2,8 @@
 
 This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
 
-**Last Updated**: March 15, 2026
-**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented. Form validation (react-hook-form + Zod) and user-visible error handling (sonner toasts) implemented on all forms. Chat system (REST + SignalR) implemented on backend and frontend.
+**Last Updated**: March 16, 2026
+**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented. Form validation (react-hook-form + Zod) and user-visible error handling (sonner toasts) implemented on all forms. Chat system (REST + SignalR) end-to-end working with real-time delivery. Matching system fully functional: correct user IDs, intersection-based match computation, auto-chat on mutual like.
 
 ---
 
@@ -502,7 +502,7 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 ## 📝 Notes
 
 - Application was bootstrapped with Lovable, then manually extended
-- Backend (`@lovecraft/`) is a working .NET 10 API with full JWT auth, Azure Table Storage, SignalR chat, and 53 unit tests
+- Backend (`@lovecraft/`) is a working .NET 10 API with full JWT auth, Azure Table Storage, SignalR chat, and 81 unit tests (added 13 matching tests March 16, 2026)
 - All pages are now wired to the API service layer — the full stack can be run end-to-end in Docker
 - Auth is enforced on all backend content endpoints (`[Authorize]`); the frontend protects routes via `ProtectedRoute`
 - Token refresh is fully implemented: silent refresh on 401 (with concurrent-request deduplication), proactive refresh in `ProtectedRoute`, and 13 dedicated unit tests in `RefreshTokenTests.cs`
@@ -518,3 +518,13 @@ The artistic `EventPostmark` component is imported but its full potential isn't 
 **March 14, 2026 update**: Issues #9 (error handling) and #10 (form validation) are fully resolved. All forms use react-hook-form + Zod. User-facing errors and successes surface via sonner toasts. See `src/lib/validators.ts` and `src/lib/apiError.ts`.
 
 **March 15, 2026 update**: Issues #5 (frontend testing, 47 tests) and #7 (duplicate Message interface) resolved. Chat system (REST + SignalR) implemented on both backend and frontend — `chatsApi.ts` is now dual-mode, `Friends.tsx` uses live messages, `Talks.tsx` uses forum topics for event discussion with real-time reply broadcasting. See `docs/superpowers/plans/2026-03-15-chat-signalr.md` and `@lovecraft/Lovecraft/docs/CHAT_ARCHITECTURE.md`.
+
+**March 16, 2026 update**: Matching and chat bugs fixed end-to-end:
+- `MatchingController` was using hardcoded `"current-user"` for all four endpoints — fixed to read `ClaimTypes.NameIdentifier` from JWT
+- Match computation changed from a stored `matches` table to intersection of `likes` ∩ `likesreceived` — fixes stale/missing match data
+- Mutual like now auto-creates a 1-on-1 chat (both mock and Azure paths)
+- `AzureChatService` constructor now calls `CreateIfNotExistsAsync()` — fixed 500 errors on first use
+- `ChatsController.SendMessage` now broadcasts `MessageReceived` via `IHubContext<ChatHub>` — real-time delivery now works for REST-sent messages
+- `getCurrentUserIdFromToken()` added to `matchingApi.ts` — decodes JWT client-side for match partner resolution and message bubble alignment; avoids extra `/auth/me` round-trip
+- Frontend chat enrichment fixed: `PrivateChatWithUser.otherUser` now populated from match data; API date strings parsed to `Date` objects; message deduplication in `MessageReceived` handler
+- Backend unit tests: 81 passing (added 13 `MatchingTests`)

@@ -427,13 +427,31 @@ const { sendMessage, isConnected, onEvent } = useChatSignalR('chat', chatId);
 // or: useChatSignalR('topic', topicId)
 
 useEffect(() => {
-  return onEvent('MessageReceived', (msg, cid) => {
-    setMessages(prev => [...prev, msg]);
+  return onEvent('MessageReceived', (msg) => {
+    const incoming = msg as MessageDto;
+    // Deduplicate — the REST sender also receives the group broadcast
+    setMessages(prev =>
+      prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]
+    );
   });
 }, [onEvent]);
 ```
 
 The `useChatSignalR` hook's own `useEffect` handles `connect()` → `joinChat/joinTopic` on mount and `leaveGroup` on unmount. Do not call these manually in the consumer component.
+
+> **Deduplication is required.** `ChatsController.SendMessage` broadcasts `MessageReceived` to the full chat group (including the sender) via `IHubContext`. Do not also add the message from the REST response — rely solely on the SignalR push so every member (sender and recipient) receives exactly one copy.
+
+### `getCurrentUserIdFromToken()`
+
+A lightweight helper exported from `src/services/api/matchingApi.ts` that decodes the stored JWT without an API call:
+
+```typescript
+import { getCurrentUserIdFromToken } from '@/services/api';
+
+const myId = getCurrentUserIdFromToken(); // e.g. "test-user-001"
+```
+
+Use this anywhere you need the current user's ID (e.g. filtering match partners, aligning chat messages left/right) without fetching `/api/v1/auth/me`. The .NET backend stores the user ID as the `"nameid"` claim in the JWT payload.
 
 ---
 
@@ -458,6 +476,8 @@ The `useChatSignalR` hook's own `useEffect` handles `connect()` → `joinChat/jo
 14. ✅ User-visible error handling: `showApiError` in `src/lib/apiError.ts` + sonner `<Toaster />` in `App.tsx`
 15. ✅ Form validation: react-hook-form + Zod on all auth, profile, and reply forms (see `src/lib/validators.ts`)
 16. ✅ Real-time chat: `chatConnection.ts` singleton + `useChatSignalR` hook + backend SignalR hub at `/hubs/chat`
+17. ✅ Matching fixed end-to-end: `MatchingController` reads real user ID from JWT; matches computed as like intersection (no dedicated table); mutual like auto-creates a 1-on-1 chat; `getCurrentUserIdFromToken()` decodes JWT client-side for match partner resolution and message alignment
+18. ✅ Backend: 81 unit tests passing (added 13 `MatchingTests` covering mutual like, auto-chat, intersection logic, idempotency)
 
 **Don't Try to Fix Without Context**:
 - Type system strictness (requires codebase-wide changes)
