@@ -1,530 +1,459 @@
 # Known Issues & Technical Debt
 
-This document catalogs all identified issues, technical debt, and areas for improvement in the AloeVera Harmony Meet application.
-
 **Last Updated**: March 16, 2026
-**Status**: Full-stack deployed on Azure VM. Azure Table Storage integrated. Docker Compose working end-to-end via nginx proxy on port 8080. JWT token refresh fully implemented. Form validation (react-hook-form + Zod) and user-visible error handling (sonner toasts) implemented on all forms. Chat system (REST + SignalR) end-to-end working with real-time delivery. Matching system fully functional: correct user IDs, intersection-based match computation, auto-chat on mutual like.
+**Active issues only.** Resolved issues are archived in [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md).
 
 ---
 
-## 🔴 Critical Issues
+## 🔴 Production Blockers
 
-### ~~1. Pages Not Connected to Backend API~~ ✅ RESOLVED
-**Resolved**: February 19, 2026
+These issues must be resolved before the app serves real users.
 
-All pages are now wired to the backend API (in API mode) via dedicated service files in `src/services/api/`. Each service has a dual-mode mock/API implementation.
+### 26. Email Service Missing
+**Impact**: Account recovery impossible; password reset non-functional
 
-**API services created**:
-- `eventsApi.ts` — Events list, detail, register/unregister
-- `storeApi.ts` — Store items list and detail
-- `blogApi.ts` — Blog posts list and detail
-- `forumsApi.ts` — Forum sections and topics
-- `matchingApi.ts` — Search profiles, matches, sent/received likes
-- `chatsApi.ts` — Private chats (dual-mode; backend REST + SignalR implemented as of March 15, 2026)
-- `songsApi.ts` — AloeVera songs (mock-only; backend endpoint pending)
+Email verification tokens are logged to the console only. Because `registerSchema` enforces a valid email address (treating email as first-class identity), email verification and account recovery must work at launch. Users who lose their password have no recourse.
 
-**Mock data centralized** in `src/data/`:
-- `mockSongs.ts`, `mockEvents.ts`, `mockStoreItems.ts`, `mockBlogPosts.ts`
-- `mockForumData.ts`, `mockChats.ts`, `mockProfiles.ts`, `mockCurrentUser.ts`
-
-**Pages updated** to use `useEffect` + API services with loading states:
-- `Friends.tsx`, `AloeVera.tsx`, `Talks.tsx`, `EventDetails.tsx`, `BlogPost.tsx`, `StoreItem.tsx`, `SettingsPage.tsx`
-
-**Remaining**: Songs endpoint not on backend.
-
-**Forum topic detail** (added Feb 19, 2026):
-- `src/components/forum/TopicDetail.tsx` — renders topic content, replies, and reply input
-- `forumsApi.getTopic(topicId)` — calls `GET /api/v1/forum/topics/{topicId}` + `GET /api/v1/forum/topics/{topicId}/replies`
-- `forumsApi.createReply(topicId, content)` — calls `POST /api/v1/forum/topics/{topicId}/replies`
-- Clicking an author name/avatar in `TopicDetail` navigates to `/friends?userId={authorId}`; `Friends.tsx` loads that user's profile via `usersApi.getUserById`
+**Resolution**: Integrate SMTP or SendGrid in `Lovecraft.Backend`. Wire `POST /api/v1/auth/forgot-password` and `POST /api/v1/auth/reset-password` to send real emails. See `docs/AUTHENTICATION.md` in the backend repo.
 
 ---
 
-### ~~2. AuthContext Not Implemented — Token Not Stored~~ ✅ RESOLVED
-**Resolved**: February 19, 2026 (initial), February 24, 2026 (token refresh)
-**Approach**: lightweight localStorage-based token management instead of full AuthContext
+### 27. No HTTPS on Azure VM
+**Impact**: JWT tokens and credentials travel in plaintext
 
-**What was implemented**:
-- `apiClient.ts` stores/reads/clears `access_token` and `refresh_token` from `localStorage`
-- `Welcome.tsx` calls `apiClient.setAccessToken()` and `apiClient.setRefreshToken()` on successful login
-- `SettingsPage.tsx` calls `authApi.logout()` (server-side revocation) + `apiClient.clearTokens()` on sign-out
-- **Silent token refresh**: on any `401` response `apiClient` calls `POST /api/v1/auth/refresh` with the stored refresh token in the request body, updates both tokens, and retries the original request — concurrent 401s are deduplicated (only one refresh call fires; others queue)
-- **Proactive refresh** in `ProtectedRoute`: if the access token is missing or expired and a refresh token is present, a silent refresh is attempted with a loading spinner; if the token is near-expiry (<5 min) the user is let through immediately and a background refresh fires
-- `App.tsx` wraps all routes except `/` with `<ProtectedRoute>`
+All traffic between the browser and the Azure VM is unencrypted. JWT tokens stored in `localStorage` are readable in transit.
 
-**Remaining / known limitations**:
-- No React Context for user identity — the current user is fetched per-page via `usersApi.getCurrentUser()`
-- No `AuthProvider` / `useAuth()` hook — token is accessed imperatively via `apiClient`
+**Resolution**: Obtain an SSL certificate (Let's Encrypt / Certbot) and update `nginx.conf` in the frontend repo to serve HTTPS on port 443. Redirect HTTP → HTTPS.
 
 ---
 
-### ~~3. No Data Persistence (Backend In-Memory)~~ ✅ RESOLVED
-**Resolved**: February 23, 2026
+### 28. No Rate Limiting on Auth Endpoints
+**Impact**: Brute-force login attacks unprotected
 
-Azure Table Storage is now fully integrated into the backend. All data persists across restarts.
+`/api/v1/auth/login`, `/api/v1/auth/register`, and `/api/v1/auth/forgot-password` have no rate limiting. Attackers can make unlimited requests.
 
-**What was implemented** (in `Lovecraft.Backend/`):
-- `Storage/TableNames.cs` — 15 table name constants
-- `Storage/Entities/` — 14 entity classes (UserEntity, EventEntity, BlogPostEntity, StoreItemEntity, ForumSectionEntity, ForumTopicEntity, ForumReplyEntity, LikeEntity, MatchEntity, RefreshTokenEntity, etc.)
-- `Services/Azure/` — 7 Azure service implementations: `AzureAuthService`, `AzureUserService`, `AzureEventService`, `AzureMatchingService`, `AzureBlogService`, `AzureStoreService`, `AzureForumService`
-- Mode switch via `USE_AZURE_STORAGE=true/false` in config (false = mock mode, true = Azure)
-- Connection string via `AZURE_STORAGE_CONNECTION_STRING` env var
-
-**`Lovecraft.Tools.Seeder`** — new CLI tool that seeds Azure Table Storage with all mock data (users with hashed passwords, events, store items, blog posts, forum sections/topics/replies). Run from `Lovecraft/` directory:
-```bash
-dotnet run --project Lovecraft.Tools.Seeder
-# Requires AZURE_STORAGE_CONNECTION_STRING in .env or environment
-```
-
-**Remaining**:
-- Azure Blob Storage (image uploads) — not yet integrated (images still Unsplash URLs)
-- Email service — tokens logged to console, no real email sending
+**Resolution**: Add ASP.NET Core rate limiting middleware (built-in in .NET 7+) in `Lovecraft.Backend/Program.cs`. Target: 5 login attempts per 15 minutes per IP.
 
 ---
 
-## 🟠 High Priority Issues
+### 29. No Account Lockout
+**Impact**: Unlimited failed login attempts with no lockout
+
+There is no tracking of failed login attempts and no temporary lockout mechanism.
+
+**Resolution**: Add failed-attempt counting to `MockAuthService` / `AzureAuthService`. Lock account for 15 minutes after 10 consecutive failures. See `docs/AUTHENTICATION.md` in the backend repo.
+
+---
+
+### 30. No Input Sanitization on User-Generated Content
+**Impact**: XSS risk when rich text rendering is introduced
+
+Forum replies, chat messages, and bio fields are stored without sanitisation. React escapes plain string output by default, so the XSS surface is limited today — but this becomes a direct vulnerability when rich text rendering (#40) is implemented. Sanitisation must be in place before that feature ships.
+
+**Resolution**: Add server-side HTML sanitisation (e.g. HtmlSanitizer NuGet package) to `ForumService.CreateReplyAsync`, `ChatService.SendMessageAsync`, and `UserService.UpdateUserAsync` (bio field) in the backend.
+
+---
+
+## 🟠 Missing Core Features
+
+### 15. Desktop Navigation *(escalated from UX/Polish)*
+**Impact**: App is functionally unusable on desktop viewports
+
+Bottom navigation is mobile-only. No navigation element exists on large screens. Desktop users have no way to switch between pages.
+
+**Resolution**: Add a sidebar or top navigation bar that is visible at `md:` breakpoints and above. Follow existing design system colours and active-state patterns from `src/components/ui/bottom-navigation.tsx`.
+
+---
+
+### 31. Forum Topic Creation
+**Impact**: Community feature is read-only for new content
+
+Users can only reply to existing topics. There is no UI, no `forumsApi.createTopic()` method, and no backend endpoint for creating new topics. The entire forum is seeded-only content.
+
+**Resolution**:
+- Backend: Add `POST /api/v1/forum/sections/{sectionId}/topics` endpoint to `ForumController` and `IForumService`
+- Frontend: Add `forumsApi.createTopic(sectionId, title, content)` to `src/services/api/forumsApi.ts`
+- UI: Add a "New Topic" button and form to the topic list view in `src/pages/Talks.tsx`
+
+---
+
+### 32. Profile Image Upload
+**Impact**: Users cannot set their own profile photo
+
+Profile images are hardcoded Unsplash URLs. Azure Blob Storage is not integrated. `UserDto.profileImage` is always an external URL.
+
+**Resolution**:
+- Backend: Integrate Azure Blob Storage. Add `POST /api/v1/users/{id}/images` endpoint. Store blob URL in `UserEntity`.
+- Frontend: Add file input to the profile edit form in `src/pages/SettingsPage.tsx`. Call new upload endpoint. Display uploaded image preview.
+
+---
+
+### 33. Notification System
+**Impact**: No engagement hooks — users are never informed of new activity
+
+There are no notifications for: new match, received like, reply to a forum post you authored, new message. Users must manually refresh to discover activity.
+
+**Resolution**: Design notification model (type, userId, payload, read flag). Implement `GET /api/v1/notifications` and `POST /api/v1/notifications/{id}/read` endpoints. Push new notifications via SignalR `ChatHub` as a `NotificationReceived` server event. Add notification bell UI to the header.
+
+---
+
+### 34. Songs Backend Endpoint
+**Impact**: Favorite songs on user profiles are disconnected from real data
+
+`src/services/api/songsApi.ts` always returns mock data regardless of `VITE_API_MODE`. There is no backend endpoint for songs.
+
+**Resolution**: Add `GET /api/v1/songs` endpoint to the backend. Implement `MockSongService` and `AzureSongService`. Update `songsApi.ts` to call the real endpoint in API mode.
+
+---
+
+### 35. Pagination on List Views
+**Impact**: All list views load full datasets; will degrade at scale
+
+Events, blog posts, forum topics, store items, and user search results all fetch everything at once. No `page`/`pageSize` parameters are used on the frontend.
+
+**Resolution**: Add `?page=&pageSize=` query parameters to all list API calls. Use the existing `PagedResult<T>` model already defined in `Lovecraft.Common`. Implement "Load more" buttons or infinite scroll on each list view.
+
+---
+
+### 36. Advanced User Search & Filtering
+**Impact**: User discovery has no filters; swipe deck shows all users
+
+User preferences (age range, gender, location) exist in `UserPreferencesDto` and `SettingsPage.tsx` but are not sent to or honoured by `GET /api/v1/users`. The matching swipe deck shows every user regardless of preferences.
+
+**Resolution**:
+- Backend: Add filter parameters to `GET /api/v1/users` (`?country=&city=&minAge=&maxAge=&gender=&eventId=`)
+- Frontend: Pass the current user's preferences when calling `usersApi.getUsers()` in `src/pages/Friends.tsx`
+- UI: Add a filter sheet/drawer accessible from the Search tab header
+
+---
+
+### 37. Anonymous Likes
+**Impact**: Core privacy feature absent from the matching system
+
+Currently all likes are visible to the recipient. A user sending an anonymous like has their identity stored in the system but not surfaced to the recipient. The sender is revealed only when the recipient also sends a like, creating a mutual (non-anonymous) match.
+
+**Resolution**:
+- Backend: Add `isAnonymous: boolean` to `CreateLikeRequestDto` and `LikeEntity`. Update `GET /api/v1/matching/likes/received` to omit sender details when `isAnonymous = true`
+- Frontend: Add an "Anonymous" toggle to the like action in `src/pages/Friends.tsx`
+
+---
+
+### 38. Event Sub-Groups
+**Impact**: No way to organise attendees into sub-groups within an event
+
+For events like yachting trips, attendees may be split into boats or other groups. Each group needs its own forum topic and roster, while remaining transparent — all event attendees can see and interact with all sub-groups.
+
+**Resolution**:
+- Backend: Add `EventSubGroup` entity and table. Add `POST /api/v1/events/{id}/subgroups`, `GET /api/v1/events/{id}/subgroups`, `POST /api/v1/events/{id}/subgroups/{groupId}/members` endpoints
+- Frontend: Show sub-group tabs on `src/pages/EventDetails.tsx`. Each sub-group links to its own forum topic (using the existing `forumTopicId` pattern from `EventDto`)
+
+---
+
+### 39. Gated Registration via Access Codes
+**Impact**: No way to restrict who can create accounts
+
+When enabled, only users with a valid access code can complete registration. Codes are time-limited and distributed at real-world events (printed QR codes or short keywords). Controlled via the admin panel (#45).
+
+**Resolution**:
+- Backend: Add `AccessCode` entity and table. Add `POST /api/v1/admin/access-codes` (create), `GET /api/v1/admin/access-codes` (list), `POST /api/v1/auth/validate-code` (validate before registration). Check for valid code during `RegisterAsync` when gating is enabled via feature flag
+- Frontend: Add optional access code field to the registration form in `src/pages/Welcome.tsx`
+
+---
+
+### 40. Rich Text and Media in Forum & Chat
+**Impact**: Forum posts and messages are plain text only; no images or formatting
+
+Users cannot bold text, create lists, or attach images in forum replies or private messages. This is a baseline expectation for a community platform.
+
+**Resolution**:
+- Choose a rich text editor (e.g. TipTap or Quill) for the frontend
+- Replace the plain `<textarea>` in `src/components/forum/TopicDetail.tsx` and the message input in `src/pages/Friends.tsx` with the editor component
+- Backend: Store content as HTML or a safe subset (Markdown). Apply server-side sanitisation (see #30) before storage
+- Add image upload support via Azure Blob Storage (see #32)
+
+---
+
+### 41. Ranking & Badges System
+**Impact**: Community engagement has no visible progression or recognition
+
+Active users receive no visible acknowledgement for their participation. No ranks, no badges, no profile distinction between a new user and a long-term community member.
+
+**Proposed tiers**: Novice → Active Member → Friend of Aloe → Aloe Crew (criteria: forum post count, match count, likes received, events attended)
+
+**Resolution**:
+- Backend: Add rank computation logic to `UserService`. Expose `rank` and `badgeCount` on `UserDto`
+- Frontend: Display rank badge on profile cards in `src/pages/Friends.tsx` and in `src/pages/SettingsPage.tsx`
+
+---
+
+### 42. Event Group Chat (Real Implementation)
+**Impact**: Event discussions are routed through a forum topic workaround, not a real group chat
+
+`src/pages/Talks.tsx` event chat tab uses a forum topic as a group chat proxy. This produces a poor UX (forum reply format instead of chat bubbles) and limits real-time features.
+
+**Resolution**: Implement proper multi-participant group chat per event using the existing `ChatHub` SignalR infrastructure. Add a `type: 'event'` chat variant alongside the existing `private` type. Auto-create an event group chat when a new event is created (similar to how mutual likes auto-create a 1-on-1 chat).
+
+---
+
+### 43. Public Metrics Dashboard
+**Impact**: No visibility into platform activity for users
+
+Users have no way to see how active the platform is — total members, who is online, recent sign-ups.
+
+**Resolution**:
+- Backend: Add `GET /api/v1/stats` endpoint returning `{ totalUsers, onlineUsers, recentRegistrations[] }`
+- Frontend: Add a stats widget to the main AloeVera or Welcome page
+
+---
+
+### 44. AI Content Moderation
+**Impact**: No automated protection against spam or inappropriate content
+
+Forum posts and chat messages are not screened. A single bad actor can flood the platform before a moderator notices.
+
+**Resolution**: Integrate an AI moderation API (e.g. OpenAI Moderation, Azure Content Safety) at the point of content creation in the backend (`ForumService.CreateReplyAsync`, `ChatService.SendMessageAsync`). Flag content above a configurable threshold. Route flagged content to the admin panel (#45) for human review rather than blocking automatically.
+
+---
+
+### 45. Admin & Moderator Panel
+**Impact**: No interface for managing the platform — feature flags, user blocking, content removal
+
+There is no admin interface. A rogue user or spammer can only be stopped by directly modifying the database. Feature flags (e.g. gated registration from #39) have no toggle UI.
+
+**Scope**:
+- Feature flag management (enable/disable gated registration, maintenance mode, etc.)
+- User management: view, block, unblock accounts
+- Content management: delete forum posts and replies, clear chat messages
+- Access code management (for #39)
+- AI moderation review queue (for #44)
+- Platform metrics view (for #43)
+
+**Architecture note**: Consider a separate web application (`@aloevera-admin/`) with its own authentication (admin-only JWT role) for security isolation. Alternatively, add admin routes to the existing frontend behind a role check.
+
+---
+
+### 46. Telegram Mini App
+**Impact**: Users who prefer Telegram have no native way to access the platform
+
+A Telegram Mini App would let users interact with AloeVera Harmony Meet without leaving Telegram. Planned as a separate repository (`@aloevera-telegram-bot/`).
+
+**Dependencies**: Telegram bot authentication on the backend (see `@lovecraft/Lovecraft/docs/AUTHENTICATION.md` — Phase 3, not yet implemented).
+
+*Note: significant scope — separate project and repository.*
+
+---
+
+### 47. aloeband.ru Scraper
+**Impact**: Events and store items require manual data entry; may fall out of sync with the official site
+
+Upcoming concerts, events, and merchandise listed on `aloeband.ru` are not automatically reflected in the app. App events and store items should include a forward link to the official site for ticket and merchandise purchases.
+
+**Resolution**: Build a scheduled scraper (Azure Function or cron job) that fetches `aloeband.ru`, parses event and store listings, and upserts them into the backend via the existing `EventService` and `StoreService`. Add `externalUrl` field to `EventDto` and `StoreItemDto`.
+
+*Note: significant scope — depends on the structure of `aloeband.ru` and may require maintenance as the site changes.*
+
+---
+
+## 🟡 Technical Debt & Infrastructure
 
 ### 4. Loose TypeScript Configuration
-**Severity**: High  
-**Impact**: Type safety compromised, potential runtime errors
+**Impact**: Type safety compromised; potential runtime errors
 
-**Current `tsconfig.json` settings**:
-```json
-{
-  "noImplicitAny": false,
-  "noUnusedParameters": false,
-  "skipLibCheck": true,
-  "allowJs": true,
-  "noUnusedLocals": false,
-  "strictNullChecks": false
-}
-```
+Current `tsconfig.json` has `strictNullChecks: false`, `noImplicitAny: false`, `noUnusedLocals: false`, `noUnusedParameters: false`.
 
-**Problems**:
-- Missing type annotations won't be caught
-- Implicit `any` types allowed
-- Null/undefined errors won't be caught at compile time
-- Unused code won't be flagged
-
-**Resolution**: Gradually enable strict mode:
-```json
-{
-  "strict": true,
-  "noImplicitAny": true,
-  "strictNullChecks": true,
-  "noUnusedLocals": true,
-  "noUnusedParameters": true
-}
-```
-
----
-
-### ~~5. No Testing Framework~~ ✅ Resolved
-
-**Severity**: ~~High~~ → Resolved
-**Impact**: Code quality, reliability, refactoring confidence
-
-**Implemented** (2026-03-15):
-- **Vitest** + jsdom — test runner with `globals: true`, config in `vite.config.ts`
-- **React Testing Library** — `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom/vitest`
-- **47 tests** across 4 files — all passing
-
-**Coverage**:
-- `src/lib/validators.ts` — all 5 Zod schemas (22 tests)
-- `src/lib/apiError.ts` — `showApiError()` (5 tests)
-- `src/lib/utils.ts` — `cn()` (3 tests)
-- `src/pages/Welcome.tsx` — login + register forms (17 tests)
-
-**Remaining gaps**: Other page components, API services, `ProtectedRoute`, custom hooks. E2E (Playwright) deferred.
-
----
-
-### ~~6. Mock Data Still Embedded in Most Page Components~~ ✅ RESOLVED
-**Resolved**: February 19, 2026
-
-All mock data has been extracted from page components into `src/data/` files and each domain has a corresponding API service with a mock branch. Page components now use `useEffect` hooks to fetch data via service functions in both mock and API modes.
-
----
-
-### ~~7. Type Inconsistencies~~ ✅ RESOLVED
-**Resolved**: March 15, 2026
-
-**Duplicate `Message` interface**:
-- ~~Defined in both `src/types/user.ts` and `src/types/chat.ts`~~ — removed from `user.ts`
-- `user.ts` now imports `Message` from `chat.ts`
-- `chat.ts` is the single source of truth for `Message`, `ChatDto`, `MessageDto` (type aliases), and `PrivateChatWithUser`
+**Resolution**: Gradually enable strict mode. Start with `"strictNullChecks": true` as it catches the most bugs. Fix resulting type errors incrementally. Target: `"strict": true` with all errors resolved.
 
 ---
 
 ### 8. Incomplete Internationalization
-**Severity**: High  
-**Impact**: User experience for non-Russian speakers
+**Impact**: Non-Russian speakers see untranslated UI
 
-**Problems**:
-- Many UI strings are hardcoded in Russian (not translated)
-- Page components have mixed translated/untranslated strings
-- No translation for error messages
-- Forum section names hardcoded
-- Blog content not translatable
+Many strings are hardcoded in Russian instead of using `t()` from `src/contexts/LanguageContext.tsx`. Affected areas: forum section names, store categories, event categories, chat placeholders, system messages.
 
-**Examples of untranslated strings**:
-- Forum sections: "Общий", "Музыка", "Города", "Офтопик"
-- Store categories: "Одежда", "Музыка", "Мерч"
-- Event categories: "Концерт", "Встреча", "Фестиваль"
-- Chat placeholders and system messages
+**Resolution**: Audit all components for hardcoded Russian strings. Add keys to both `ru` and `en` translation objects in `LanguageContext.tsx`. Replace hardcoded strings with `{t('key')}`.
+
+---
+
+### 12. No Global State Management Strategy
+**Impact**: State cannot be shared between pages; TanStack Query is configured but unused
+
+User profile, auth state, match/like counts, and cart state are all managed in local component state and cannot be shared across routes.
+
+**Resolution**: Adopt TanStack React Query (already installed) for all server state — replace `useEffect` + `useState` data-fetching patterns page by page. Consider Zustand for client-only global state (e.g. current user identity). Keep `LanguageContext` as-is.
+
+---
+
+### 48. No React Error Boundaries
+**Impact**: Any unhandled component error crashes the entire app with a blank screen
+
+There are no `ErrorBoundary` components anywhere in the React tree. A runtime error in any component unmounts the full UI.
+
+**Resolution**: Add an `ErrorBoundary` component wrapping the main `<App />` in `src/main.tsx` and additional boundaries around each major page section. Display a user-friendly fallback UI with a "Reload" button.
+
+---
+
+### 49. No Structured Logging or Monitoring in Production
+**Impact**: Impossible to diagnose issues after deployment; no alerting
+
+The backend has no Serilog output configured for production and no Application Insights integration. There is no frontend error tracking (Sentry or equivalent).
 
 **Resolution**:
-- Add all strings to `LanguageContext` translations
-- Use `t()` function consistently throughout
-- Consider using i18next for more robust i18n
+- Backend: Add Serilog with structured JSON output to stdout (captured by Docker). Add Azure Application Insights SDK
+- Frontend: Add Sentry SDK (`@sentry/react`). Capture unhandled exceptions and API errors
 
 ---
 
-## 🟡 Medium Priority Issues
+### 50. No CI/CD Pipeline
+**Impact**: Tests are never run automatically; deployment is fully manual
 
-### ~~9. Lack of Error Handling~~ ✅ RESOLVED
-**Resolved**: March 14, 2026
+There are no GitHub Actions (or equivalent) workflows. A breaking change can be pushed to the repo without any automated gate. Deployment requires SSH-ing into the Azure VM and running `docker compose up --build` manually.
 
-**What was implemented**:
-- `src/lib/apiError.ts` — `showApiError(err, fallback)` helper: extracts `err.error.message` from ApiResponse shape, falls back to `Error.message`, then the fallback string, and calls `toast.error()`
-- `<Sonner position="bottom-center" richColors />` added to `App.tsx` (red for errors, green for success)
-- Auth actions: `toast.success('Welcome back!')` on login, `toast.success('Account created! Check your email to verify.')` on register
-- Profile save: `toast.success('Profile updated')` on success; `showApiError` on failure
-- Logout: `showApiError(err, 'Logout failed')` instead of silently swallowing the error
-- Forum replies: `toast.success('Reply posted')` on success; `showApiError` on failure
-- Unexpected API failures (network errors, etc.) surfaced via `showApiError` in all wired forms
-
-**Still missing**:
-- React Error Boundaries (component-level crashes)
-- Retry logic / fallback UI when network is unavailable
+**Resolution**:
+- Add GitHub Actions workflow: run `npm run test:run` (frontend) and `dotnet test` (backend) on every push and PR
+- Add deployment workflow: on merge to `main`, SSH to the Azure VM and run `docker compose up --build -d`
 
 ---
 
-### ~~10. No Validation on Forms~~ ✅ RESOLVED
-**Resolved**: March 14, 2026
+### 51. `localStorage` Token Security
+**Impact**: Access tokens in `localStorage` are readable by any JavaScript on the page
 
-**What was implemented** — `src/lib/validators.ts` (new) contains all Zod schemas:
-- `loginSchema` — email (valid format), password (non-empty)
-- `registerSchema` — email, password (≥8 chars + uppercase + lowercase + digit + special char), name, age (18–99 int), location, gender, bio (optional, max 500 chars)
-- `profileEditSchema` — name, age (18–99), location, bio (optional, max 500 chars)
-- `messageSchema` — content (non-empty after trim, max 2000 chars)
-- `replySchema` — content (non-empty after trim, max 5000 chars)
+Storing the access token in `localStorage` is vulnerable to XSS. The more secure pattern is: access token in memory (React state/context), refresh token in an HttpOnly cookie.
 
-**Forms migrated to `useForm<T>` + `zodResolver`**:
-- `Welcome.tsx` — login (`mode: onSubmit`, root error for wrong credentials) + register (`mode: onBlur`, EMAIL_TAKEN mapped to field-level `setError('email', ...)`)
-- `SettingsPage.tsx` — profile edit (`reset()` on cancel, `editStartUser` captures state at edit start to restore gender on cancel)
-- `TopicDetail.tsx` — forum reply (single textarea, inline error below)
+**Dependency**: Requires #27 (HTTPS) to be resolved first — the `Secure` cookie flag only works over HTTPS. The backend already supports the HttpOnly cookie flow conditionally on `Request.IsHttps`.
 
-**Lightweight inline validation** (no react-hook-form, send is mock-only):
-- `Friends.tsx` — message input: blocks empty/whitespace, inline `"Message can't be empty"` error, clears on keystroke
-- `Talks.tsx` — same pattern
+**Resolution**: After #27 is resolved, move `access_token` out of `localStorage` and into a React context (or Zustand store). The refresh flow in `apiClient.ts` continues to work — it reads from the context instead of `localStorage`.
 
 ---
+
+## 🟢 UX / Polish
 
 ### 11. Accessibility Issues
-**Severity**: Medium  
 **Impact**: Users with disabilities, SEO
 
-**Missing**:
-- Semantic HTML in many places
-- ARIA labels on interactive elements
-- Keyboard navigation support
-- Focus management
-- Alt text on some images
-- Skip navigation links
-- Proper heading hierarchy in some components
+Missing semantic HTML, ARIA labels, keyboard navigation support, focus management, alt text on some images.
 
-**Resolution**: 
-- Add ARIA attributes
-- Implement keyboard navigation
-- Test with screen readers
-- Add focus traps for modals
-- Use semantic HTML elements
-
----
-
-### 12. No State Management Strategy
-**Severity**: Medium  
-**Impact**: Scalability, code organization
-
-**Current approach**:
-- React Context only for language (good)
-- Local component state for everything else
-- TanStack React Query configured but unused
-- No global state for user, auth, or app state
-
-**Problems**:
-- Can't share state between pages
-- Auth state is hardcoded
-- User profile not globally accessible
-- Matches/likes not accessible outside Friends page
-
-**Resolution**: 
-- Use TanStack React Query for server state (when backend exists)
-- Consider Zustand or Jotai for client-side global state
-- Keep Context API for theme/language
+**Resolution**: Audit with `axe` browser extension. Add ARIA attributes, semantic elements, and keyboard navigation. Test with a screen reader.
 
 ---
 
 ### 13. Swipe Functionality Incomplete
-**Severity**: Medium  
 **Impact**: Core dating feature UX
 
-The `SwipeCard` component exists (`src/components/ui/swipe-card.tsx`) but:
-- Swipe gestures may not work smoothly on all devices
-- No swipe animation feedback
-- No undo functionality
-- No algorithm for user recommendations
-- No filtering based on preferences
+`src/components/ui/swipe-card.tsx` exists but swipe gestures may not be smooth on all devices, there is no animation feedback, and no undo.
 
-**Resolution**: 
-- Test and improve gesture handling
-- Add swipe animations
-- Implement user recommendation algorithm (backend)
-- Add preference-based filtering
+**Resolution**: Test gesture handling on iOS and Android. Add CSS transition animations for swipe direction. Add an "undo" button that restores the last-passed profile.
 
 ---
 
 ### 14. Image Handling Issues
-**Severity**: Medium  
 **Impact**: Performance, UX
 
-**Problems**:
-- All images are from Unsplash URLs (external dependency)
-- No image optimization
-- No lazy loading
-- No image upload functionality
-- No image validation
-- Same placeholder images used for different users
+All images are external Unsplash URLs. No lazy loading, no optimisation, no unique images per user.
 
-**Resolution**:
-- Implement image upload functionality
-- Add image optimization (sharp, cloudinary, or similar)
-- Implement lazy loading
-- Add proper CDN or local storage
-- Use unique, appropriate images
+**Resolution**: Once #32 (profile image upload) is resolved, migrate to user-uploaded images. Add `loading="lazy"` to all `<img>` elements. Add skeleton loaders.
 
 ---
 
-### 15. Responsive Design Gaps
-**Severity**: Medium  
-**Impact**: UX on various devices
-
-- Mobile-first approach is good
-- Bottom navigation only shown on mobile
-- Some components may not work well on tablets
-- Desktop experience could be enhanced with sidebar navigation
-- Some text may be too small on mobile
-
-**Resolution**:
-- Test on various devices and screen sizes
-- Add tablet-specific layouts
-- Consider desktop sidebar navigation
-- Ensure all touch targets are at least 44x44px
-
----
-
-## 🟢 Low Priority Issues
-
-### 16. Package.json Name Mismatch
-**Severity**: Low  
+### 16. package.json Name Mismatch
 **Impact**: Project identity confusion
 
-`package.json` has name: `"vite_react_shadcn_ts"` (generic template name) instead of `"aloevera-harmony-meet"`
+`package.json` has `"name": "vite_react_shadcn_ts"` (default template name).
 
-**Resolution**: Update package.json name field.
-
----
-
-### ~~17. Incomplete Docker Configuration~~ ✅ RESOLVED
-**Resolved**: February 23, 2026 (updated)
-
-Full stack is deployed and tested on Azure VM (`http://20.153.164.3:8080`). The `docker-compose.yml` in `loveable/aloevera-harmony-meet/` starts both containers.
-
-**Key deployment details**:
-- nginx proxies `/api/` and `/swagger` to the backend container over the internal Docker network — only port 8080 needs to be exposed publicly (port 5000 does not need to be open in the Azure NSG)
-- `VITE_API_BASE_URL` is baked into the frontend bundle at build time and must match the public hostname/IP (currently `http://20.153.164.3:8080`)
-- Backend reads `USE_AZURE_STORAGE` and `AZURE_STORAGE_CONNECTION_STRING` from `../../lovecraft/Lovecraft/.env` via `env_file`
-
-```bash
-# From loveable/aloevera-harmony-meet/
-docker compose up --build -d
-```
+**Resolution**: Change to `"name": "aloevera-harmony-meet"`.
 
 ---
 
-### 18. No Environment Configuration
-**Severity**: Low  
-**Impact**: Configuration management
+### 18. No .env.example File
+**Impact**: New developers don't know which environment variables are required
 
-- No `.env` file or `.env.example`
-- API URLs will need to be hardcoded
-- No way to configure different environments (dev/staging/prod)
-
-**Resolution**: 
-- Add `.env.example` with template variables
-- Document all required environment variables
-- Use Vite's env variable system (`import.meta.env`)
+**Resolution**: Add `.env.example` listing all required `VITE_*` variables with placeholder values. Commit it. Keep `.env.development` and `.env.production` in `.gitignore`.
 
 ---
 
 ### 19. Unused Dependencies
-**Severity**: Low  
-**Impact**: Bundle size, maintenance
+**Impact**: Bundle size, maintenance overhead
 
-Several packages are included but not used or minimally used:
-- `@tanstack/react-query` - Configured but not used
-- `recharts` - Imported but no charts implemented
-- `next-themes` - Dark mode package but dark mode not implemented
-- `react-resizable-panels` - Not used anywhere
-- `vaul` - Drawer component not used
-- `cmdk` - Command palette not used
+Unused packages: `recharts` (no charts), `next-themes` (dark mode not implemented), `react-resizable-panels`, `vaul`, `cmdk`.
 
-**Resolution**: 
-- Remove unused packages OR
-- Implement features that use them (e.g., dark mode, analytics charts)
+**Resolution**: Remove unused packages with `npm uninstall <package>`. Exception: keep `@tanstack/react-query` — it will be used when #12 is addressed.
 
 ---
 
 ### 20. No Analytics or Monitoring
-**Severity**: Low  
-**Impact**: Business insights, debugging
+**Impact**: No business insights
 
-- No analytics integration (GA, Mixpanel, etc.)
-- No error tracking (Sentry, LogRocket, etc.)
-- No performance monitoring
-- No user behavior tracking
+No analytics (GA, Mixpanel), no error tracking (Sentry), no performance monitoring.
 
-**Resolution**: Add analytics and monitoring when backend is implemented.
+**Resolution**: Add analytics when there are real users. Add Sentry for error tracking (see #49 — handled together with structured logging).
 
 ---
 
 ### 21. No PWA Support
-**Severity**: Low  
 **Impact**: Mobile experience, offline functionality
 
-No Progressive Web App capabilities:
-- No service worker
-- No offline support
-- No install prompt
-- No push notifications
+No service worker, no offline support, no install prompt.
 
-**Resolution**: Add PWA support using Vite PWA plugin.
+**Resolution**: Add `vite-plugin-pwa`. Configure a service worker that caches the app shell. Add a Web App Manifest.
 
 ---
 
 ### 22. Inconsistent Date Formatting
-**Severity**: Low  
-**Impact**: Code consistency
+**Impact**: Code inconsistency, maintenance
 
-Date formatting is done manually in multiple places with `Intl.DateTimeFormat`:
-- `Friends.tsx`: `formatDateShort`, `formatTime`, `formatChatDate`
-- `AloeVera.tsx`: `formatDate`, `formatBlogDate`
-- Different formats in different components
+Date formatting is duplicated across `Friends.tsx` (`formatDateShort`, `formatTime`, `formatChatDate`) and `AloeVera.tsx` (`formatDate`, `formatBlogDate`).
 
-**Resolution**: Create centralized date formatting utilities using date-fns.
+**Resolution**: Create `src/lib/dates.ts` with shared formatting functions using `date-fns`. Import and replace inline formatters.
 
 ---
 
-### 23. Missing Metadata and SEO
-**Severity**: Low  
+### 23. Missing SEO Metadata
 **Impact**: SEO, social sharing
 
-`index.html` has basic metadata but:
-- No Open Graph tags
-- No Twitter Card tags
-- Generic title/description
-- No favicon variation (only basic)
-- No structured data (JSON-LD)
+`index.html` has no Open Graph tags, no Twitter Card tags, generic title/description, no structured data.
 
-**Resolution**: Add comprehensive metadata for SEO and social sharing.
+**Resolution**: Add `<meta property="og:*">` and `<meta name="twitter:*">` tags to `index.html`. Consider `react-helmet-async` for per-route metadata.
 
 ---
 
-### 24. No Content Moderation System
-**Severity**: Low (for mock) / High (for production)  
-**Impact**: Community safety
+### 24. No Content Moderation UI Placeholder
+**Impact**: No user-facing reporting mechanism
 
-No consideration for:
-- Inappropriate content detection
-- User reporting
-- Admin moderation interface
-- Spam prevention
-- Blocking/muting users
+Users cannot report another user or flag a forum post. Only admin-side moderation (#45) is planned.
 
-**Resolution**: Design and implement moderation system when backend is built.
+**Resolution**: Add a "Report" option to user cards and forum posts. Store reports in a backend table. Surface in the admin panel (#45).
 
 ---
 
-### 25. Event Postmark Component Unused
-**Severity**: Low  
+### 25. Event Postmark Component Underutilised
 **Impact**: Visual design opportunity missed
 
-The artistic `EventPostmark` component is imported but its full potential isn't utilized:
-- Only shown on event cards in `AloeVera.tsx`
-- Could be used more prominently
-- Could be collected as "stamps" by users who attended events
+`src/components/ui/event-postmark.tsx` is only shown on event cards in `AloeVera.tsx`. It could serve as a collectible stamp on user profiles showing events attended.
 
-**Resolution**: Enhance event postmark feature as a collectible/badge system.
+**Resolution**: Display event postmarks on the user profile in `SettingsPage.tsx` and on user cards in `Friends.tsx` (for events the viewed user attended).
 
 ---
 
-## 📊 Summary by Category
+## 📊 Summary
 
-| Category | Critical | High | Medium | Low | Total | Resolved |
-|----------|----------|------|--------|-----|-------|----------|
-| **Backend/Data** | 0 | 1 | 1 | 0 | 3 | #1, #3, #6, #17 |
-| **TypeScript/Code Quality** | 0 | 1 | 1 | 1 | 4 | #5, #7 |
-| **UX/Features** | 0 | 1 | 2 | 3 | 8 | #2, #9, #10 |
-| **Infrastructure** | 0 | 0 | 1 | 3 | 4 | #17 |
-| **Total** | **0** | **3** | **5** | **7** | **14 open** | **#1, #2, #3, #5, #6, #7, #9, #10, #17** |
-
----
-
-## 🎯 Recommended Priority Order
-
-1. ✔️~~**Implement AuthContext** (Issue #2)~~ ✅ Done (localStorage-based minimal implementation)
-2. ✔️~~**Add Protected Routes** (Issue #2)~~ ✅ Done (`ProtectedRoute` component in `App.tsx`)
-3. ✔️~~**Wire remaining pages to API** (Issue #1)~~ ✅ Done (all pages use API services)
-4. ✔️~~**Backend: Azure Storage** (Issue #3)~~ ✅ Done (Azure Table Storage integrated, seeder tool available)
-5. ✔️~~**Full AuthContext with token refresh** (Issue #2 follow-up)~~ ✅ Done (silent refresh in `apiClient`, proactive refresh in `ProtectedRoute`, 13 new backend unit tests)
-6. **Fix Type Issues** (Issue #4) — Prevents bugs during development
-7. ✔️~~**Add Testing** (Issue #5)~~ ✅ Done (Vitest + RTL, 47 tests covering `src/lib/` and `Welcome.tsx`)
-8. **Complete i18n** (Issue #8) — Better UX
-9. ✅~~**Add Form Validation** (Issue #10)~~ ✅ Done (react-hook-form + Zod on all forms)
-10. ✅~~**Improve Error Handling** (Issue #9)~~ ✅ Done (sonner toasts via `showApiError`, success toasts on auth/save/reply)
-11. **Implement State Management** (Issue #12) — Scalability
-12. **Improve Swipe UX** (Issue #13) — Core feature polish
-13. **Everything else** — Based on priority
+| Section | Count |
+|---|---|
+| 🔴 Production Blockers | 5 |
+| 🟠 Missing Core Features | 18 |
+| 🟡 Technical Debt & Infrastructure | 7 |
+| 🟢 UX / Polish | 12 |
+| **Total active** | **42** |
+| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 9 |
 
 ---
 
-## 📝 Notes
+## 📝 Changelog
 
-- Application was bootstrapped with Lovable, then manually extended
-- Backend (`@lovecraft/`) is a working .NET 10 API with full JWT auth, Azure Table Storage, SignalR chat, and 81 unit tests (added 13 matching tests March 16, 2026)
-- All pages are now wired to the API service layer — the full stack can be run end-to-end in Docker
-- Auth is enforced on all backend content endpoints (`[Authorize]`); the frontend protects routes via `ProtectedRoute`
-- Token refresh is fully implemented: silent refresh on 401 (with concurrent-request deduplication), proactive refresh in `ProtectedRoute`, and 13 dedicated unit tests in `RefreshTokenTests.cs`
-- API service layer (`src/services/api/`) provides the mock/real dual-mode pattern
-- Mock data is centralized in `src/data/` for consistency and reuse
-- Backend enum serialization uses camelCase strings (e.g., `"concert"`, `"male"`) for frontend compatibility
-- Design system and component architecture are solid foundations
+**March 16, 2026** — Full restructure. Switched from severity-based to type-based sections. Resolved issues (#1, #2, #3, #5, #6, #7, #9, #10, #17) moved to `RESOLVED_ISSUES.md`. Added new issues from audit: production blockers (#26–#30), missing core features (#31–#47), tech debt (#48–#51). Escalated #15 (desktop navigation) from UX/Polish to Missing Core Features. Removed "Recommended Priority Order" section — section ordering communicates priority.
 
----
+**March 15, 2026** — Issues #5 (testing) and #7 (duplicate Message interface) resolved. Chat REST + SignalR implemented.
 
-**Next Steps**: Fix Type Issues (#4) and complete i18n (#8). See [API_INTEGRATION.md](./API_INTEGRATION.md) and [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) for guidance.
+**March 14, 2026** — Issues #9 (error handling) and #10 (form validation) resolved.
 
-**March 14, 2026 update**: Issues #9 (error handling) and #10 (form validation) are fully resolved. All forms use react-hook-form + Zod. User-facing errors and successes surface via sonner toasts. See `src/lib/validators.ts` and `src/lib/apiError.ts`.
+**February 23, 2026** — Issue #3 (data persistence / Azure Storage) and #17 (Docker) resolved.
 
-**March 15, 2026 update**: Issues #5 (frontend testing, 47 tests) and #7 (duplicate Message interface) resolved. Chat system (REST + SignalR) implemented on both backend and frontend — `chatsApi.ts` is now dual-mode, `Friends.tsx` uses live messages, `Talks.tsx` uses forum topics for event discussion with real-time reply broadcasting. See `docs/superpowers/plans/2026-03-15-chat-signalr.md` and `@lovecraft/Lovecraft/docs/CHAT_ARCHITECTURE.md`.
-
-**March 16, 2026 update**: Matching and chat bugs fixed end-to-end:
-- `MatchingController` was using hardcoded `"current-user"` for all four endpoints — fixed to read `ClaimTypes.NameIdentifier` from JWT
-- Match computation changed from a stored `matches` table to intersection of `likes` ∩ `likesreceived` — fixes stale/missing match data
-- Mutual like now auto-creates a 1-on-1 chat (both mock and Azure paths)
-- `AzureChatService` constructor now calls `CreateIfNotExistsAsync()` — fixed 500 errors on first use
-- `ChatsController.SendMessage` now broadcasts `MessageReceived` via `IHubContext<ChatHub>` — real-time delivery now works for REST-sent messages
-- `getCurrentUserIdFromToken()` added to `matchingApi.ts` — decodes JWT client-side for match partner resolution and message bubble alignment; avoids extra `/auth/me` round-trip
-- Frontend chat enrichment fixed: `PrivateChatWithUser.otherUser` now populated from match data; API date strings parsed to `Date` objects; message deduplication in `MessageReceived` handler
-- Backend unit tests: 81 passing (added 13 `MatchingTests`)
+**February 19, 2026** — Issues #1 (pages wired to backend), #2 (auth token storage), and #6 (mock data centralized) resolved.
