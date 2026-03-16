@@ -7,13 +7,13 @@ services:
   # Backend API (.NET)
   backend:
     build:
-      context: ../../lovecraft/Lovecraft
+      context: ../lovecraft/Lovecraft
       dockerfile: Dockerfile
     container_name: aloevera-backend
     ports:
       - "5000:8080"
     env_file:
-      - ../../lovecraft/Lovecraft/.env
+      - ../lovecraft/Lovecraft/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
