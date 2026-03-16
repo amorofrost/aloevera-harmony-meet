@@ -55,7 +55,10 @@ const Friends = () => {
   useEffect(() => {
     if (!activeChatId) return;
     return onEvent('MessageReceived', (msg: unknown) => {
-      setMessages(prev => [...prev, msg as MessageDto]);
+      const incoming = msg as MessageDto;
+      setMessages(prev =>
+        prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]
+      );
     });
   }, [activeChatId, onEvent]);
 
@@ -179,10 +182,9 @@ const Friends = () => {
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !activeChatId) return;
-    const result = await chatsApi.sendMessage(activeChatId, content);
-    if (result.success && result.data) {
-      setMessages(prev => [...prev, result.data!]);
-    }
+    // Don't add to state from the REST response — the SignalR broadcast delivers
+    // the message to all group members including the sender, avoiding duplicates.
+    await chatsApi.sendMessage(activeChatId, content);
   };
 
   const handleSendClick = () => {
