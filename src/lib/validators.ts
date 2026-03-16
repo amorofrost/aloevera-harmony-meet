@@ -52,8 +52,14 @@ export const replySchema = z.object({
     .max(5000, 'Reply is too long'),
 });
 
+export const createTopicSchema = z.object({
+  title: z.string().trim().min(5, 'Title must be at least 5 characters').max(100, 'Title is too long'),
+  content: z.string().trim().min(10, 'Content must be at least 10 characters').max(5000, 'Content is too long'),
+});
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type ProfileEditSchema = z.infer<typeof profileEditSchema>;
 export type MessageSchema = z.infer<typeof messageSchema>;
 export type ReplySchema = z.infer<typeof replySchema>;
+export type CreateTopicFormData = z.infer<typeof createTopicSchema>;

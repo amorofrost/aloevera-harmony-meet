@@ -4,6 +4,7 @@ import {
   profileEditSchema,
   messageSchema,
   replySchema,
+  createTopicSchema,
 } from '../validators';
 
 // ---------------------------------------------------------------------------
@@ -154,6 +155,62 @@ describe('replySchema', () => {
 
   it('fails when content exceeds 5000 characters', () => {
     const result = replySchema.safeParse({ content: 'a'.repeat(5001) });
+    expect(result.success).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createTopicSchema
+// ---------------------------------------------------------------------------
+describe('createTopicSchema', () => {
+  it('passes with valid title and content', () => {
+    const result = createTopicSchema.safeParse({
+      title: 'Valid topic title',
+      content: 'Valid content that is long enough',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('fails when title is shorter than 5 characters', () => {
+    const result = createTopicSchema.safeParse({
+      title: 'Hi',
+      content: 'Valid content that is long enough',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe('Title must be at least 5 characters');
+  });
+
+  it('fails when title is longer than 100 characters', () => {
+    const result = createTopicSchema.safeParse({
+      title: 'A'.repeat(101),
+      content: 'Valid content that is long enough',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe('Title is too long');
+  });
+
+  it('fails when content is shorter than 10 characters', () => {
+    const result = createTopicSchema.safeParse({
+      title: 'Valid title',
+      content: 'Short',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe('Content must be at least 10 characters');
+  });
+
+  it('fails when title is whitespace only', () => {
+    const result = createTopicSchema.safeParse({
+      title: '     ',
+      content: 'Valid content that is long enough',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails when content is whitespace only', () => {
+    const result = createTopicSchema.safeParse({
+      title: 'Valid title',
+      content: '          ',
+    });
     expect(result.success).toBe(false);
   });
 });
