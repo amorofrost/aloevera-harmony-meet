@@ -115,6 +115,18 @@ export const forumsApi = {
     return mockSuccess(detail);
   },
 
+  async getReplies(topicId: string): Promise<ApiResponse<ForumReply[]>> {
+    if (isApiMode()) {
+      const res = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies`);
+      if (res.success && res.data) {
+        return { ...res, data: res.data.map(mapReplyFromApi) };
+      }
+      return res as ApiResponse<ForumReply[]>;
+    }
+    const detail = mockTopicDetails[topicId];
+    return mockSuccess(detail ? detail.replies : []);
+  },
+
   async createReply(topicId: string, content: string): Promise<ApiResponse<ForumReply>> {
     if (isApiMode()) {
       return apiClient.post<ForumReply>(`/api/v1/forum/topics/${topicId}/replies`, { content });

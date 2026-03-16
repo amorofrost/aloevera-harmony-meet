@@ -8,16 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { GroupChat } from '@/types/chat';
-import { forumsApi, chatsApi } from '@/services/api';
-import type { ForumSection } from '@/data/mockForumData';
+import { eventsApi } from '@/services/api/eventsApi';
+import { forumsApi } from '@/services/api/forumsApi';
+import { useChatSignalR } from '@/hooks/useChatSignalR';
+import type { ForumSection, ForumReply } from '@/data/mockForumData';
 import TopicDetail from '@/components/forum/TopicDetail';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const Talks = () => {
   const [activeTab, setActiveTab] = useState('forum');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [messageError, setMessageError] = useState('');
@@ -26,28 +26,42 @@ const Talks = () => {
   const { t } = useLanguage();
 
   const [forumSections, setForumSections] = useState<ForumSection[]>([]);
-  const [eventChats, setEventChats] = useState<GroupChat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Event discussion state
+  const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [topicReplies, setTopicReplies] = useState<ForumReply[]>([]);
+  const [topicLoading, setTopicLoading] = useState(false);
+
+  // SignalR for event topic updates
+  const { onEvent } = useChatSignalR('topic', activeTopicId ?? '');
+
+  useEffect(() => {
+    if (!activeTopicId) return;
+    return onEvent('ReplyPosted', (reply: unknown, topicId: unknown) => {
+      if (topicId === activeTopicId) {
+        setTopicReplies(prev => [...prev, reply as ForumReply]);
+      }
+    });
+  }, [activeTopicId, onEvent]);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    const chatId = searchParams.get('chatId');
+    const eventId = searchParams.get('eventId');
     if (tab === 'events') setActiveTab('events');
-    if (chatId) {
+    if (eventId) {
       setActiveTab('events');
-      setSelectedChat(chatId);
+      handleOpenEventDiscussion(eventId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const [sectionsRes, chatsRes] = await Promise.all([
-        forumsApi.getSections(),
-        chatsApi.getEventChats(),
-      ]);
+      const sectionsRes = await forumsApi.getSections();
       if (sectionsRes.success && sectionsRes.data) setForumSections(sectionsRes.data);
-      if (chatsRes.success && chatsRes.data) setEventChats(chatsRes.data);
       setIsLoading(false);
     };
     load();
@@ -64,23 +78,40 @@ const Talks = () => {
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
   };
 
-  const formatTime = (date: Date) =>
-    new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(date);
+  const handleOpenEventDiscussion = async (eventId: string) => {
+    setActiveEventId(eventId);
+    setTopicLoading(true);
+    const eventResult = await eventsApi.getEventById(eventId);
+    if (eventResult.success && eventResult.data?.forumTopicId) {
+      const topicId = eventResult.data.forumTopicId;
+      setActiveTopicId(topicId);
+      const repliesResult = await forumsApi.getReplies(topicId);
+      if (repliesResult.success && repliesResult.data) {
+        setTopicReplies(repliesResult.data);
+      }
+    } else {
+      setActiveTopicId(null);
+      setTopicReplies([]);
+    }
+    setTopicLoading(false);
+  };
 
-  const handleSendMessage = () => {
-    if (!messageText.trim()) {
-      setMessageError("Message can't be empty");
+  const handleSendEventReply = async () => {
+    const content = messageText.trim();
+    if (!content || !activeTopicId) {
+      if (!content) setMessageError("Message can't be empty");
       return;
     }
     setMessageError('');
     setMessageText('');
+    const result = await forumsApi.createReply(activeTopicId, content);
+    if (result.success && result.data) {
+      setTopicReplies(prev => [...prev, result.data!]);
+    }
   };
 
-  // Chat view
-  if (selectedChat) {
-    const chat = eventChats.find(c => c.id === selectedChat);
-    if (!chat) return null;
-
+  // Event discussion panel
+  if (activeEventId && activeTab === 'events') {
     return (
       <div className="min-h-screen bg-background pb-20 flex flex-col relative">
         <div className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80" style={{ backgroundImage: `url(${heroBg})` }}>
@@ -88,7 +119,7 @@ const Talks = () => {
         </div>
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
           <div className="flex items-center gap-3 p-4">
-            <Button variant="ghost" size="sm" onClick={() => setSelectedChat(null)}>
+            <Button variant="ghost" size="sm" onClick={() => { setActiveEventId(null); setActiveTopicId(null); setTopicReplies([]); }}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-3 flex-1">
@@ -96,47 +127,67 @@ const Talks = () => {
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="font-semibold">{chat.name}</h2>
-                <p className="text-xs text-muted-foreground">{chat.participants.length} участников</p>
+                <h2 className="font-semibold">Обсуждение события</h2>
+                <p className="text-xs text-muted-foreground">Форум события</p>
               </div>
             </div>
-            {chat.eventId && (
-              <Button variant="ghost" size="sm" onClick={() => navigate(`/aloevera/events/${chat.eventId}`)}>
-                <ExternalLink className="w-5 h-5" />
-              </Button>
-            )}
-          </div>
-        </div>
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto relative z-10">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">Добро пожаловать в группу {chat.name}</p>
-          </div>
-          {chat.lastMessage && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-xs font-medium">У</span>
-              </div>
-              <div className="flex-1">
-                <div className="bg-muted rounded-lg p-3 max-w-xs">
-                  <p className="text-sm">{chat.lastMessage.content}</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{formatTime(chat.lastMessage.timestamp)}</p>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="border-t p-4">
-          <div className="flex gap-2">
-            <Input value={messageText} onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
-              placeholder="Введи сообщение..." onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} className="flex-1" />
-            <Button onClick={handleSendMessage} disabled={!messageText.trim()}>
-              <Send className="w-4 h-4" />
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/aloevera/events/${activeEventId}`)}>
+              <ExternalLink className="w-5 h-5" />
             </Button>
           </div>
-          {messageError && (
-            <p className="text-xs text-destructive mt-1">{messageError}</p>
+        </div>
+        <div className="flex-1 p-4 overflow-y-auto relative z-10">
+          {topicLoading && (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            </div>
+          )}
+          {!topicLoading && !activeTopicId && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              У этого события нет форумного обсуждения.
+            </p>
+          )}
+          {!topicLoading && topicReplies.map(reply => (
+            <div key={reply.id} className="flex gap-3 py-2">
+              {reply.authorAvatar && (
+                <img src={reply.authorAvatar} alt={reply.authorName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-medium text-sm">{reply.authorName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(reply.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-sm mt-0.5 break-words">{reply.content}</p>
+              </div>
+            </div>
+          ))}
+          {!topicLoading && activeTopicId && topicReplies.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Нет сообщений. Начните обсуждение!
+            </p>
           )}
         </div>
+        {activeTopicId && (
+          <div className="border-t p-4 relative z-10">
+            <div className="flex gap-2">
+              <Input
+                value={messageText}
+                onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
+                placeholder="Введи сообщение..."
+                onKeyPress={(e) => e.key === 'Enter' && handleSendEventReply()}
+                className="flex-1"
+              />
+              <Button onClick={handleSendEventReply} disabled={!messageText.trim()}>
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+            {messageError && (
+              <p className="text-xs text-destructive mt-1">{messageError}</p>
+            )}
+          </div>
+        )}
         <BottomNavigation />
       </div>
     );
@@ -171,7 +222,7 @@ const Talks = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="forum">Форум</TabsTrigger>
-            <TabsTrigger value="events">Чаты событий</TabsTrigger>
+            <TabsTrigger value="events">Обсуждения событий</TabsTrigger>
           </TabsList>
 
           {/* Forum Tab */}
@@ -236,43 +287,18 @@ const Talks = () => {
             )}
           </TabsContent>
 
-          {/* Event Chats Tab */}
+          {/* Event Discussions Tab */}
           <TabsContent value="events" className="mt-6">
-            {isLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
-            ) : eventChats.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Нет чатов событий</h3>
-                <p className="text-muted-foreground">Присоединяйтесь к событиям</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {eventChats.map((chat) => (
-                  <Card key={chat.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => setSelectedChat(chat.id)}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
-                          <Calendar className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold truncate">{chat.name}</h3>
-                            {chat.lastMessage && (
-                              <span className="text-xs text-muted-foreground">{formatDate(chat.lastMessage.timestamp)}</span>
-                            )}
-                          </div>
-                          {chat.lastMessage && (
-                            <p className="text-sm text-muted-foreground truncate">{chat.lastMessage.content}</p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Обсуждения событий</h3>
+              <p className="text-muted-foreground">
+                Перейдите к событию и откройте его форумное обсуждение оттуда.
+              </p>
+              <Button className="mt-4" variant="outline" onClick={() => navigate('/aloevera')}>
+                К событиям
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Event, User } from '@/types/user';
-import { eventsApi, usersApi, chatsApi } from '@/services/api';
+import { eventsApi, usersApi } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const EventDetails = () => {
@@ -58,15 +58,7 @@ const EventDetails = () => {
     }
   };
 
-  const handleGroupChatClick = async () => {
-    const chatsRes = await chatsApi.getEventChats();
-    if (chatsRes.success && chatsRes.data) {
-      const chat = chatsRes.data.find(c => c.isEventChat && c.eventId === eventId);
-      if (chat) {
-        navigate(`/talks?chatId=${chat.id}`);
-        return;
-      }
-    }
+  const handleGroupChatClick = () => {
     navigate(`/talks?tab=events&eventId=${eventId}`);
   };
 
