@@ -12,7 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
 import type { MessageDto } from '@/types/chat';
-import { matchingApi, usersApi } from '@/services/api';
+import { matchingApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
 import { chatsApi } from '@/services/api/chatsApi';
 import { useChatSignalR } from '@/hooks/useChatSignalR';
 import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
@@ -73,7 +73,32 @@ const Friends = () => {
       if (matchesRes.success && matchesRes.data) setMatches(matchesRes.data);
       if (sentRes.success && sentRes.data) setSentLikes(sentRes.data);
       if (receivedRes.success && receivedRes.data) setReceivedLikes(receivedRes.data);
-      if (chatsRes.success && chatsRes.data) setPrivateChats(chatsRes.data as unknown as PrivateChatWithUser[]);
+      if (chatsRes.success && chatsRes.data) {
+        const allMatches = matchesRes.success && matchesRes.data ? matchesRes.data : [];
+        const allProfiles = profilesRes.success && profilesRes.data ? profilesRes.data : [];
+        const enriched: PrivateChatWithUser[] = (chatsRes.data as any[]).map((chat: any) => {
+          const participants: string[] = chat.participants ?? [];
+          const otherUser =
+            allMatches.find(m => participants.includes(m.otherUser.id))?.otherUser ??
+            allProfiles.find(u => participants.includes(u.id)) ??
+            { id: participants[0] ?? '', name: 'Пользователь', age: 0, bio: '', location: '',
+              gender: 'prefer-not-to-say' as const, profileImage: '', images: [],
+              lastSeen: new Date(), isOnline: false,
+              preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
+              settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true } };
+          return {
+            ...chat,
+            createdAt: new Date(chat.createdAt),
+            updatedAt: new Date(chat.updatedAt),
+            lastMessage: chat.lastMessage ? {
+              ...chat.lastMessage,
+              timestamp: new Date(chat.lastMessage.timestamp),
+            } : undefined,
+            otherUser,
+          };
+        });
+        setPrivateChats(enriched);
+      }
       setIsLoading(false);
     };
     load();
@@ -217,7 +242,7 @@ const Friends = () => {
             <div className="text-center py-4 text-muted-foreground text-sm">Загрузка сообщений...</div>
           ) : messages.length > 0 ? (
             messages.map(msg => (
-              <div key={msg.id} className={cn('flex', msg.senderId === 'current-user' ? 'justify-end' : 'justify-start')}>
+              <div key={msg.id} className={cn('flex', msg.senderId === getCurrentUserIdFromToken() ? 'justify-end' : 'justify-start')}>
                 <div className={cn('rounded-lg px-3 py-2 max-w-[75%] text-sm',
                   msg.senderId === 'current-user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
                   {msg.content}
@@ -236,7 +261,7 @@ const Friends = () => {
             )
           )}
         </div>
-        <div className="border-t p-4">
+        <div className="border-t p-4 relative z-10">
           <div className="flex gap-2">
             <Input value={messageText} onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }} placeholder="Введи сообщение..."
               onKeyPress={(e) => e.key === 'Enter' && handleSendClick()} className="flex-1" />

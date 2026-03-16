@@ -7,6 +7,22 @@ import {
 } from '@/data/mockProfiles';
 import { usersApi } from './usersApi';
 
+// Decode the stored JWT to get the current user's ID without an extra API call.
+// .NET serialises ClaimTypes.NameIdentifier as "nameid" in the JWT payload.
+export function getCurrentUserIdFromToken(): string {
+  const token = apiClient.getAccessToken();
+  if (!token) return '';
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload['nameid']
+      ?? payload['sub']
+      ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+      ?? '';
+  } catch {
+    return '';
+  }
+}
+
 function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
 }
@@ -71,9 +87,10 @@ export const matchingApi = {
 
       const allUsersRes = await usersApi.getUsers();
       const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
+      const myId = getCurrentUserIdFromToken();
 
       const enriched: MatchWithUser[] = res.data.map((dto: any): MatchWithUser => {
-        const otherUserId = (dto.users as string[]).find(id => id !== 'current-user') ?? '';
+        const otherUserId = (dto.users as string[]).find(id => id !== myId) ?? '';
         const otherUser = allUsers.find(u => u.id === otherUserId) ?? {
           id: otherUserId, name: 'Пользователь', age: 0, bio: '', location: '', gender: 'prefer-not-to-say' as const,
           profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
