@@ -32,3 +32,14 @@ export interface PrivateChat extends Chat {
   type: 'private';
   matchId: string;
 }
+
+// Aliases used by chatsApi dual-mode layer
+export type ChatDto = PrivateChat;
+export type MessageDto = Message;
+
+import type { User } from './user';
+
+export interface PrivateChatWithUser {
+  chat: PrivateChat;
+  otherUser: User;
+}

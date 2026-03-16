@@ -14,6 +14,7 @@ export const mockEvents: Event[] = [
     category: 'concert',
     price: 2500,
     organizer: 'AloeVera Official',
+    forumTopicId: 't1',
   },
   {
     id: '2',
@@ -26,6 +27,7 @@ export const mockEvents: Event[] = [
     attendees: ['4', '5', '6', '7'],
     category: 'meetup',
     organizer: 'Фан-клуб AloeVera',
+    forumTopicId: 't2',
   },
   {
     id: '3',
@@ -40,6 +42,7 @@ export const mockEvents: Event[] = [
     category: 'festival',
     price: 5000,
     organizer: 'AloeVera Official',
+    forumTopicId: 't3',
   },
   {
     id: '4',
