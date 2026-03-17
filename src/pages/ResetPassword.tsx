@@ -67,9 +67,6 @@ const ResetPassword = () => {
           <h1 className="text-3xl font-bold text-white mb-2">
             {t('resetPassword.title')}
           </h1>
-          <p className="text-white/70 text-sm">
-            {t('resetPassword.description') || 'Create a new password for your account'}
-          </p>
         </div>
 
         {form.formState.errors.root && (
@@ -127,10 +124,7 @@ const ResetPassword = () => {
             disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                {t('common.loading') || 'Loading...'}
-              </>
+              <><Loader2 className="w-5 h-5 mr-2 animate-spin" />{t('resetPassword.submitButton')}</>
             ) : (
               t('resetPassword.submitButton')
             )}
