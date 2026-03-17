@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
+import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ const Welcome = () => {
   });
   const [showRegister, setShowRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
   const handleLogin = loginForm.handleSubmit(async (data) => {
     setIsLoading(true);
     try {
@@ -190,8 +193,12 @@ const Welcome = () => {
                   className="text-white/80 hover:text-white underline text-sm block w-full">
                   {t('auth.noAccount')}
                 </button>
-                <button className="text-white/60 hover:text-white/80 text-xs block w-full">
-                  Forgot password?
+                <button
+                  type="button"
+                  onClick={() => setForgotPasswordOpen(true)}
+                  className="text-white/60 hover:text-white/80 text-xs block w-full"
+                >
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
             </div>
@@ -397,6 +404,13 @@ const Welcome = () => {
             </div>
           )}
         </div>
+
+        <ForgotPasswordModal
+          open={forgotPasswordOpen}
+          onOpenChange={setForgotPasswordOpen}
+          email={forgotEmail}
+          onEmailChange={setForgotEmail}
+        />
 
         {/* Music Notes Animation */}
         <div className="absolute inset-0 pointer-events-none">
