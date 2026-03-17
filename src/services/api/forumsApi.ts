@@ -200,7 +200,8 @@ export const forumsApi = {
 
   async createReply(topicId: string, content: string): Promise<ApiResponse<ForumReply>> {
     if (isApiMode()) {
-      return apiClient.post<ForumReply>(`/api/v1/forum/topics/${topicId}/replies`, { content });
+      const res = await apiClient.post<any>(`/api/v1/forum/topics/${topicId}/replies`, { content });
+      return res.success && res.data ? { ...res, data: mapReplyFromApi(res.data) } : res as ApiResponse<ForumReply>;
     }
     const reply: ForumReply = {
       id: `r_${Date.now()}`,
