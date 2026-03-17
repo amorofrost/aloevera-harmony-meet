@@ -104,6 +104,27 @@ const translations = {
     'auth.male': 'Мужской',
     'auth.female': 'Женский',
     'auth.other': 'Другой',
+    // Forgot password modal
+    'auth.forgotPassword': 'Забыли пароль?',
+    'forgotPassword.title': 'Восстановление пароля',
+    'forgotPassword.emailLabel': 'Email',
+    'forgotPassword.submitButton': 'Отправить ссылку',
+    'forgotPassword.successMessage': 'Если этот email зарегистрирован, вы получите ссылку для сброса пароля.',
+    'forgotPassword.closeButton': 'Закрыть',
+    // Email verification page
+    'verifyEmail.loading': 'Подтверждаем email...',
+    'verifyEmail.success': 'Email подтверждён! Теперь вы можете войти.',
+    'verifyEmail.successButton': 'Войти',
+    'verifyEmail.error': 'Ссылка недействительна или устарела.',
+    'verifyEmail.errorButton': 'На главную',
+    // Reset password page
+    'resetPassword.title': 'Новый пароль',
+    'resetPassword.passwordLabel': 'Новый пароль',
+    'resetPassword.confirmLabel': 'Подтвердите пароль',
+    'resetPassword.submitButton': 'Сохранить пароль',
+    'resetPassword.successToast': 'Пароль изменён. Войдите с новым паролем.',
+    'resetPassword.errorFallback': 'Не удалось изменить пароль',
+    'resetPassword.passwordMismatch': 'Пароли не совпадают',
 
     // Forum
     'forum.createTopic.titlePrefix': 'Новая тема в',
@@ -200,6 +221,27 @@ const translations = {
     'auth.male': 'Male',
     'auth.female': 'Female',
     'auth.other': 'Other',
+    // Forgot password modal
+    'auth.forgotPassword': 'Forgot password?',
+    'forgotPassword.title': 'Reset Password',
+    'forgotPassword.emailLabel': 'Email',
+    'forgotPassword.submitButton': 'Send Reset Link',
+    'forgotPassword.successMessage': "If that email is registered, you'll receive a reset link shortly.",
+    'forgotPassword.closeButton': 'Close',
+    // Email verification page
+    'verifyEmail.loading': 'Verifying your email...',
+    'verifyEmail.success': 'Email verified! You can now sign in.',
+    'verifyEmail.successButton': 'Sign In',
+    'verifyEmail.error': 'This link is invalid or has expired.',
+    'verifyEmail.errorButton': 'Go Home',
+    // Reset password page
+    'resetPassword.title': 'Set New Password',
+    'resetPassword.passwordLabel': 'New Password',
+    'resetPassword.confirmLabel': 'Confirm Password',
+    'resetPassword.submitButton': 'Save Password',
+    'resetPassword.successToast': 'Password changed. Sign in with your new password.',
+    'resetPassword.errorFallback': 'Failed to reset password',
+    'resetPassword.passwordMismatch': 'Passwords do not match',
 
     // Forum
     'forum.createTopic.titlePrefix': 'New Topic in',
