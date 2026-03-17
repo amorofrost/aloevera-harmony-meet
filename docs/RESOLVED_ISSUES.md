@@ -163,6 +163,35 @@ docker compose up --build -d
 
 ---
 
+## ~~MCF.2. Forum Topic Creation~~ ✅ RESOLVED
+**Resolved**: March 16, 2026
+
+Users can now create new forum topics within any section. The forum is no longer read-only for new content.
+
+**What was implemented**:
+
+**Backend** (`D:\src\lovecraft\Lovecraft\`):
+- `CreateTopicRequestDto` updated: removed unused `SectionId` property, added `[Required]` + `[StringLength]` validation annotations (`Title`: 5–100 chars, `Content`: 10–5000 chars)
+- `IForumService.CreateTopicAsync(sectionId, authorId, authorName, title, content)` added
+- `MockForumService.CreateTopicAsync` — creates topic in mock store, increments section `TopicCount`; `GetTopicsAsync` now returns pinned topics first
+- `AzureForumService.CreateTopicAsync` — inserts `ForumTopicEntity` + `ForumTopicIndexEntity`, increments `TopicCount` on `ForumSectionEntity` via ETag-optimistic update
+- `CachingForumService.CreateTopicAsync` — delegates to inner, then invalidates `forum:topics:{sectionId}` and `forum:sections` cache keys
+- `ForumController` — new `POST /api/v1/forum/sections/{sectionId}/topics` action; also fixed hardcoded `"current-user"` author ID in `CreateReply` (now extracts from JWT claims)
+- `Lovecraft.UnitTests/ForumTests.cs` — 5 new unit tests: `CreateTopic_AddsToSection_ReturnsTopic`, `CreateTopic_IncrementsSectionTopicCount`, `CreateTopic_UnknownSection_Throws`, `GetTopics_ReturnsPinnedFirst`, `CreateReply_IncrementsReplyCount`
+
+**Frontend** (`D:\src\aloevera-harmony-meet\`):
+- `src/lib/validators.ts` — `createTopicSchema` (title 5–100, content 10–5000, both trimmed) + `CreateTopicFormData` type
+- `src/lib/__tests__/validators.test.ts` — 6 new tests for `createTopicSchema`
+- `src/services/api/forumsApi.ts` — `createTopic(sectionId, title, content)` with mock and API mode implementations; also fixed `createReply` API mode to map response through `mapReplyFromApi` (date conversion bug fix)
+- `src/components/forum/CreateTopicModal.tsx` — shadcn `Dialog` with title + content fields, `useForm` + `zodResolver`, loading state, `showApiError` on failure, `onCreated` callback
+- `src/contexts/LanguageContext.tsx` — 8 new translation keys (`forum.createTopic.*`, `forum.newTopic`) in both `ru` and `en`
+- `src/pages/Talks.tsx` — `createModalOpen` state, `handleTopicCreated` callback (prepends stub to section topics, increments `topicCount`, navigates to new topic), "+ New Topic" button (visible when section selected, no topic open), `<CreateTopicModal>` rendered
+
+**New endpoint**: `POST /api/v1/forum/sections/{sectionId}/topics` (requires Bearer token)
+
+---
+
 ## 📝 Changelog
 
+- **March 16, 2026** — MCF.2 (forum topic creation) resolved and added to this archive.
 - **March 16, 2026** — Archive created. Issues #1, #2, #3, #5, #6, #7, #9, #10, #17 moved here from `ISSUES.md`.

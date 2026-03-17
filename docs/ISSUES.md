@@ -65,18 +65,6 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 ---
 
-### MCF.2. Forum Topic Creation
-**Impact**: Community feature is read-only for new content
-
-Users can only reply to existing topics. There is no UI, no `forumsApi.createTopic()` method, and no backend endpoint for creating new topics. The entire forum is seeded-only content.
-
-**Resolution**:
-- Backend: Add `POST /api/v1/forum/sections/{sectionId}/topics` endpoint to `ForumController` and `IForumService`
-- Frontend: Add `forumsApi.createTopic(sectionId, title, content)` to `src/services/api/forumsApi.ts`
-- UI: Add a "New Topic" button and form to the topic list view in `src/pages/Talks.tsx`
-
----
-
 ### MCF.3. Profile Image Upload
 **Impact**: Users cannot set their own profile photo
 
@@ -438,15 +426,17 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 | Section | Count |
 |---|---|
 | 🔴 Production Blockers | 5 |
-| 🟠 Missing Core Features | 18 |
+| 🟠 Missing Core Features | 17 |
 | 🟡 Technical Debt & Infrastructure | 7 |
 | 🟢 UX / Polish | 12 |
-| **Total active** | **42** |
-| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 9 |
+| **Total active** | **41** |
+| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 10 |
 
 ---
 
 ## 📝 Changelog
+
+**March 16, 2026** — MCF.2 (forum topic creation) resolved and moved to `RESOLVED_ISSUES.md`.
 
 **March 16, 2026** — Renumbered all issues with section prefixes (PB.1–PB.5, MCF.1–MCF.18, TD.1–TD.7, UX.1–UX.12). Updated all cross-references within the file.
 
