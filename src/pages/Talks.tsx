@@ -244,12 +244,13 @@ const Talks = () => {
             {currentSection ? currentSection.name : t('nav.talks')}
           </h1>
           {selectedSection && !selectedTopic && (
-            <button
+            <Button
+              size="sm"
               onClick={() => setCreateModalOpen(true)}
-              className="text-xs px-3 py-1.5 rounded bg-[var(--aloe-gold)] text-black font-semibold hover:opacity-90 transition-opacity"
+              className="bg-[var(--aloe-gold)] text-black hover:opacity-90"
             >
               {t('forum.newTopic')}
-            </button>
+            </Button>
           )}
           <MessageSquare className="w-6 h-6 text-primary" />
         </div>
