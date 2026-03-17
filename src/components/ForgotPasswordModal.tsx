@@ -42,7 +42,7 @@ const ForgotPasswordModal = ({ open, onOpenChange, email, onEmailChange }: Forgo
       await authApi.forgotPassword(data.email);
       setShowSuccess(true);
     } catch (err) {
-      showApiError(err, 'Failed to send reset link');
+      showApiError(err, t('forgotPassword.errorFallback'));
     }
   });
 
@@ -70,7 +70,6 @@ const ForgotPasswordModal = ({ open, onOpenChange, email, onEmailChange }: Forgo
                 {...form.register('email', {
                   onChange: (e) => onEmailChange(e.target.value),
                 })}
-                defaultValue={email}
               />
               {form.formState.errors.email && (
                 <p role="alert" className="text-xs text-destructive">

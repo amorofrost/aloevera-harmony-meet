@@ -111,6 +111,7 @@ const translations = {
     'forgotPassword.submitButton': 'Отправить ссылку',
     'forgotPassword.successMessage': 'Если этот email зарегистрирован, вы получите ссылку для сброса пароля.',
     'forgotPassword.closeButton': 'Закрыть',
+    'forgotPassword.errorFallback': 'Не удалось отправить ссылку для сброса пароля',
     // Email verification page
     'verifyEmail.loading': 'Подтверждаем email...',
     'verifyEmail.success': 'Email подтверждён! Теперь вы можете войти.',
@@ -228,6 +229,7 @@ const translations = {
     'forgotPassword.submitButton': 'Send Reset Link',
     'forgotPassword.successMessage': "If that email is registered, you'll receive a reset link shortly.",
     'forgotPassword.closeButton': 'Close',
+    'forgotPassword.errorFallback': 'Failed to send reset link',
     // Email verification page
     'verifyEmail.loading': 'Verifying your email...',
     'verifyEmail.success': 'Email verified! You can now sign in.',
