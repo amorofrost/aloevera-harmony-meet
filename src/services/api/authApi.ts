@@ -165,4 +165,34 @@ export const authApi = {
       timestamp: new Date().toISOString(),
     };
   },
+
+  // Forgot password — sends reset email; always returns success (anti-enumeration)
+  async forgotPassword(email: string) {
+    if (isApiMode()) {
+      return apiClient.post<{ success: boolean }>('/api/v1/auth/forgot-password', { email });
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return { success: true, timestamp: new Date().toISOString() };
+  },
+
+  // Verify email — GET with token as query param (matches backend [HttpGet] endpoint)
+  async verifyEmail(token: string) {
+    if (isApiMode()) {
+      return apiClient.get<{ success: boolean }>(`/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return { success: true, timestamp: new Date().toISOString() };
+  },
+
+  // Reset password — data.password (form field) maps to newPassword in the API body
+  async resetPassword(token: string, newPassword: string) {
+    if (isApiMode()) {
+      return apiClient.post<{ success: boolean }>('/api/v1/auth/reset-password', { token, newPassword });
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return { success: true, timestamp: new Date().toISOString() };
+  },
 };
