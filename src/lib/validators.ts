@@ -57,9 +57,26 @@ export const createTopicSchema = z.object({
   content: z.string().trim().min(10, 'Content must be at least 10 characters').max(5000, 'Content is too long'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'At least 8 characters')
+    .regex(/[A-Z]/, 'One uppercase letter')
+    .regex(/[a-z]/, 'One lowercase letter')
+    .regex(/[0-9]/, 'One number')
+    .regex(/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/, 'One special character'),
+  confirmPassword: z.string().min(1),
+});
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type ProfileEditSchema = z.infer<typeof profileEditSchema>;
 export type MessageSchema = z.infer<typeof messageSchema>;
 export type ReplySchema = z.infer<typeof replySchema>;
 export type CreateTopicFormData = z.infer<typeof createTopicSchema>;
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;

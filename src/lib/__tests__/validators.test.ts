@@ -5,6 +5,8 @@ import {
   messageSchema,
   replySchema,
   createTopicSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '../validators';
 
 // ---------------------------------------------------------------------------
@@ -211,6 +213,68 @@ describe('createTopicSchema', () => {
       title: 'Valid title',
       content: '          ',
     });
+    expect(result.success).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// forgotPasswordSchema
+// ---------------------------------------------------------------------------
+describe('forgotPasswordSchema', () => {
+  it('passes with a valid email', () => {
+    const result = forgotPasswordSchema.safeParse({ email: 'user@example.com' });
+    expect(result.success).toBe(true);
+  });
+
+  it('fails with invalid email format', () => {
+    const result = forgotPasswordSchema.safeParse({ email: 'not-an-email' });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails with empty email', () => {
+    const result = forgotPasswordSchema.safeParse({ email: '' });
+    expect(result.success).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// resetPasswordSchema
+// ---------------------------------------------------------------------------
+const validReset = { password: 'Password1!', confirmPassword: 'anything' };
+
+describe('resetPasswordSchema', () => {
+  it('passes with a strong password and non-empty confirmPassword', () => {
+    const result = resetPasswordSchema.safeParse(validReset);
+    expect(result.success).toBe(true);
+  });
+
+  it('fails when password is too short', () => {
+    const result = resetPasswordSchema.safeParse({ ...validReset, password: 'Aa1!' });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails when password has no uppercase letter', () => {
+    const result = resetPasswordSchema.safeParse({ ...validReset, password: 'password1!' });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails when password has no lowercase letter', () => {
+    const result = resetPasswordSchema.safeParse({ ...validReset, password: 'PASSWORD1!' });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails when password has no digit', () => {
+    const result = resetPasswordSchema.safeParse({ ...validReset, password: 'Password!' });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails when password has no special character', () => {
+    const result = resetPasswordSchema.safeParse({ ...validReset, password: 'Password1' });
+    expect(result.success).toBe(false);
+  });
+
+  it('fails with empty confirmPassword', () => {
+    const result = resetPasswordSchema.safeParse({ ...validReset, confirmPassword: '' });
     expect(result.success).toBe(false);
   });
 });
