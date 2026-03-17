@@ -15,6 +15,8 @@ import BlogPost from "./pages/BlogPost";
 import StoreItem from "./pages/StoreItem";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
             <Routes>
               {/* Public — authentication page */}
               <Route path="/" element={<Welcome />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Protected — require a valid JWT */}
               <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
