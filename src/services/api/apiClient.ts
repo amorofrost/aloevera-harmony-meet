@@ -198,6 +198,31 @@ class ApiClient {
     });
   }
 
+  async postForm<T>(url: string, formData: FormData): Promise<ApiResponse<T>> {
+    const token = localStorage.getItem('access_token');
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const response = await fetch(`${this.baseURL}${url}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (response.status === 401) {
+      await this.handleUnauthorized();
+      const newToken = localStorage.getItem('access_token');
+      const retryHeaders: HeadersInit = newToken ? { Authorization: `Bearer ${newToken}` } : {};
+      const retryResponse = await fetch(`${this.baseURL}${url}`, {
+        method: 'POST',
+        headers: retryHeaders,
+        body: formData,
+      });
+      return retryResponse.json();
+    }
+
+    return response.json();
+  }
+
   async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
