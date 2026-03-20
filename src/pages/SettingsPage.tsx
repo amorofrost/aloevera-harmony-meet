@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, Camera, LogOut, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit3, LogOut, Globe, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,10 @@ const SettingsPage = () => {
     resolver: zodResolver(profileEditSchema),
   });
   const [editStartUser, setEditStartUser] = useState<User | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -85,6 +89,46 @@ const SettingsPage = () => {
     }
   });
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPreviewUrl(reader.result as string);
+    reader.readAsDataURL(file);
+    setPendingFile(file);
+  };
+
+  const handleSavePhoto = async () => {
+    if (!pendingFile || !user) return;
+    setIsUploading(true);
+    try {
+      const result = await usersApi.uploadProfileImage(user.id, pendingFile);
+      if (!result.success) throw result;
+      setUser({ ...user, profileImage: result.data! });
+      setPreviewUrl(null);
+      setPendingFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      toast.success(t('profile.photoUpdated'));
+    } catch (err) {
+      showApiError(err, t('profile.photoUploadFailed'));
+      setPreviewUrl(null);
+      setPendingFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCancelPhoto = () => {
+    setPreviewUrl(null);
+    setPendingFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSignOut = async () => {
     try {
       await authApi.logout();
@@ -133,12 +177,36 @@ const SettingsPage = () => {
             <Card className="profile-card">
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="relative inline-block">
-                    <img src={user.profileImage} alt={user.name} className="w-32 h-32 rounded-full object-cover shadow-lg" />
-                    {isEditing && (
-                      <Button size="sm" className="absolute bottom-0 right-0 rounded-full w-10 h-10 p-0"><Camera className="w-4 h-4" /></Button>
-                    )}
+                  <div
+                    className="relative inline-block cursor-pointer"
+                    onClick={handleAvatarClick}
+                  >
+                    <img
+                      src={previewUrl ?? user.profileImage}
+                      alt={user.name}
+                      className="w-32 h-32 rounded-full object-cover shadow-lg"
+                    />
+                    <div className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-[--aloe-flame] flex items-center justify-center border-2 border-background">
+                      <Pencil className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                    />
                   </div>
+                  {pendingFile && (
+                    <div className="flex gap-2 mt-3">
+                      <Button onClick={handleSavePhoto} disabled={isUploading} size="sm">
+                        {isUploading ? t('profile.savingPhoto') : t('profile.savePhoto')}
+                      </Button>
+                      <Button onClick={handleCancelPhoto} disabled={isUploading} variant="outline" size="sm">
+                        {t('common.cancel')}
+                      </Button>
+                    </div>
+                  )}
                   <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><p className="text-muted-foreground">{user.location}</p></div>
                 </div>
               </CardContent>

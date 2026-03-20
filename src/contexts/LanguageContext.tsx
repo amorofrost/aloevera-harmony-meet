@@ -50,6 +50,10 @@ const translations = {
     'profile.gender': 'Пол',
     'profile.settings': 'Настройки',
     'profile.signOut': 'Выйти',
+    'profile.savePhoto': 'Сохранить фото',
+    'profile.savingPhoto': 'Сохранение...',
+    'profile.photoUpdated': 'Фото обновлено',
+    'profile.photoUploadFailed': 'Не удалось загрузить фото',
 
     // Search
     'search.title': 'Найди тех самых',
@@ -168,6 +172,10 @@ const translations = {
     'profile.gender': 'Gender',
     'profile.settings': 'Settings',
     'profile.signOut': 'Sign Out',
+    'profile.savePhoto': 'Save photo',
+    'profile.savingPhoto': 'Saving...',
+    'profile.photoUpdated': 'Photo updated',
+    'profile.photoUploadFailed': 'Failed to upload photo',
 
     // Search
     'search.title': 'Find Love',
