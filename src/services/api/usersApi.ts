@@ -87,4 +87,15 @@ export const usersApi = {
     const user = mockSearchProfiles.find(u => u.id === id) ?? null;
     return mockSuccess(user ? { ...user, ...updates } : null);
   },
+
+  async uploadProfileImage(userId: string, file: File): Promise<ApiResponse<string>> {
+    if (isApiMode()) {
+      const formData = new FormData();
+      formData.append('image', file);
+      return apiClient.postForm<string>(`/api/v1/users/${userId}/images`, formData);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return { success: true, data: mockCurrentUser.profileImage };
+  },
 };
