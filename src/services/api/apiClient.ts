@@ -202,7 +202,7 @@ class ApiClient {
     const token = localStorage.getItem('access_token');
     const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const response = await fetch(`${this.baseURL}${url}`, {
+    const response = await this.fetchWithTimeout(`${this.baseURL}${url}`, {
       method: 'POST',
       headers,
       body: formData,
@@ -212,15 +212,23 @@ class ApiClient {
       await this.handleUnauthorized();
       const newToken = localStorage.getItem('access_token');
       const retryHeaders: HeadersInit = newToken ? { Authorization: `Bearer ${newToken}` } : {};
-      const retryResponse = await fetch(`${this.baseURL}${url}`, {
+      const retryResponse = await this.fetchWithTimeout(`${this.baseURL}${url}`, {
         method: 'POST',
         headers: retryHeaders,
         body: formData,
       });
-      return retryResponse.json();
+      return retryResponse.json().catch(() => ({
+        success: false,
+        error: { code: `HTTP_${retryResponse.status}`, message: retryResponse.statusText },
+        timestamp: new Date().toISOString(),
+      } as ApiResponse<T>));
     }
 
-    return response.json();
+    return response.json().catch(() => ({
+      success: false,
+      error: { code: `HTTP_${response.status}`, message: response.statusText },
+      timestamp: new Date().toISOString(),
+    } as ApiResponse<T>));
   }
 
   async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {

@@ -96,6 +96,6 @@ export const usersApi = {
     }
 
     await new Promise(resolve => setTimeout(resolve, 500));
-    return { success: true, data: mockCurrentUser.profileImage };
+    return mockSuccess(mockCurrentUser.profileImage);
   },
 };
