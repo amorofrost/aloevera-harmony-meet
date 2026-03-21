@@ -80,7 +80,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
   };
 
-  const AuthorBadge = ({ authorId, authorName, size = 'md' }: { authorId?: string; authorName: string; size?: 'sm' | 'md' }) => {
+  const AuthorBadge = ({ authorId, authorName, authorAvatar, size = 'md' }: { authorId?: string; authorName: string; authorAvatar?: string; size?: 'sm' | 'md' }) => {
     const isClickable = Boolean(authorId);
     const avatarSize = size === 'md' ? 'w-8 h-8' : 'w-7 h-7';
     const textSize = size === 'md' ? 'text-sm' : 'text-xs';
@@ -93,10 +93,14 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
         tabIndex={isClickable ? 0 : undefined}
         onKeyDown={isClickable ? (e) => { if (e.key === 'Enter') handleAuthorClick(authorId); } : undefined}
       >
-        <div className={`${avatarSize} rounded-full ${size === 'md' ? 'bg-primary/20' : 'bg-muted'} flex items-center justify-center`}>
-          <span className={`${textSize} font-semibold ${size === 'md' ? 'text-primary' : ''}`}>
-            {authorName.charAt(0)}
-          </span>
+        <div className={`${avatarSize} rounded-full overflow-hidden ${size === 'md' ? 'bg-primary/20' : 'bg-muted'} flex items-center justify-center`}>
+          {authorAvatar ? (
+            <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
+          ) : (
+            <span className={`${textSize} font-semibold ${size === 'md' ? 'text-primary' : ''}`}>
+              {authorName.charAt(0)}
+            </span>
+          )}
         </div>
         <span className={`font-medium ${textSize} ${isClickable ? 'text-primary underline-offset-2 hover:underline' : ''}`}>
           {authorName}
@@ -132,7 +136,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
             <h2 className="text-lg font-bold">{topic.title}</h2>
           </div>
           <div className="flex items-center gap-2 mb-4">
-            <AuthorBadge authorId={topic.authorId} authorName={topic.authorName} size="md" />
+            <AuthorBadge authorId={topic.authorId} authorName={topic.authorName} authorAvatar={topic.authorAvatar} size="md" />
             <span className="text-xs text-muted-foreground">· {formatDate(topic.createdAt)}</span>
           </div>
           <p className="text-sm leading-relaxed text-foreground">{topic.content}</p>
@@ -151,7 +155,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
           <Card key={reply.id} className="profile-card">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                <AuthorBadge authorId={reply.authorId} authorName={reply.authorName} size="sm" />
+                <AuthorBadge authorId={reply.authorId} authorName={reply.authorName} authorAvatar={reply.authorAvatar} size="sm" />
                 <span className="text-xs text-muted-foreground">· {formatDate(reply.createdAt)}</span>
               </div>
               <p className="text-sm leading-relaxed pl-9">{reply.content}</p>

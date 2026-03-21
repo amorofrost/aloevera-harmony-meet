@@ -67,11 +67,13 @@ export const usersApi = {
 
   async getCurrentUser(): Promise<ApiResponse<User | null>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any>('/api/v1/auth/me');
-      if (res.success && res.data) {
-        return { ...res, data: mapUserFromApi(res.data) };
+      const meRes = await apiClient.get<any>('/api/v1/auth/me');
+      if (!meRes.success || !meRes.data?.id) return meRes as ApiResponse<User | null>;
+      const userRes = await apiClient.get<any>(`/api/v1/users/${meRes.data.id}`);
+      if (userRes.success && userRes.data) {
+        return { ...userRes, data: mapUserFromApi(userRes.data) };
       }
-      return res as ApiResponse<User | null>;
+      return userRes as ApiResponse<User | null>;
     }
     return mockSuccess(mockCurrentUser);
   },
