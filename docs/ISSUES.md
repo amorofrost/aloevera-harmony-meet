@@ -37,15 +37,6 @@ There is no tracking of failed login attempts and no temporary lockout mechanism
 
 ---
 
-### PB.5. No Input Sanitization on User-Generated Content
-**Impact**: XSS risk when rich text rendering is introduced
-
-Forum replies, chat messages, and bio fields are stored without sanitisation. React escapes plain string output by default, so the XSS surface is limited today — but this becomes a direct vulnerability when rich text rendering (MCF.11) is implemented. Sanitisation must be in place before that feature ships.
-
-**Resolution**: Add server-side HTML sanitisation (e.g. HtmlSanitizer NuGet package) to `ForumService.CreateReplyAsync`, `ChatService.SendMessageAsync`, and `UserService.UpdateUserAsync` (bio field) in the backend.
-
----
-
 ## 🟠 Missing Core Features
 
 ### MCF.1. Desktop Navigation *(escalated from UX/Polish)*
@@ -417,7 +408,7 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 
 | Section | Count |
 |---|---|
-| 🔴 Production Blockers | 4 |
+| 🔴 Production Blockers | 3 |
 | 🟠 Missing Core Features | 17 |
 | 🟡 Technical Debt & Infrastructure | 7 |
 | 🟢 UX / Polish | 12 |
@@ -427,6 +418,8 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 ---
 
 ## 📝 Changelog
+
+**April 11, 2026** — PB.5 (input sanitization) resolved. `HtmlGuard` static helper rejects inputs containing HTML tags with 400 `HTML_NOT_ALLOWED`. Guards added to `ForumController` (CreateTopic, CreateReply), `ChatsController` (SendMessage), and `UsersController` (UpdateUser: name, location, bio). Note: SignalR hub `SendMessage` path is not covered — must be addressed before MCF.11 ships.
 
 **March 20, 2026** — PB.2 (HTTPS) resolved. nginx.conf updated for SSL + HTTP redirect; docker-compose updated for ports 80/443 and cert volume mount; Cloudflare Origin Certificate approach documented in `docs/HTTPS_SETUP.md`.
 
