@@ -36,15 +36,24 @@ public static class HtmlGuard
     public static bool ContainsHtml(string? value)
     {
         if (string.IsNullOrEmpty(value)) return false;
-        return HtmlTagPattern.IsMatch(value);
+        try
+        {
+            return HtmlTagPattern.IsMatch(value);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            // Pathological input triggered the timeout — treat as containing HTML and reject.
+            return true;
+        }
     }
 }
 ```
 
 **Regex behaviour:**
-- Matches: `<script>`, `</b>`, `<img src="x"/>`, `<!DOCTYPE html>`, `<!--comment-->`
-- Does NOT match: `<3`, `5 < 10`, `a < b` (no false positives on common plain text)
-- 100 ms timeout prevents ReDoS on pathological inputs
+- Matches: `<script>`, `<SCRIPT>`, `</b>`, `<br/>`, `<img src="x"/>`, `<!DOCTYPE html>`
+- Matches HTML comments: `<!--comment-->`. Note: for comments containing a `>` in the body (e.g. `<!-- a > b -->`), the pattern matches only up to the first `>`, which still produces a match and correctly rejects the input.
+- Does NOT match: `<3`, `5 < 10`, `a < b`, `"price < "` (no closing `>`) — no false positives on common plain text.
+- 100 ms timeout prevents ReDoS on pathological inputs. `RegexMatchTimeoutException` is caught and treated as a positive match (reject).
 
 ---
 
@@ -54,7 +63,7 @@ All checks use error code `"HTML_NOT_ALLOWED"` for uniform frontend handling.
 
 ### `ForumController` — `CreateTopic`
 
-Insert after the existing `ModelState.IsValid` check:
+Insert after the existing `ModelState.IsValid` check, before the `try` block:
 
 ```csharp
 if (HtmlGuard.ContainsHtml(request.Title))
@@ -65,7 +74,7 @@ if (HtmlGuard.ContainsHtml(request.Content))
 
 ### `ForumController` — `CreateReply`
 
-Insert before the service call:
+Insert before the `try` block (the current action has no early-return zone — insert before `try` on line 144, outside it):
 
 ```csharp
 if (HtmlGuard.ContainsHtml(request.Content))
@@ -83,7 +92,7 @@ if (HtmlGuard.ContainsHtml(request.Content))
 
 ### `UsersController` — `UpdateUser`
 
-Insert before the service call:
+Insert before the `try` block:
 
 ```csharp
 if (HtmlGuard.ContainsHtml(user.Name))
@@ -100,21 +109,24 @@ if (HtmlGuard.ContainsHtml(user.Bio))
 
 **File**: `Lovecraft.UnitTests/HtmlGuardTests.cs`
 
-| Input | Expected |
-|---|---|
-| `null` | `false` |
-| `""` | `false` |
-| `"Hello world"` | `false` |
-| `"5 < 10"` | `false` |
-| `"<3"` | `false` |
-| `"<b>bold</b>"` | `true` |
-| `"<script>alert(1)</script>"` | `true` |
-| `"<img src='x' onerror='alert(1)'>"` | `true` |
-| `"</div>"` | `true` |
-| `"<!DOCTYPE html>"` | `true` |
-| `"<!--comment-->"` | `true` |
+| Input | Expected | Notes |
+|---|---|---|
+| `null` | `false` | |
+| `""` | `false` | |
+| `"Hello world"` | `false` | |
+| `"5 < 10"` | `false` | comparison operator, no closing `>` |
+| `"price < "` | `false` | `<` at end, no closing `>` |
+| `"<3"` | `false` | digit after `<`, not a tag |
+| `"<b>bold</b>"` | `true` | |
+| `"<script>alert(1)</script>"` | `true` | |
+| `"<SCRIPT>alert(1)</SCRIPT>"` | `true` | uppercase tags |
+| `"<img src='x' onerror='alert(1)'>"` | `true` | attribute injection |
+| `"<br/>"` | `true` | self-closing tag |
+| `"</div>"` | `true` | closing tag |
+| `"<!DOCTYPE html>"` | `true` | |
+| `"<!--comment-->"` | `true` | |
 
-No controller tests needed for the guard calls — they are a single `if` delegating entirely to `HtmlGuard`, which is fully covered above.
+No controller tests needed for the guard calls — they are a single `if` delegating entirely to `HtmlGuard`, which is fully covered above. Controller wiring is validated manually via Swagger or end-to-end testing.
 
 ---
 
@@ -123,7 +135,7 @@ No controller tests needed for the guard calls — they are a single `if` delega
 - HTML stripping / sanitization (deferred to MCF.11 when rich text is introduced)
 - Frontend error handling for `HTML_NOT_ALLOWED` (frontend currently uses plain text inputs only; no user can accidentally trigger this through normal use)
 - Length limits on fields (separate concern)
-- SignalR hub `SendMessage` path — the REST `ChatsController.SendMessage` is the authoritative write path; the hub's `SendMessage` calls `IChatService.SendMessageAsync` directly without going through the controller. This is a known gap: the hub path bypasses controller-layer validation.
+- **SignalR hub `SendMessage` path** — `ChatHub.SendMessage` is the active real-time write path: it persists messages via `IChatService.SendMessageAsync` and broadcasts to `OthersInGroup`. It bypasses the controller entirely, so the guard added to `ChatsController.SendMessage` provides **no protection for real-time messages**. This gap must be closed before MCF.11 ships — either by moving the guard into `IChatService.SendMessageAsync` (both Mock and Azure) or by adding an equivalent check inside the hub method. It is deferred here only because the chat backend is not yet wired to the frontend in production. **Do not treat the REST guard as sufficient chat protection.**
 
 ---
 
