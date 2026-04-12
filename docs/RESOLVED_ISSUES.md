@@ -191,7 +191,32 @@ Users can now create new forum topics within any section. The forum is no longer
 
 ---
 
+## ~~PB.2. No HTTPS on Azure VM~~ ✅ RESOLVED
+**Resolved**: March 20, 2026
+
+HTTPS is now configured using **Cloudflare** as a DNS proxy (free tier) with a **Cloudflare Origin Certificate** on nginx. This approach is portable — migrating to a new host only requires updating a DNS A record.
+
+**What was changed** (`D:\src\aloevera-harmony-meet\`):
+- `nginx.conf` — added HTTP→HTTPS redirect server block (port 80); added HTTPS server block (port 443) with SSL config, HSTS header, and `X-Forwarded-Proto` on all proxy locations.
+- `docker-compose.yml` — frontend ports changed from `8080:80` to `80:80` + `443:443`; added `/etc/ssl/aloeve:/etc/ssl/aloeve:ro` volume mount; backend external port removed (backend only reachable internally via Docker network); `ASPNETCORE_ENVIRONMENT` changed to `Production`.
+- `Dockerfile` — added `EXPOSE 443`.
+- `docs/HTTPS_SETUP.md` — full step-by-step setup guide (Cloudflare account, DNS records, SSL mode, Origin Certificate generation, cert placement on VM, Azure NSG port rules, migration path).
+
+**Setup summary**:
+1. Add `aloeve.club` to Cloudflare; point GoDaddy nameservers to Cloudflare.
+2. Add A records `@` and `www` → Azure VM IP (orange cloud / proxied).
+3. SSL/TLS mode → **Full (strict)**.
+4. SSL/TLS → Origin Server → Create Certificate (hostnames: `aloeve.club`, `*.aloeve.club`; 15 years).
+5. Place `origin.pem` + `origin.key` at `/etc/ssl/aloeve/` on the VM.
+6. Open ports 80 and 443 in Azure NSG; close public port 8080.
+7. `docker compose down && docker compose up --build -d`.
+
+See `docs/HTTPS_SETUP.md` for the complete guide and troubleshooting table.
+
+---
+
 ## 📝 Changelog
 
+- **March 20, 2026** — PB.2 (HTTPS) resolved and added to this archive.
 - **March 16, 2026** — MCF.2 (forum topic creation) resolved and added to this archive.
 - **March 16, 2026** — Archive created. Issues #1, #2, #3, #5, #6, #7, #9, #10, #17 moved here from `ISSUES.md`.

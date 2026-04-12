@@ -10,12 +10,13 @@ services:
       context: ../lovecraft/Lovecraft
       dockerfile: Dockerfile
     container_name: aloevera-backend
-    ports:
-      - "5000:8080"
+    # No external port exposed — backend is only reachable through nginx internally.
+    # For ad-hoc debugging, temporarily add "5000:8080" and restrict port 5000
+    # to your IP in the Azure NSG, then remove it when done.
     env_file:
       - ../lovecraft/Lovecraft/.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       - JWT_SECRET_KEY=your-super-secret-key-min-32-chars-change-in-prod!!
     healthcheck:
@@ -26,7 +27,7 @@ services:
     networks:
       - aloevera-network
 
-  # Frontend (React)
+  # Frontend (React + nginx)
   frontend:
     build:
       context: .
@@ -35,7 +36,13 @@ services:
         VITE_API_MODE: api
     container_name: aloevera-frontend
     ports:
-      - "8080:80"
+      - "80:80"     # HTTP — nginx redirects to HTTPS
+      - "443:443"   # HTTPS — Cloudflare Origin Certificate
+    volumes:
+      # SSL cert and key mounted from host — never baked into the image.
+      # Place files at /etc/ssl/aloeve/origin.pem and /etc/ssl/aloeve/origin.key
+      # on the VM before starting. See docs/HTTPS_SETUP.md.
+      - /etc/ssl/aloeve:/etc/ssl/aloeve:ro
     depends_on:
       - backend
     healthcheck:

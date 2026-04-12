@@ -18,14 +18,6 @@ Email verification tokens are logged to the console only. Because `registerSchem
 
 ---
 
-### PB.2. No HTTPS on Azure VM
-**Impact**: JWT tokens and credentials travel in plaintext
-
-All traffic between the browser and the Azure VM is unencrypted. JWT tokens stored in `localStorage` are readable in transit.
-
-**Resolution**: Obtain an SSL certificate (Let's Encrypt / Certbot) and update `nginx.conf` in the frontend repo to serve HTTPS on port 443. Redirect HTTP → HTTPS.
-
----
 
 ### PB.3. No Rate Limiting on Auth Endpoints
 **Impact**: Brute-force login attacks unprotected
@@ -425,16 +417,18 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 
 | Section | Count |
 |---|---|
-| 🔴 Production Blockers | 5 |
+| 🔴 Production Blockers | 4 |
 | 🟠 Missing Core Features | 17 |
 | 🟡 Technical Debt & Infrastructure | 7 |
 | 🟢 UX / Polish | 12 |
-| **Total active** | **41** |
-| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 10 |
+| **Total active** | **40** |
+| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 11 |
 
 ---
 
 ## 📝 Changelog
+
+**March 20, 2026** — PB.2 (HTTPS) resolved. nginx.conf updated for SSL + HTTP redirect; docker-compose updated for ports 80/443 and cert volume mount; Cloudflare Origin Certificate approach documented in `docs/HTTPS_SETUP.md`.
 
 **March 16, 2026** — MCF.2 (forum topic creation) resolved and moved to `RESOLVED_ISSUES.md`.
 

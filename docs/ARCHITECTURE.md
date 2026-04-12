@@ -2,8 +2,8 @@
 
 **AloeVera Harmony Meet** - Technical Architecture Overview
 
-**Version**: 1.2 (Full-stack deployed)
-**Last Updated**: February 23, 2026
+**Version**: 1.3 (HTTPS + Cloudflare)
+**Last Updated**: March 20, 2026
 
 ---
 
@@ -12,12 +12,12 @@
 AloeVera Harmony Meet is a **React-based single-page application (SPA)** designed as a fan community platform combining dating features, social networking, event management, and e-commerce for AloeVera music band enthusiasts.
 
 ### Current State
-- **Full-stack deployed on Azure VM** at `http://20.153.164.3:8080`
+- **Full-stack deployed on Azure VM** at `https://aloeve.club` (HTTPS via Cloudflare + nginx TLS termination)
 - **LoveCraft .NET 10 backend** running with JWT auth and Azure Table Storage
 - **API service layer**: `src/services/api/` provides mock/real dual-mode HTTP client
 - **All pages wired**: every page fetches data via `useEffect` + API service calls
 - **Data persists**: Azure Table Storage, seeded via `Lovecraft.Tools.Seeder`
-- **nginx proxy**: frontend container proxies `/api/` to backend — only port 8080 exposed
+- **nginx proxy**: frontend container proxies `/api/` to backend — ports 80 (HTTP→HTTPS redirect) and 443 (HTTPS) exposed
 
 ### Technology Philosophy
 - **Modern React**: Hooks, functional components, TypeScript
@@ -455,15 +455,18 @@ const translations = {
 
 ```
 Browser
-    ↓ HTTP/REST
-nginx (port 8080)
+    ↓ HTTPS
+Cloudflare (DNS proxy, DDoS protection, edge cache)
+    ↓ HTTPS (Origin Certificate)
+nginx (port 443 / 80→443 redirect)
     ├─ /           → React SPA static files
     ├─ /api/       → proxy_pass → backend:8080 (Docker internal)
-    └─ /swagger    → proxy_pass → backend:8080
+    ├─ /swagger    → proxy_pass → backend:8080
+    └─ /hubs/      → proxy_pass → backend:8080 (WebSocket/SignalR)
          ↓
 .NET 10 ASP.NET Core (port 8080 internal)
     ├─ JWT authentication (JwtService, PBKDF2 password hashing)
-    └─ Azure Table Storage (15 tables)
+    └─ Azure Table Storage (18 tables)
 ```
 
 **Implemented API Endpoints** (`/api/v1/`):

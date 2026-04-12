@@ -30,7 +30,9 @@ VITE_API_BASE_URL=http://localhost:5000
 **`.env.production`** (used for `npm run build`):
 ```bash
 VITE_API_MODE=api
-VITE_API_BASE_URL=https://api.aloevera-harmony.com
+VITE_API_BASE_URL=
+# Empty string — all API calls use relative paths (/api/v1/...); nginx proxies them.
+# No domain needed because the frontend and API are served from the same origin (aloeve.club).
 ```
 
 ### Switching Modes
@@ -183,21 +185,21 @@ interface ApiResponse<T> {
 ### Full Stack with Docker Compose (Recommended)
 
 ```bash
-# From loveable/aloevera-harmony-meet/
+# From aloevera-harmony-meet/
 docker compose up --build -d
-# App: http://<host>:8080
-# API proxied at: http://<host>:8080/api/
-# Swagger at:     http://<host>:8080/swagger
+# App: https://aloeve.club  (via Cloudflare → nginx port 443)
+# API proxied at: https://aloeve.club/api/
+# Swagger at:     https://aloeve.club/swagger
 ```
 
-nginx inside the frontend container proxies `/api/` and `/swagger` to the backend container over the internal Docker network (`http://backend:8080`). **Only port 8080 needs to be publicly exposed** — port 5000 does not need to be open in firewall/NSG rules.
+nginx inside the frontend container handles TLS termination (Cloudflare Origin Certificate) and proxies `/api/`, `/swagger`, and `/hubs/` to the backend container over the internal Docker network (`http://backend:8080`). **Only ports 80 and 443 need to be publicly exposed** — the backend is not reachable from outside Docker. See [HTTPS_SETUP.md](./HTTPS_SETUP.md) for the full SSL/DNS setup guide.
 
-**Important**: `VITE_API_BASE_URL` is baked into the JS bundle at build time. When deploying to a remote server, update this arg in `docker-compose.yml` before building:
+**Important**: `VITE_API_BASE_URL` is baked into the JS bundle at build time. It is set to an **empty string** in production — all API calls use relative paths (`/api/v1/...`) so nginx can proxy them regardless of the host domain. No changes to `docker-compose.yml` are needed when migrating hosts; only update the Cloudflare DNS A record.
 
 ```yaml
 args:
   VITE_API_MODE: api
-  VITE_API_BASE_URL: http://<your-server-ip-or-domain>:8080
+  # VITE_API_BASE_URL is intentionally omitted (defaults to "")
 ```
 
 Backend reads `USE_AZURE_STORAGE` and `AZURE_STORAGE_CONNECTION_STRING` from `../../lovecraft/Lovecraft/.env` via `env_file`. Set `USE_AZURE_STORAGE=true` to use Azure Table Storage.

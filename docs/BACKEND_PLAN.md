@@ -2,8 +2,8 @@
 
 **AloeVera Harmony Meet** - Backend Development Roadmap
 
-**Last Updated**: March 15, 2026
-**Status**: Full-stack deployed on Azure VM (`http://20.153.164.3:8080`). JWT auth, Azure Table Storage, Docker + nginx, token refresh, form validation, and error handling are all implemented. Chat and songs endpoints are pending.
+**Last Updated**: March 20, 2026
+**Status**: Full-stack deployed on Azure VM at `https://aloeve.club` (HTTPS via Cloudflare + nginx TLS termination). JWT auth, Azure Table Storage, Docker + nginx, token refresh, form validation, and error handling are all implemented. Chat and songs endpoints are pending.
 
 ---
 
@@ -414,11 +414,11 @@ AZURE_STORAGE_CONNECTION_STRING=UseDevelopmentStorage=true
 
 # JWT
 JWT_SECRET=your-super-secret-key-change-in-production
-JWT_ISSUER=https://api.aloevera-meet.com
-JWT_AUDIENCE=https://aloevera-meet.com
+JWT_ISSUER=https://aloeve.club
+JWT_AUDIENCE=https://aloeve.club
 
 # CORS
-ALLOWED_ORIGINS=http://localhost:8080,https://aloevera-meet.com
+ALLOWED_ORIGINS=http://localhost:5173,https://aloeve.club
 
 # Logging
 LOGGING__LOGLEVEL__DEFAULT=Information
@@ -556,16 +556,16 @@ LOGGING__LOGLEVEL__DEFAULT=Information
 ### Phase 10: Deployment ✅ DONE
 **Goal**: Deploy to Azure
 
-- [x] Docker Compose with nginx proxy (port 8080 only exposed)
-- [x] Azure VM deployment (`http://20.153.164.3:8080`)
-- [x] Azure Table Storage integrated (15 tables, seeder tool available)
+- [x] Docker Compose with nginx proxy (ports 80 + 443 exposed; backend internal only)
+- [x] Azure VM deployment (`https://aloeve.club`)
+- [x] Azure Table Storage integrated (18 tables, seeder tool available)
 - [x] Environment variables configured via `.env` file
-- [x] nginx proxies `/api/` and `/swagger` to backend container
-- [ ] SSL/HTTPS — not yet configured (HTTP only)
+- [x] nginx proxies `/api/`, `/swagger`, and `/hubs/` to backend container
+- [x] SSL/HTTPS — Cloudflare Origin Certificate, Full (strict) mode; HTTP port 80 redirects to HTTPS 443
 - [ ] Monitoring and logging — Application Insights not set up
 - [ ] Azure Container Registry — using Docker directly on VM
 
-**Deliverables**: ✅ Running on Azure VM (HTTP, single VM)
+**Deliverables**: ✅ Running on Azure VM at `https://aloeve.club` (HTTPS, Cloudflare proxying, nginx TLS termination)
 
 ---
 
@@ -785,8 +785,7 @@ Each client has its own repository and documentation:
 4. OAuth integration (Google, Facebook, VK) — see [AUTHENTICATION.md](../../lovecraft/Lovecraft/docs/AUTHENTICATION.md)
 5. Telegram Mini App authentication — planned
 6. Rate limiting and account lockout
-7. SSL/HTTPS on Azure VM
-8. SignalR enhancements: online presence, typing indicators, unread push updates
+7. SignalR enhancements: online presence, typing indicators, unread push updates
 
 ---
 
