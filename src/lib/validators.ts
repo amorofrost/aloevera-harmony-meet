@@ -72,8 +72,13 @@ export const resetPasswordSchema = z.object({
   confirmPassword: z.string().min(1),
 });
 
+export const registerSchemaWithInvite = registerSchema.extend({
+  inviteCode: z.string().min(1, 'Invite code is required'),
+});
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
+export type RegisterSchemaWithInvite = z.infer<typeof registerSchemaWithInvite>;
 export type ProfileEditSchema = z.infer<typeof profileEditSchema>;
 export type MessageSchema = z.infer<typeof messageSchema>;
 export type ReplySchema = z.infer<typeof replySchema>;

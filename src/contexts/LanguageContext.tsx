@@ -108,6 +108,8 @@ const translations = {
     'auth.male': 'Мужской',
     'auth.female': 'Женский',
     'auth.other': 'Другой',
+    'register.inviteCode': 'Инвайт-код',
+    'register.inviteCodePlaceholder': 'Введите инвайт-код',
     // Forgot password modal
     'auth.forgotPassword': 'Забыли пароль?',
     'forgotPassword.title': 'Восстановление пароля',
@@ -230,6 +232,8 @@ const translations = {
     'auth.male': 'Male',
     'auth.female': 'Female',
     'auth.other': 'Other',
+    'register.inviteCode': 'Invite code',
+    'register.inviteCodePlaceholder': 'Enter invite code',
     // Forgot password modal
     'auth.forgotPassword': 'Forgot password?',
     'forgotPassword.title': 'Reset Password',

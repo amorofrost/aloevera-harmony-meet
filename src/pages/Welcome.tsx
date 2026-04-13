@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import appIcon from '@/assets/app-icon.jpg';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
-import { loginSchema, registerSchema, type LoginSchema, type RegisterSchema } from '@/lib/validators';
+import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchemaWithInvite } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
@@ -23,14 +23,38 @@ const Welcome = () => {
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
   });
-  const registerForm = useForm<RegisterSchema>({
-    resolver: zodResolver(registerSchema),
+  // Ref allows the resolver (captured once) to read the current inviteCodeRequired
+  const inviteCodeRequiredRef = useRef(false);
+  const registerForm = useForm<RegisterSchemaWithInvite>({
+    resolver: async (values, context, options) => {
+      const schema = inviteCodeRequiredRef.current ? registerSchemaWithInvite : registerSchema;
+      return zodResolver(schema)(values, context, options);
+    },
     mode: 'onBlur',
   });
   const [showRegister, setShowRegister] = useState(false);
+  const [inviteCodeRequired, setInviteCodeRequired] = useState(false);
+  const [configLoading, setConfigLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
+  useEffect(() => {
+    if (!showRegister) return;
+    setConfigLoading(true);
+    authApi.getRegistrationConfig()
+      .then((res) => {
+        if (res.success && res.data) {
+          inviteCodeRequiredRef.current = res.data.inviteCodeRequired;
+          setInviteCodeRequired(res.data.inviteCodeRequired);
+        }
+      })
+      .catch(() => {
+        // Fail open — field hidden, registration remains usable
+        console.error('Failed to fetch registration config');
+      })
+      .finally(() => setConfigLoading(false));
+  }, [showRegister]);
+
   const handleLogin = loginForm.handleSubmit(async (data) => {
     setIsLoading(true);
     try {
@@ -66,11 +90,16 @@ const Welcome = () => {
         location: data.location,
         gender: data.gender,
         bio: data.bio,
+        inviteCode: data.inviteCode,
       });
       if (!response.success) {
         const apiErr = (response as any).error;
         if (apiErr?.code === 'EMAIL_TAKEN') {
           registerForm.setError('email', { message: apiErr.message || 'Email is already taken' });
+          return;
+        }
+        if (apiErr?.code === 'INVALID_INVITE_CODE') {
+          registerForm.setError('inviteCode', { message: apiErr.message || 'Invalid invite code' });
           return;
         }
         showApiError(response, 'Registration failed');
@@ -207,7 +236,12 @@ const Welcome = () => {
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
               <h2 className="text-2xl font-bold text-white mb-4">Create Account</h2>
 
-              <form onSubmit={handleRegister} className="space-y-4">
+              {configLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                </div>
+              ) : null}
+              <form onSubmit={handleRegister} className="space-y-4" style={configLoading ? { display: 'none' } : undefined}>
                 <div className="space-y-2">
                   <Label htmlFor="reg-email" className="text-white font-medium">
                     {t('auth.email')} *
@@ -346,6 +380,24 @@ const Welcome = () => {
                     <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.location.message}</p>
                   )}
                 </div>
+
+                {inviteCodeRequired && (
+                  <div className="space-y-2">
+                    <Label htmlFor="inviteCode" className="text-white font-medium">
+                      {t('register.inviteCode')} *
+                    </Label>
+                    <Input
+                      id="inviteCode"
+                      placeholder={t('register.inviteCodePlaceholder')}
+                      {...registerForm.register('inviteCode')}
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                      disabled={isLoading}
+                    />
+                    {registerForm.formState.errors.inviteCode && (
+                      <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.inviteCode.message}</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="bio" className="text-white font-medium">

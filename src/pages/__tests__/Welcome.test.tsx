@@ -19,7 +19,7 @@ vi.mock('@/services/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/api')>();
   return {
     ...actual,
-    authApi: { login: vi.fn(), register: vi.fn() },
+    authApi: { login: vi.fn(), register: vi.fn(), getRegistrationConfig: vi.fn() },
   };
 });
 
@@ -59,6 +59,11 @@ beforeEach(() => {
   localStorage.clear();
   vi.spyOn(apiClient, 'setAccessToken').mockImplementation(() => {});
   vi.spyOn(apiClient, 'setRefreshToken').mockImplementation(() => {});
+  vi.mocked(authApi.getRegistrationConfig).mockResolvedValue({
+    success: true,
+    data: { inviteCodeRequired: false },
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ============================================================
@@ -328,6 +333,131 @@ describe('Welcome — register form', () => {
     await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalled();
+    });
+  });
+});
+
+// ============================================================
+// INVITE CODE
+// ============================================================
+
+describe('Welcome — register form — invite code', () => {
+  async function openRegisterForm(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole('button', { name: /auth\.noAccount/i }));
+    await waitFor(() => {
+      expect(authApi.getRegistrationConfig).toHaveBeenCalled();
+    });
+  }
+
+  it('does not render invite code field when inviteCodeRequired is false', async () => {
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+      success: true,
+      data: { inviteCodeRequired: false },
+      timestamp: new Date().toISOString(),
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(/inviteCodePlaceholder/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders invite code field when inviteCodeRequired is true', async () => {
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+      success: true,
+      data: { inviteCodeRequired: true },
+      timestamp: new Date().toISOString(),
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows inline Zod error when invite code field is visible but empty on submit', async () => {
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+      success: true,
+      data: { inviteCodeRequired: true },
+      timestamp: new Date().toISOString(),
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
+    });
+    // Fill all fields except invite code
+    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'Secure1!');
+    await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
+    await user.selectOptions(screen.getByTestId('gender-select'), 'female');
+    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+      expect(authApi.register).not.toHaveBeenCalled();
+    });
+  });
+
+  it('includes inviteCode in payload when field is visible and filled', async () => {
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+      success: true,
+      data: { inviteCodeRequired: true },
+      timestamp: new Date().toISOString(),
+    });
+    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
+    });
+    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'Secure1!');
+    await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
+    await user.selectOptions(screen.getByTestId('gender-select'), 'female');
+    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    await user.type(screen.getByPlaceholderText(/inviteCodePlaceholder/i), 'MYCODE');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(authApi.register).toHaveBeenCalledWith(
+        expect.objectContaining({ inviteCode: 'MYCODE' })
+      );
+    });
+  });
+
+  it('sets inline error on invite code field for INVALID_INVITE_CODE response', async () => {
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+      success: true,
+      data: { inviteCodeRequired: true },
+      timestamp: new Date().toISOString(),
+    });
+    vi.mocked(authApi.register).mockResolvedValueOnce({
+      success: false,
+      error: { code: 'INVALID_INVITE_CODE', message: 'Invalid invite code' },
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<Welcome />);
+    await openRegisterForm(user);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
+    });
+    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'Secure1!');
+    await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
+    await user.selectOptions(screen.getByTestId('gender-select'), 'female');
+    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    await user.type(screen.getByPlaceholderText(/inviteCodePlaceholder/i), 'WRONG');
+    await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(toast.error).not.toHaveBeenCalled();
     });
   });
 });

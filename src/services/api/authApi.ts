@@ -15,6 +15,7 @@ export interface RegisterRequest {
   location?: string;
   gender?: string;
   bio?: string;
+  inviteCode?: string;
 }
 
 export interface AuthResponse {
@@ -184,6 +185,14 @@ export const authApi = {
 
     await new Promise(resolve => setTimeout(resolve, 500));
     return { success: true, timestamp: new Date().toISOString() };
+  },
+
+  // Registration config — returns whether an invite code is required
+  async getRegistrationConfig() {
+    if (isApiMode()) {
+      return apiClient.get<{ inviteCodeRequired: boolean }>('/api/v1/auth/registration-config');
+    }
+    return { success: true, data: { inviteCodeRequired: false }, timestamp: new Date().toISOString() };
   },
 
   // Reset password — data.password (form field) maps to newPassword in the API body
