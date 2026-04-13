@@ -19,15 +19,6 @@ Email verification tokens are logged to the console only. Because `registerSchem
 ---
 
 
-### PB.3. No Rate Limiting on Auth Endpoints
-**Impact**: Brute-force login attacks unprotected
-
-`/api/v1/auth/login`, `/api/v1/auth/register`, and `/api/v1/auth/forgot-password` have no rate limiting. Attackers can make unlimited requests.
-
-**Resolution**: Add ASP.NET Core rate limiting middleware (built-in in .NET 7+) in `Lovecraft.Backend/Program.cs`. Target: 5 login attempts per 15 minutes per IP.
-
----
-
 ### PB.4. No Account Lockout
 **Impact**: Unlimited failed login attempts with no lockout
 
@@ -408,7 +399,7 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 
 | Section | Count |
 |---|---|
-| 🔴 Production Blockers | 3 |
+| 🔴 Production Blockers | 2 |
 | 🟠 Missing Core Features | 17 |
 | 🟡 Technical Debt & Infrastructure | 7 |
 | 🟢 UX / Polish | 12 |
@@ -418,6 +409,8 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 ---
 
 ## 📝 Changelog
+
+**April 12, 2026** — PB.3 (rate limiting) resolved. Sliding window rate limiter (5 req / 15 min / IP) applied to `POST /auth/login`, `POST /auth/register`, `POST /auth/forgot-password`. Returns 429 `TOO_MANY_REQUESTS` with `Retry-After` header. `UseForwardedHeaders` added so real client IP is used behind nginx/Cloudflare. One shared permit bucket per IP across all three endpoints. `refresh`, `logout`, and other auth endpoints are intentionally not rate-limited.
 
 **April 11, 2026** — PB.5 (input sanitization) resolved. `HtmlGuard` static helper rejects inputs containing HTML tags with 400 `HTML_NOT_ALLOWED`. Guards added to `ForumController` (CreateTopic, CreateReply), `ChatsController` (SendMessage), and `UsersController` (UpdateUser: name, location, bio). Note: SignalR hub `SendMessage` path is not covered — must be addressed before MCF.11 ships.
 
