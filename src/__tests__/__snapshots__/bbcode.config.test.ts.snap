@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BBCODE_CONFIG > matches the expected default state (snapshot) 1`] = `
+{
+  "bold": true,
+  "code": false,
+  "italic": true,
+  "quote": true,
+  "spoiler": true,
+  "strikethrough": true,
+  "underline": false,
+  "url": false,
+}
+`;
