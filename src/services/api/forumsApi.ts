@@ -30,6 +30,7 @@ function mapReplyFromApi(dto: any): ForumReply {
     content: dto.content,
     createdAt: new Date(dto.createdAt),
     likes: dto.likes ?? 0,
+    imageUrls: dto.imageUrls ?? [],
   };
 }
 
@@ -198,9 +199,9 @@ export const forumsApi = {
     };
   },
 
-  async createReply(topicId: string, content: string): Promise<ApiResponse<ForumReply>> {
+  async createReply(topicId: string, content: string, imageUrls?: string[]): Promise<ApiResponse<ForumReply>> {
     if (isApiMode()) {
-      const res = await apiClient.post<any>(`/api/v1/forum/topics/${topicId}/replies`, { content });
+      const res = await apiClient.post<any>(`/api/v1/forum/topics/${topicId}/replies`, { content, imageUrls: imageUrls ?? [] });
       return res.success && res.data ? { ...res, data: mapReplyFromApi(res.data) } : res as ApiResponse<ForumReply>;
     }
     const reply: ForumReply = {
@@ -210,6 +211,7 @@ export const forumsApi = {
       content,
       createdAt: new Date(),
       likes: 0,
+      imageUrls: imageUrls ?? [],
     };
     // Add to mock data so it persists within the session
     if (mockTopicDetails[topicId]) {

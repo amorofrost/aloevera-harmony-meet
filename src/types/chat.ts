@@ -17,6 +17,7 @@ export interface Message {
   timestamp: Date;
   read: boolean;
   type: 'text' | 'image' | 'system';
+  imageUrls?: string[];
 }
 
 export interface GroupChat extends Chat {

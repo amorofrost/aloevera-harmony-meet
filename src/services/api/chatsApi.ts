@@ -34,7 +34,7 @@ export const chatsApi = {
     return apiClient.post<ChatDto>('/api/v1/chats', { targetUserId });
   },
 
-  async sendMessage(chatId: string, content: string) {
+  async sendMessage(chatId: string, content: string, imageUrls?: string[]) {
     if (!isApiMode()) {
       const msg: MessageDto = {
         id: crypto.randomUUID(),
@@ -44,10 +44,11 @@ export const chatsApi = {
         timestamp: new Date(),
         read: false,
         type: 'text',
+        imageUrls: imageUrls ?? [],
       };
       return mockSuccess(msg);
     }
-    return apiClient.post<MessageDto>(`/api/v1/chats/${chatId}/messages`, { content });
+    return apiClient.post<MessageDto>(`/api/v1/chats/${chatId}/messages`, { content, imageUrls: imageUrls ?? [] });
   },
 };
 

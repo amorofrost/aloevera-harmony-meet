@@ -7,6 +7,7 @@ export interface ForumReply {
   content: string;
   createdAt: Date;
   likes: number;
+  imageUrls?: string[];
 }
 
 export interface ForumTopicDetail {
