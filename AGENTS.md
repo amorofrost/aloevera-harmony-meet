@@ -396,6 +396,17 @@ const handleSend = () => {
 
 ---
 
+## BB Code
+
+BB code formatting is controlled per-tag via `src/config/bbcode.config.ts`. To enable or disable a tag, change the boolean value — no other code changes needed.
+
+- **Renderer**: `src/components/ui/bbcode-renderer.tsx` — parses raw BB code strings into React elements. Disabled tags render as literal `[tag]...[/tag]` text. XSS-safe: uses React text nodes, no `dangerouslySetInnerHTML`.
+- **Toolbar**: `src/components/ui/bbcode-toolbar.tsx` — floating popup on text selection. Requires a `ref` to the target `<textarea>`.
+- **Image picker**: `src/components/ui/image-attachment-picker.tsx` — max 4 files, holds `File[]` in state; parent uploads at send time.
+- **Image display**: `src/components/ui/image-attachment-display.tsx` — 1→full-width, 2+→2-col grid, click-to-lightbox.
+
+---
+
 ## 🔌 SignalR Real-Time Pattern
 
 The chat system uses a module-level singleton (`src/services/signalr/chatConnection.ts`) and a React hook (`src/hooks/useChatSignalR.ts`).

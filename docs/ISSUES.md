@@ -122,16 +122,17 @@ When enabled, only users with a valid access code can complete registration. Cod
 
 ---
 
-### MCF.11. Rich Text and Media in Forum & Chat
+### ~~MCF.11. Rich Text and Media in Forum & Chat~~ ✅ RESOLVED
 **Impact**: Forum posts and messages are plain text only; no images or formatting
 
 Users cannot bold text, create lists, or attach images in forum replies or private messages. This is a baseline expectation for a community platform.
 
 **Resolution**:
-- Choose a rich text editor (e.g. TipTap or Quill) for the frontend
-- Replace the plain `<textarea>` in `src/components/forum/TopicDetail.tsx` and the message input in `src/pages/Friends.tsx` with the editor component
-- Backend: Store content as HTML or a safe subset (Markdown). Apply server-side sanitisation (see PB.5) before storage
-- Add image upload support via Azure Blob Storage (see MCF.3)
+- ✅ BB code formatting via `src/components/ui/bbcode-renderer.tsx` (configurable per-tag in `src/config/bbcode.config.ts`)
+- ✅ BB code toolbar floating popup on text selection in `src/components/ui/bbcode-toolbar.tsx`
+- ✅ Image attachment picker and display in `src/components/ui/image-attachment-picker.tsx` and `src/components/ui/image-attachment-display.tsx`
+- ✅ Image upload endpoint `POST /api/v1/images/upload` (multipart/form-data, validates JPEG/PNG/GIF/WebP, max 10 MB, resizes to 1200px)
+- ✅ Frontend: `MessageDto` and `ForumReplyDto` now carry `imageUrls: string[]` arrays; `useChatSignalR` hook and forum reply UI handle uploads at send time
 
 ---
 
@@ -409,6 +410,8 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 ---
 
 ## 📝 Changelog
+
+**April 13, 2026** — MCF.11 (rich text and media in forum & chat) resolved. BB code formatting via `src/components/ui/bbcode-renderer.tsx` with per-tag config in `src/config/bbcode.config.ts`; toolbar via `src/components/ui/bbcode-toolbar.tsx`. Image attachment picker (`src/components/ui/image-attachment-picker.tsx`) and display (`src/components/ui/image-attachment-display.tsx`). New backend endpoint `POST /api/v1/images/upload` (multipart/form-data, validates content-type and size ≤10 MB, resizes to 1200px, JPEG 85%, uploads to Azure Blob). `MessageDto` and `ForumReplyDto` now carry `imageUrls: string[]` arrays. Images uploaded at send time before persisting message/reply.
 
 **April 12, 2026** — PB.3 (rate limiting) resolved. Sliding window rate limiter (5 req / 15 min / IP) applied to `POST /auth/login`, `POST /auth/register`, `POST /auth/forgot-password`. Returns 429 `TOO_MANY_REQUESTS` with `Retry-After` header. `UseForwardedHeaders` added so real client IP is used behind nginx/Cloudflare. One shared permit bucket per IP across all three endpoints. `refresh`, `logout`, and other auth endpoints are intentionally not rate-limited.
 

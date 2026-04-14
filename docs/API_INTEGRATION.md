@@ -245,6 +245,21 @@ All API services are implemented and wired. The full stack is deployed on Azure 
 - `chatsApi.ts` and `songsApi.ts` always return mock data — backend has no endpoints for these yet
 - No user-visible error messages for failed API calls (console.error only)
 
+---
+
+## Image Upload
+
+```typescript
+import { uploadImage } from '@/services/api/imagesApi';
+
+// Upload a single File object; returns { url: string }
+const { url } = await uploadImage(file);
+```
+
+In mock mode (`VITE_API_MODE=mock`), returns `https://placehold.co/600x400` after a 300ms delay. In API mode, calls `POST /api/v1/images/upload`.
+
+---
+
 ## 🔜 Next Steps
 
 1. **Chat / Songs backend endpoints** — implement in `Lovecraft.Backend` and wire frontend services
