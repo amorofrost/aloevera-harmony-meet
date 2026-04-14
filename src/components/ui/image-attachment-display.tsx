@@ -34,7 +34,7 @@ export function ImageAttachmentDisplay({ imageUrls }: ImageAttachmentDisplayProp
           <img
             src={lightbox}
             alt="полный размер"
-            className="max-w-full max-h-full object-contain rounded shadow-xl"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded shadow-xl"
             onClick={e => e.stopPropagation()}
           />
         </div>
