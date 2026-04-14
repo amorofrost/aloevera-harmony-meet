@@ -8,6 +8,7 @@ export { forumsApi } from './forumsApi';
 export { chatsApi } from './chatsApi';
 export { songsApi } from './songsApi';
 export { matchingApi, getCurrentUserIdFromToken } from './matchingApi';
+export { imagesApi, uploadImage } from './imagesApi';
 
 export type { ApiResponse } from './apiClient';
 export type { LoginRequest, RegisterRequest, AuthResponse } from './authApi';
