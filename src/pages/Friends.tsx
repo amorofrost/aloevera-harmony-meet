@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import SwipeCard from '@/components/ui/swipe-card';
 import BottomNavigation from '@/components/ui/bottom-navigation';
+import { BbcodeRenderer } from '@/components/ui/bbcode-renderer';
+import { BbcodeToolbar } from '@/components/ui/bbcode-toolbar';
+import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
+import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display';
+import { uploadImage } from '@/services/api/imagesApi';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
@@ -40,6 +44,9 @@ const Friends = () => {
   const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // Chat message state
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -180,11 +187,17 @@ const Friends = () => {
     setMessagesLoading(false);
   };
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim() || !activeChatId) return;
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !activeChatId) return;
+    const imageUrls: string[] = [];
+    for (const file of imageFiles) {
+      const res = await uploadImage(file);
+      imageUrls.push(res.url);
+    }
     // Don't add to state from the REST response — the SignalR broadcast delivers
     // the message to all group members including the sender, avoiding duplicates.
-    await chatsApi.sendMessage(activeChatId, content);
+    await chatsApi.sendMessage(activeChatId, messageText.trim(), imageUrls);
+    setImageFiles([]);
   };
 
   const handleSendClick = () => {
@@ -194,7 +207,7 @@ const Friends = () => {
     }
     if (!selectedChat) return;
     setMessageError('');
-    handleSendMessage(messageText);
+    handleSendMessage();
     setMessageText('');
   };
 
@@ -247,7 +260,8 @@ const Friends = () => {
               <div key={msg.id} className={cn('flex', msg.senderId === getCurrentUserIdFromToken() ? 'justify-end' : 'justify-start')}>
                 <div className={cn('rounded-lg px-3 py-2 max-w-[75%] text-sm',
                   msg.senderId === 'current-user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                  {msg.content}
+                  <BbcodeRenderer content={msg.content} />
+                  <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
                 </div>
               </div>
             ))
@@ -265,8 +279,24 @@ const Friends = () => {
         </div>
         <div className="border-t p-4 relative z-10">
           <div className="flex gap-2">
-            <Input value={messageText} onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }} placeholder="Введи сообщение..."
-              onKeyPress={(e) => e.key === 'Enter' && handleSendClick()} className="flex-1" />
+            <div className="relative flex-1">
+              <BbcodeToolbar textareaRef={chatInputRef} />
+              <textarea
+                ref={chatInputRef}
+                value={messageText}
+                onChange={e => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendClick();
+                  }
+                }}
+                placeholder="Написать сообщение..."
+                className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[40px] max-h-[120px]"
+                rows={1}
+              />
+            </div>
+            <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
             <Button onClick={handleSendClick} disabled={!messageText.trim()}><Send className="w-4 h-4" /></Button>
           </div>
           {messageError && (
