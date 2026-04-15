@@ -277,6 +277,22 @@ There are no GitHub Actions (or equivalent) workflows. A breaking change can be 
 
 ---
 
+### TD.8. Blob Storage Images Are Publicly Accessible
+**Impact**: Any image URL can be downloaded by an unauthenticated user; URLs do not expire
+
+Both `profile-images` and `content-images` Azure Blob containers are set to public read access (`PublicAccessType.Blob`). A user in possession of an image URL — from a leaked log, a shared link, or browser history — can download it indefinitely with no authentication.
+
+Profile images were previously named `{userId}/profile.jpg` (enumerable by sequential userId). This was patched on 2026-04-15: profile images are now stored as `{userId}/{guid}.jpg`, eliminating the enumeration risk. Content images (`content-images/{userId}/{guid}.jpg`) were already non-enumerable. Neither container requires authentication to read.
+
+**Resolution**: Switch both containers to private access. Generate short-lived Azure SAS (Shared Access Signature) tokens in the backend when serving URLs to authenticated clients. Tokens should expire after ~1 hour. The backend embeds pre-signed SAS URLs into all DTOs that carry image URLs (`UserDto.profileImage`, `ForumReplyDto.imageUrls`, `MessageDto.imageUrls`) so the browser fetches blobs directly from Azure without routing through the VM.
+
+**Scope**:
+- Backend: Set both containers to `PublicAccessType.None` on startup. Add `GenerateSasUrl(BlobClient, TimeSpan)` helper to `IImageService`/`AzureImageService`. Call it in `UsersController` when returning `UserDto`, in `AzureForumService.ToReplyDto`, and in `AzureChatService` when mapping messages
+- Frontend: No changes needed — SAS URLs are standard HTTPS URLs; `<img src>` and `uploadImage` calls work the same way
+- `MockImageService`: no changes — placeholder URLs are always returned as-is
+
+---
+
 ### TD.7. `localStorage` Token Security
 **Impact**: Access tokens in `localStorage` are readable by any JavaScript on the page
 
@@ -402,14 +418,16 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 |---|---|
 | 🔴 Production Blockers | 2 |
 | 🟠 Missing Core Features | 17 |
-| 🟡 Technical Debt & Infrastructure | 7 |
+| 🟡 Technical Debt & Infrastructure | 8 |
 | 🟢 UX / Polish | 12 |
-| **Total active** | **40** |
+| **Total active** | **41** |
 | ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 11 |
 
 ---
 
 ## 📝 Changelog
+
+**April 15, 2026** — Profile image blobs renamed from `{userId}/profile.jpg` to `{userId}/{guid}.jpg` to eliminate sequential enumeration. Old blob deleted on re-upload. Added TD.8 tracking SAS tokens as the full privacy solution.
 
 **April 13, 2026** — MCF.11 (rich text and media in forum & chat) resolved. BB code formatting via `src/components/ui/bbcode-renderer.tsx` with per-tag config in `src/config/bbcode.config.ts`; toolbar via `src/components/ui/bbcode-toolbar.tsx`. Image attachment picker (`src/components/ui/image-attachment-picker.tsx`) and display (`src/components/ui/image-attachment-display.tsx`). New backend endpoint `POST /api/v1/images/upload` (multipart/form-data, validates content-type and size ≤10 MB, resizes to 1200px, JPEG 85%, uploads to Azure Blob). `MessageDto` and `ForumReplyDto` now carry `imageUrls: string[]` arrays. Images uploaded at send time before persisting message/reply.
 
