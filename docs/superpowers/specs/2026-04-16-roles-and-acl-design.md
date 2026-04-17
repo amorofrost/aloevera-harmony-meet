@@ -46,19 +46,40 @@ authorRank:      'novice' | 'activeMember' | 'friendOfAloe' | 'aloeCrew'
 authorStaffRole: 'none' | 'moderator' | 'admin'
 ```
 
-### `ForumSectionEntity` / `ForumTopicEntity` — new field
+### `ForumSectionEntity` — new field
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `MinRank` | string | `"novice"` | Minimum rank required to read and post. `"novice"` = public. |
 
-Both `ForumSectionDto` and `ForumTopicDto` expose `minRank: string` so the frontend can render lock states without making a separate request. The field is also added to `ForumSectionDto` in `Lovecraft.Common/DTOs/Forum/ForumDtos.cs`.
+`ForumSectionDto` exposes `minRank: string`.
+
+### `ForumTopicEntity` — new fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `MinRank` | string | `"novice"` | Minimum rank to read this topic (section-level default, overridable per topic). |
+| `NoviceVisible` | bool? | null | Can Novice users see this topic in the list? null = true (backward compat). |
+| `NoviceCanReply` | bool? | null | Can Novice users post a reply? null = true (backward compat). |
+
+`ForumTopicDto` exposes all three: `minRank: string`, `noviceVisible: boolean`, `noviceCanReply: boolean`. Missing/null values are resolved to `true` before mapping to DTO so the frontend never sees null.
+
+### `CreateTopicRequestDto` — new optional fields
+
+```ts
+noviceVisible?:  boolean  // default true — Novice users can see this topic
+noviceCanReply?: boolean  // default true — Novice users can reply
+```
+
+Only accepted from Active Member and above (rank gate already enforced on topic creation). Topic author and Moderator+ can update these fields later via `PUT /forum/topics/{id}` (new endpoint, see API section).
 
 ### New `appconfig` Azure Table
 
-General-purpose key-value config store. Rank thresholds use partition key `rank_thresholds`:
+General-purpose key-value config store with two partition keys used by this feature.
 
-| RowKey | Default Value | Meaning |
+#### Partition `rank_thresholds` — activity counters for tier promotion
+
+| RowKey | Default | Meaning |
 |---|---|---|
 | `active_replies` | 5 | Replies needed for Novice → Active Member |
 | `active_likes` | 3 | Likes received needed for Novice → Active Member |
@@ -72,6 +93,32 @@ General-purpose key-value config store. Rank thresholds use partition key `rank_
 | `crew_matches` | 10 | Matches needed for Friend → Aloe Crew |
 
 Promotion logic: **OR** — meeting any single criterion at a tier is sufficient. Ranks are sequential — a user must pass through each tier; they cannot skip levels. Matches are only a criterion for the Friend → Aloe Crew transition.
+
+#### Partition `permissions` — minimum level required per action
+
+Permission values use a **unified level hierarchy** that spans both user ranks and staff roles:
+
+```
+novice(0) < activeMember(1) < friendOfAloe(2) < aloeCrew(3) < moderator(4) < admin(5)
+```
+
+A user's **effective level** is `max(rank level, staff role level)`. A Novice Moderator has effective level 4. An Aloe Crew user with no staff role has effective level 3.
+
+| RowKey | Default | Meaning |
+|---|---|---|
+| `create_topic` | `activeMember` | Minimum level to create a new forum topic |
+| `delete_own_reply` | `novice` | Minimum level to delete your own reply |
+| `delete_any_reply` | `moderator` | Minimum level to delete anyone's reply |
+| `delete_any_topic` | `moderator` | Minimum level to delete any topic |
+| `pin_topic` | `moderator` | Minimum level to pin or lock a topic |
+| `ban_user` | `moderator` | Minimum level to ban or suspend a user |
+| `assign_role` | `admin` | Minimum level to assign a staff role |
+| `override_rank` | `admin` | Minimum level to manually override a user's rank |
+| `manage_events` | `admin` | Minimum level to create, edit, or delete events |
+| `manage_blog` | `admin` | Minimum level to create, edit, or delete blog posts |
+| `manage_store` | `admin` | Minimum level to create, edit, or delete store items |
+
+Changing a value in this table reconfigures the system within one hour (cache TTL). The `IAppConfigService` returns a typed `PermissionConfig` record alongside `RankThresholds`.
 
 ---
 
@@ -94,18 +141,53 @@ Algorithm (top-down, returns first match):
   5. → novice
 ```
 
-### `RankOrder` static helper
+### `EffectiveLevel` static helper
 
-Maps rank strings to integers for comparison: `novice=0`, `activeMember=1`, `friendOfAloe=2`, `aloeCrew=3`.
+Location: `Lovecraft.Backend/Services/EffectiveLevel.cs`
 
-Used by ACL checks: `if (RankOrder.Value(callerRank) < RankOrder.Parse(section.MinRank)) → 403`.
+Unified level map covering both ranks and staff roles:
+
+| Value | Level |
+|---|---|
+| `novice` | 0 |
+| `activeMember` | 1 |
+| `friendOfAloe` | 2 |
+| `aloeCrew` | 3 |
+| `moderator` | 4 |
+| `admin` | 5 |
+
+```
+EffectiveLevel.For(UserEntity user, UserRank computedRank):
+  rankLevel     = Level(computedRank)
+  staffLevel    = Level(user.StaffRole)   // "none" → 0
+  return max(rankLevel, staffLevel)
+```
+
+Used by all ACL checks:
+```
+// Permission from appconfig:
+required = EffectiveLevel.Parse(permissionConfig.CreateTopic)  // e.g. 1
+caller   = EffectiveLevel.For(callerEntity, callerRank)
+if caller < required → 403 INSUFFICIENT_RANK
+
+// Section/topic minRank gate (same helper, rank values only):
+if caller < EffectiveLevel.Parse(section.MinRank) → 403 INSUFFICIENT_RANK
+```
+
+Replaces the previous `RankOrder` helper — single source of truth for all level comparisons.
 
 ### `IAppConfigService`
 
 Singleton service with two implementations:
 
-- **`AzureAppConfigService`** — reads `appconfig` table on startup, returns typed `RankThresholds` record. Cache TTL: 1 hour.
-- **`MockAppConfigService`** — returns hardcoded defaults (matching the Seeder defaults above). Used when `USE_AZURE_STORAGE=false`.
+- **`AzureAppConfigService`** — reads `appconfig` table on startup, returns a typed `AppConfig` record containing both `RankThresholds` and `PermissionConfig`. Cache TTL: 1 hour.
+- **`MockAppConfigService`** — returns hardcoded defaults (matching the Seeder defaults). Used when `USE_AZURE_STORAGE=false`.
+
+```csharp
+record AppConfig(RankThresholds Ranks, PermissionConfig Permissions);
+record RankThresholds(int ActiveReplies, int ActiveLikes, ...);
+record PermissionConfig(string CreateTopic, string DeleteAnyReply, string PinTopic, ...);
+```
 
 All services receive it via constructor injection. DI registration mirrors the existing `USE_AZURE_STORAGE` pattern in `Program.cs`.
 
@@ -126,17 +208,19 @@ All services receive it via constructor injection. DI registration mirrors the e
 | Endpoint | Change |
 |---|---|
 | `GET /users`, `GET /users/{id}`, `GET /users/me` | Response includes `rank`, `staffRole` |
-| `POST /forum/topics/{id}/replies` | Checks caller rank ≥ section `MinRank`; 403 `INSUFFICIENT_RANK` if not |
 | `GET /forum/sections` | Response includes `minRank` per section |
-| `GET /forum/sections/{id}/topics` | Response includes `minRank` per topic |
-| `POST /forum/sections/{sectionId}/topics` | Blocked for Novice; 403 `INSUFFICIENT_RANK` |
+| `GET /forum/sections/{id}/topics` | Response includes `minRank`, `noviceVisible`, `noviceCanReply` per topic. Topics where `noviceVisible=false` are excluded from the list for Novice callers. |
+| `GET /forum/topics/{id}` | Returns 403 `INSUFFICIENT_RANK` for Novice callers if `noviceVisible=false` |
+| `POST /forum/sections/{sectionId}/topics` | Checks `permissions.create_topic` via `EffectiveLevel`; accepts optional `noviceVisible` and `noviceCanReply` in body |
+| `POST /forum/topics/{id}/replies` | Checks caller level ≥ section/topic `MinRank`; additionally checks `noviceCanReply` for Novice callers |
+| `PUT /forum/topics/{id}` | **New** — update `noviceVisible`, `noviceCanReply`, `isPinned`, `isLocked`. Allowed for topic author (own topic settings) or Moderator+ (any topic). |
 
 ### Error codes
 
 | Code | HTTP | Meaning |
 |---|---|---|
-| `INSUFFICIENT_RANK` | 403 | Caller's rank is below the required minimum |
-| `ADMIN_REQUIRED` | 403 | Operation requires Admin staff role |
+| `INSUFFICIENT_RANK` | 403 | Caller's effective level is below the required minimum |
+| `ADMIN_REQUIRED` | 403 | Operation requires Admin staff role (returned when `permissions.assign_role = admin` and caller is not admin) |
 | `MODERATOR_REQUIRED` | 403 | Operation requires Moderator or Admin staff role |
 
 ---
@@ -156,27 +240,31 @@ Each counter is incremented by calling `IUserService.IncrementCounterAsync(userI
 
 ## Permission Matrix
 
-| Action | Novice | Active | Friend | Crew | Mod | Admin |
-|---|---|---|---|---|---|---|
-| Read public forum | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Read gated sections (minRank=activeMember+) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Post reply (public section) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Post reply (gated section) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Create topic (public section) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Create topic (gated section) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Edit / delete own reply | own | own | own | own | ✓ | ✓ |
-| Delete any reply or topic | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ |
-| Pin / lock topic | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ |
-| Send likes / swipe | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Send / receive private messages | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Delete own chat message | own | own | own | own | ✓ | ✓ |
-| Edit own profile | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Ban / suspend user | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ |
-| Assign staff role | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ |
-| Override user rank | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ |
-| Register for events | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Create / edit / delete events | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ |
-| Manage blog posts & store items | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ |
+> The defaults below match the `permissions` partition in `appconfig`. Starred rows (★) are stored in `appconfig` and can be changed at runtime. Unstarred rows are always-allowed (all authenticated users) and are not stored in config.
+
+| Action | Novice | Active | Friend | Crew | Mod | Admin | Config key |
+|---|---|---|---|---|---|---|---|
+| Read public forum | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Read gated section/topic (minRank gate) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-entity `minRank` |
+| Read topic with `noviceVisible=false` | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-topic field |
+| Post reply (public topic) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Post reply (topic with `noviceCanReply=false`) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-topic field |
+| Post reply (minRank-gated section) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-entity `minRank` |
+| ★ Create topic | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | `create_topic` = `activeMember` |
+| Edit / delete own reply | own | own | own | own | ✓ | ✓ | `delete_own_reply` = `novice` |
+| ★ Delete any reply or topic | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ | `delete_any_reply` / `delete_any_topic` = `moderator` |
+| ★ Pin / lock topic | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ | `pin_topic` = `moderator` |
+| Update own topic settings (noviceVisible etc.) | own | own | own | own | ✓ | ✓ | — |
+| Send likes / swipe | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Send / receive private messages | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Delete own chat message | own | own | own | own | ✓ | ✓ | — |
+| Edit own profile | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| ★ Ban / suspend user | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ | `ban_user` = `moderator` |
+| ★ Assign staff role | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `assign_role` = `admin` |
+| ★ Override user rank | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `override_rank` = `admin` |
+| Register for events | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| ★ Create / edit / delete events | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `manage_events` = `admin` |
+| ★ Manage blog posts & store items | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `manage_blog` / `manage_store` = `admin` |
 
 ---
 
@@ -213,6 +301,9 @@ Rank dot colours match existing design system variables:
 'staffRole.moderator':  { ru: 'Мод',                   en: 'Mod' }
 'staffRole.admin':      { ru: 'Админ',                 en: 'Admin' }
 'forum.lockedSection':  { ru: 'Только для активных участников+', en: 'Active Member+ only' }
+'forum.replyRestricted':{ ru: 'Ответы доступны только активным участникам', en: 'Replies for Active Members only' }
+'forum.noviceVisible':  { ru: 'Видно новичкам', en: 'Visible to new users' }
+'forum.noviceCanReply': { ru: 'Новички могут отвечать', en: 'New users can reply' }
 ```
 
 ### Where `<UserBadges />` is used
@@ -224,13 +315,30 @@ Rank dot colours match existing design system variables:
 | User swipe cards | `Friends.tsx` | Below name on profile card |
 | Chat list items | `Friends.tsx` | Below name in chat list |
 
-### Gated forum sections (UI)
+### Gated forum sections and topics (UI)
 
-In `Talks.tsx`, sections/topics where `minRank > 'novice'` and the current user's rank is insufficient are rendered with:
-- Lock icon (🔒) next to section name
-- Muted/dimmed style
+**Section-level gating** (`Talks.tsx`): sections where `minRank > 'novice'` and the current user's level is insufficient:
+- Lock icon next to section name, muted style
 - Click shows `toast.error(t('forum.lockedSection'))` instead of navigating
-- Backend enforces the actual 403 — this is UX only
+
+**Topic-level gating** (`Talks.tsx` topic list): topics excluded server-side when `noviceVisible=false` for Novice callers; Novice users simply don't see those topics. No lock icon needed — they're invisible.
+
+**Reply gating** (`TopicDetail.tsx`): when `noviceCanReply=false` and the current user is Novice, the reply input is hidden and replaced with `t('forum.replyRestricted')` message.
+
+**Create topic form** (`Talks.tsx`): when creating a new topic (Active Member+), show two optional toggles:
+- "Visible to new users (Novice)" — default on
+- "New users can reply" — default on
+
+Toggling "Visible" off also disables and resets "Can reply" (a hidden topic can't be replied to either).
+
+### New translation keys
+
+```ts
+'forum.lockedSection':    { ru: 'Только для активных участников+', en: 'Active Member+ only' }
+'forum.replyRestricted':  { ru: 'Ответы доступны только активным участникам', en: 'Replies for Active Members only' }
+'forum.noviceVisible':    { ru: 'Видно новичкам', en: 'Visible to new users' }
+'forum.noviceCanReply':   { ru: 'Новички могут отвечать', en: 'New users can reply' }
+```
 
 ### Type updates
 
@@ -256,7 +364,7 @@ interface User {
 
 `Lovecraft.Tools.Seeder` additions:
 
-1. **Seed `appconfig` table** with all 10 default threshold rows (upsert — safe to re-run)
+1. **Seed `appconfig` table** with all 10 rank threshold rows and all 11 permission rows (upsert — safe to re-run)
 2. **Seed mock user activity counters** to make all four rank tiers visible immediately:
 
 | User | ReplyCount | LikesReceived | EventsAttended | MatchCount | Rank |
@@ -283,13 +391,20 @@ interface User {
 - `RankOverride` takes precedence over computed rank
 - `null` override falls back to computed rank
 
-**`AclTests`** (8 tests):
-- Novice blocked from creating topic → `INSUFFICIENT_RANK`
+**`AclTests`** (14 tests):
+- Novice blocked from creating topic → `INSUFFICIENT_RANK` (from `permissions.create_topic`)
 - Active Member allowed to create topic
-- Novice blocked from gated section → `INSUFFICIENT_RANK`
-- Active Member allowed into gated section
-- Moderator can delete any reply
+- Novice blocked from minRank-gated section → `INSUFFICIENT_RANK`
+- Active Member allowed into minRank-gated section
+- Novice cannot see topic with `noviceVisible=false` (excluded from list; 403 on direct fetch)
+- Active Member can see topic with `noviceVisible=false`
+- Novice cannot reply to topic with `noviceCanReply=false` → `INSUFFICIENT_RANK`
+- Active Member can reply to topic with `noviceCanReply=false`
+- Moderator can delete any reply (effective level ≥ `permissions.delete_any_reply`)
 - Admin can assign staff role; non-Admin gets `ADMIN_REQUIRED`
+- Effective level: Novice Moderator passes moderator-gated action
+- Effective level: Aloe Crew without staff role blocked from moderator-gated action
+- Changing `permissions.create_topic` to `novice` in config allows Novice to create topic
 - Rank gate uses computed rank, not stored (override respected)
 
 ### Backend — existing test impact
