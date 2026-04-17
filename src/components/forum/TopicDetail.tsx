@@ -108,12 +108,19 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
       >
         <div className={`${avatarSize} rounded-full overflow-hidden ${size === 'md' ? 'bg-primary/20' : 'bg-muted'} flex items-center justify-center`}>
           {authorAvatar ? (
-            <img src={authorAvatar} alt={authorName} className="w-full h-full object-cover" />
-          ) : (
-            <span className={`${textSize} font-semibold ${size === 'md' ? 'text-primary' : ''}`}>
-              {authorName.charAt(0)}
-            </span>
-          )}
+            <img
+              src={authorAvatar}
+              alt={authorName}
+              className="w-full h-full object-cover"
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement | null)?.style.setProperty('display', 'flex'); }}
+            />
+          ) : null}
+          <span
+            className={`${textSize} font-semibold ${size === 'md' ? 'text-primary' : ''}`}
+            style={{ display: authorAvatar ? 'none' : 'flex' }}
+          >
+            {authorName.charAt(0)}
+          </span>
         </div>
         <span className={`font-medium ${textSize} ${isClickable ? 'text-primary underline-offset-2 hover:underline' : ''}`}>
           {authorName}
