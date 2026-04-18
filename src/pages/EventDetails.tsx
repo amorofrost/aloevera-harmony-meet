@@ -51,6 +51,16 @@ const EventDetails = () => {
     load();
   }, [eventId, searchParams]);
 
+  useEffect(() => {
+    if (!event?.imageUrl) return;
+    setIsPortraitImage(false);
+    const img = new Image();
+    img.onload = () => {
+      setIsPortraitImage(img.naturalHeight > img.naturalWidth);
+    };
+    img.src = event.imageUrl;
+  }, [event?.imageUrl]);
+
   const handleJoinToggle = async () => {
     if (!event) return;
     if (isJoined) {
