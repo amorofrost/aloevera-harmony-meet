@@ -105,7 +105,7 @@ describe('Welcome — login form', () => {
   });
 
   it('calls authApi.login with correct email and password', async () => {
-    vi.mocked(authApi.login).mockResolvedValueOnce({
+    vi.mocked(authApi.login).mockResolvedValueOnce<any>({
       success: true,
       data: { accessToken: 'at', refreshToken: 'rt', user: { id: '1', name: 'Test', email: 'user@example.com' } as any },
     });
@@ -120,7 +120,7 @@ describe('Welcome — login form', () => {
   });
 
   it('shows inline root error on API failure (INVALID_CREDENTIALS)', async () => {
-    vi.mocked(authApi.login).mockResolvedValueOnce({
+    vi.mocked(authApi.login).mockResolvedValueOnce<any>({
       success: false,
       error: { code: 'INVALID_CREDENTIALS', message: 'Invalid credentials' },
     });
@@ -150,7 +150,7 @@ describe('Welcome — login form', () => {
   });
 
   it('calls setAccessToken and setRefreshToken on success', async () => {
-    vi.mocked(authApi.login).mockResolvedValueOnce({
+    vi.mocked(authApi.login).mockResolvedValueOnce<any>({
       success: true,
       data: { accessToken: 'at', refreshToken: 'rt', user: { id: '1', name: 'Test', email: 'user@example.com' } as any },
     });
@@ -166,7 +166,7 @@ describe('Welcome — login form', () => {
   });
 
   it('navigates away from / on successful login', async () => {
-    vi.mocked(authApi.login).mockResolvedValueOnce({
+    vi.mocked(authApi.login).mockResolvedValueOnce<any>({
       success: true,
       data: { accessToken: 'at', refreshToken: 'rt', user: { id: '1', name: 'Test', email: 'user@example.com' } as any },
     });
@@ -256,7 +256,7 @@ describe('Welcome — register form', () => {
   });
 
   it('shows inline field error on email field for EMAIL_TAKEN', async () => {
-    vi.mocked(authApi.register).mockResolvedValueOnce({
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({
       success: false,
       error: { code: 'EMAIL_TAKEN', message: 'Email already in use' },
     });
@@ -274,7 +274,7 @@ describe('Welcome — register form', () => {
   });
 
   it('calls toast.error for generic server error', async () => {
-    vi.mocked(authApi.register).mockResolvedValueOnce({
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({
       success: false,
       error: { code: 'SERVER_ERROR', message: 'Internal server error' },
     });
@@ -289,7 +289,7 @@ describe('Welcome — register form', () => {
   });
 
   it('calls authApi.register with correct payload', async () => {
-    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({ success: true });
     const user = userEvent.setup();
     renderWithProviders(<Welcome />);
     await openRegisterForm(user);
@@ -310,7 +310,7 @@ describe('Welcome — register form', () => {
   });
 
   it('shows login form after successful registration', async () => {
-    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({ success: true });
     const user = userEvent.setup();
     renderWithProviders(<Welcome />);
     await openRegisterForm(user);
@@ -325,7 +325,7 @@ describe('Welcome — register form', () => {
   });
 
   it('shows success toast after successful registration', async () => {
-    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({ success: true });
     const user = userEvent.setup();
     renderWithProviders(<Welcome />);
     await openRegisterForm(user);
@@ -350,7 +350,7 @@ describe('Welcome — register form — invite code', () => {
   }
 
   it('does not render invite code field when inviteCodeRequired is false', async () => {
-    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce<any>({
       success: true,
       data: { inviteCodeRequired: false },
       timestamp: new Date().toISOString(),
@@ -364,7 +364,7 @@ describe('Welcome — register form — invite code', () => {
   });
 
   it('renders invite code field when inviteCodeRequired is true', async () => {
-    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce<any>({
       success: true,
       data: { inviteCodeRequired: true },
       timestamp: new Date().toISOString(),
@@ -378,7 +378,7 @@ describe('Welcome — register form — invite code', () => {
   });
 
   it('shows inline Zod error when invite code field is visible but empty on submit', async () => {
-    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce<any>({
       success: true,
       data: { inviteCodeRequired: true },
       timestamp: new Date().toISOString(),
@@ -404,12 +404,12 @@ describe('Welcome — register form — invite code', () => {
   });
 
   it('includes inviteCode in payload when field is visible and filled', async () => {
-    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce<any>({
       success: true,
       data: { inviteCodeRequired: true },
       timestamp: new Date().toISOString(),
     });
-    vi.mocked(authApi.register).mockResolvedValueOnce({ success: true });
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({ success: true });
     const user = userEvent.setup();
     renderWithProviders(<Welcome />);
     await openRegisterForm(user);
@@ -432,12 +432,12 @@ describe('Welcome — register form — invite code', () => {
   });
 
   it('sets inline error on invite code field for INVALID_INVITE_CODE response', async () => {
-    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce({
+    vi.mocked(authApi.getRegistrationConfig).mockResolvedValueOnce<any>({
       success: true,
       data: { inviteCodeRequired: true },
       timestamp: new Date().toISOString(),
     });
-    vi.mocked(authApi.register).mockResolvedValueOnce({
+    vi.mocked(authApi.register).mockResolvedValueOnce<any>({
       success: false,
       error: { code: 'INVALID_INVITE_CODE', message: 'Invalid invite code' },
     });
