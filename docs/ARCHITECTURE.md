@@ -46,8 +46,24 @@ AloeVera Harmony Meet is a **React-based single-page application (SPA)** designe
 ├─────────────────────────────────────────────────────┤
 │                   Backend API                        │
 │  .NET 10 ASP.NET Core — JWT auth + Azure Storage    │
+│    ├─ Controllers                                    │
+│    ├─ ACL Enforcement (PermissionGuard + filters)    │
+│    └─ Services (IUserService, IForumService, …)      │
 └─────────────────────────────────────────────────────┘
 ```
+
+### ACL Enforcement (between Controllers and Services)
+
+Cross-cutting authorisation layer introduced by the Roles & ACL spec. All forum/user/admin controller actions route through this layer before reaching service implementations.
+
+- **`IAppConfigService`** (`Services/IAppConfigService.cs`) — singleton, backed by the Azure `appconfig` table with `IMemoryCache` (1-hour TTL). Surfaces `RankThresholds` and `PermissionConfig` with safe fallbacks to code-defined defaults on missing/invalid rows.
+- **`RankCalculator`** (`Helpers/RankCalculator.cs`) — computes `UserRank` from `(ReplyCount, LikesReceived, EventsAttended, MatchCount)` against the configured thresholds. Honours `UserEntity.RankOverride` when set.
+- **`EffectiveLevel`** (`Helpers/EffectiveLevel.cs`) — unified 0–5 level map that combines user rank (0–3) and staff role (0, 4, 5) via `Math.Max`. Used as the single comparison scale for all authorisation decisions.
+- **`PermissionGuard.MeetsAsync`** — shared helper resolving a caller's effective level from the JWT `staffRole` claim + `IUserService.GetUserByIdAsync` (for computed rank) and comparing against a required level.
+- **`[RequireStaffRoleAttribute]`** — synchronous action filter; reads the `staffRole` claim only (zero DB hits) and blocks with `MODERATOR_REQUIRED` / `ADMIN_REQUIRED`.
+- **`[RequirePermissionAttribute]`** — async action filter (via `IFilterFactory`) that looks up the permission's required level from `AppConfig.Permissions` and delegates to `PermissionGuard`; blocks with `INSUFFICIENT_RANK`.
+
+JWT access tokens carry `staffRole` as a custom claim so the synchronous filter never needs to hit storage for moderator/admin-gated endpoints.
 
 ---
 
@@ -476,6 +492,8 @@ POST   /auth/register, /auth/login, /auth/logout, /auth/refresh
 
 GET    /users, /users/me, /users/{id}
 PUT    /users/{id}
+PUT    /users/{id}/role            (admin-only — assign staff role)
+PUT    /users/{id}/rank-override   (admin-only — set/clear rank override)
 
 GET    /events, /events/{id}
 POST   /events/{id}/register
@@ -490,6 +508,9 @@ GET    /blog, /blog/{id}
 GET    /forum/sections, /forum/sections/{id}/topics
 GET    /forum/topics/{id}, /forum/topics/{id}/replies
 POST   /forum/topics/{id}/replies
+PUT    /forum/topics/{id}          (author + moderator; pin/lock require moderator+)
+
+GET    /admin/config               (admin-only — read appconfig values)
 ```
 
 **Not yet on backend** (frontend falls back to mock data):
