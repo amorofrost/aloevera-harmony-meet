@@ -201,6 +201,14 @@ export default PageName;
 - `<SwipeCard />` - Swipeable card for Tinder-like UX
 - `<EventPostmark />` - Artistic postage stamp badge for events
 
+### UserBadges
+
+`import { UserBadges } from '@/components/ui/user-badges';`
+
+Props: `{ rank?: UserRank; staffRole?: StaffRole; className?: string }`. Renders a coloured rank dot + translated rank name (hidden for `novice`) and an uppercase coloured pill for staff role (hidden for `none`). Returns `null` when both are unset so you can drop it into any author/profile header unconditionally.
+
+Rendered in: reply headers in `TopicDetail`, display name in `SettingsPage`, swipe card + chat-list items in `Friends`.
+
 **Component Guidelines**:
 - Functional components with TypeScript
 - Use `React.FC` type if you prefer, but not required
@@ -254,6 +262,12 @@ const Component = () => {
 
 **Note**: `Message` interface was previously duplicated; now only in `chat.ts`. `user.ts` imports it from `chat.ts`. `chat.ts` also exports `ChatDto`, `MessageDto` (aliases), and `PrivateChatWithUser`.
 
+**Rank & role aliases**:
+
+- `UserRank` = `'novice' | 'activeMember' | 'friendOfAloe' | 'aloeCrew'` (`src/types/user.ts`) — auto-computed from activity counters on the backend.
+- `StaffRole` = `'none' | 'moderator' | 'admin'` (`src/types/user.ts`) — manually assigned by admins.
+- Both are now required on `User` and returned by `mapUserFromApi`. The frontend helpers `levelOf` / `effectiveLevel` / `meetsLevel` live in `src/lib/acl.ts` and mirror the backend's 0–5 unified level map.
+
 **Type Guidelines**:
 - Use interfaces for object shapes
 - Use types for unions and complex types
@@ -269,6 +283,7 @@ const Component = () => {
 - **Global State**: React Context for language/i18n only
 - **Local State**: `useState` in page components
 - **No Global User State**: User is hardcoded as `'current-user'`
+- **Current user**: `useCurrentUser()` from `@/hooks/useCurrentUser` is the canonical way to load the logged-in profile inside a component. It unwraps the `ApiResponse<User | null>` envelope returned by `usersApi.getCurrentUser()` and returns `{ user, loading }`. Components gating UI by rank (`<Talks>`, `<TopicDetail>`) consume this hook rather than re-reading the token or calling the API directly.
 
 **React Query**: Configured but not used yet. Will be used when backend is implemented.
 
@@ -728,6 +743,15 @@ Replace in-memory `Mock*Service` implementations in the backend with real Azure 
 
 #### 3. Backend endpoints for songs
 `songsApi.ts` still returns mock data — the backend has no songs endpoint yet. `chatsApi.ts` is now dual-mode (REST + SignalR backend implemented as of March 15, 2026).
+
+**`appconfig` Azure Table** (new in the Roles & ACL spec)
+
+Two partitions drive the rank + permission system:
+
+- `rank_thresholds` — 10 integer rows (`active_replies`, `active_likes`, `active_events`, `friend_replies`, `friend_likes`, `friend_events`, `crew_replies`, `crew_likes`, `crew_events`, `crew_matches`). Consumed by `RankCalculator`.
+- `permissions` — 11 string rows (`create_topic`, `delete_own_reply`, `delete_any_reply`, `delete_any_topic`, `pin_topic`, `ban_user`, `assign_role`, `override_rank`, `manage_events`, `manage_blog`, `manage_store`). Each value is the minimum rank/role name that may perform the action. Consumed by `[RequirePermission("<key>")]`.
+
+Served by `IAppConfigService` (1-hour `IMemoryCache`), seeded by `Lovecraft.Tools.Seeder`, exposed read-only via `GET /api/v1/admin/config` (admin-only).
 
 **See [docs/API_INTEGRATION.md](./docs/API_INTEGRATION.md) and [docs/FRONTEND_AUTH_GUIDE.md](./docs/FRONTEND_AUTH_GUIDE.md) for details.**
 
