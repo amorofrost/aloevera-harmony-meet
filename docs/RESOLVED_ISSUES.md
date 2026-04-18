@@ -215,8 +215,80 @@ See `docs/HTTPS_SETUP.md` for the complete guide and troubleshooting table.
 
 ---
 
+## ~~PB.1. Email Service Missing~~ ✅ RESOLVED
+**Resolved**: April 18, 2026
+
+Email sending is fully integrated via `SendGridEmailService`. When `SENDGRID_API_KEY` is set, the backend sends real emails through SendGrid. When the key is absent it falls back to `NullEmailService`, which logs the token and link to stdout (safe for dev/staging).
+
+**What was implemented** (`Lovecraft.Backend/`):
+- `IEmailService` interface with `SendVerificationEmailAsync` / `SendPasswordResetEmailAsync`
+- `SendGridEmailService` — sends HTML + plain-text email via the SendGrid SDK; throws on non-2xx responses
+- `NullEmailService` — logs the full action link at `LogInformation` level; no-op otherwise
+- Conditional registration in `Program.cs`: `SendGridEmailService` when `SENDGRID_API_KEY` is present, `NullEmailService` otherwise
+- Both `MockAuthService` and `AzureAuthService` inject `IEmailService` and call it on `RegisterAsync` (verification) and `ForgotPasswordAsync` (reset)
+- `EmailServiceTests.cs` — unit tests covering both implementations
+
+**Required env vars for real email**: `SENDGRID_API_KEY`, `FROM_EMAIL` (default `noreply@aloeband.ru`), `FRONTEND_BASE_URL` (default `http://localhost:8080`)
+
+---
+
+## ~~MCF.3. Profile Image Upload~~ ✅ RESOLVED
+**Resolved**: April 18, 2026
+
+Users can now upload and replace their profile photo. The full stack — upload endpoint, blob storage, and frontend UI — is implemented.
+
+**What was implemented**:
+- **Backend**: `POST /api/v1/users/{id}/images` in `UsersController`; validates ownership; calls `IImageService.UploadProfileImageAsync`; `AzureImageService` stores blob at `profile-images/{userId}/{guid}.jpg`, updates `UserEntity.ProfileImageUrl`; mock mode returns placeholder URL
+- **Frontend**: `usersApi.uploadProfileImage(userId, file)` sends `multipart/form-data`; `SettingsPage.tsx` shows file picker, image preview (`previewUrl`), and calls the API on save
+
+---
+
+## ~~MCF.10. Gated Registration via Access Codes~~ ✅ RESOLVED
+**Resolved**: April 18, 2026
+
+Registration can be gated behind a single invite code configured via the `INVITE_CODE` environment variable. When the variable is set, the registration form shows an invite-code field and the backend validates it.
+
+**What was implemented**:
+- **Backend**: `GET /api/v1/auth/registration-config` returns `{ inviteCodeRequired: boolean }` (true when `INVITE_CODE` env var is non-empty); `RegisterRequestDto.InviteCode` (nullable string); `InvalidInviteCodeException`; both `MockAuthService.RegisterAsync` and `AzureAuthService.RegisterAsync` compare `request.InviteCode` against `INVITE_CODE` and throw `InvalidInviteCodeException` on mismatch
+- **Frontend**: `authApi.getRegistrationConfig()` fetches the flag on page load; `Welcome.tsx` conditionally renders the invite-code field; `registerSchemaWithInvite` Zod schema (extends `registerSchema` with required `inviteCode`); field-level error set on `INVALID_INVITE_CODE` response
+
+**Configuration**: Set `INVITE_CODE=<code>` in the backend environment. Omit or leave empty to allow open registration.
+
+---
+
+## ~~MCF.11. Rich Text and Media in Forum & Chat~~ ✅ RESOLVED
+**Resolved**: April 13, 2026
+
+Forum replies and private chat messages support BB code formatting and image attachments.
+
+**What was implemented**:
+- `src/components/ui/bbcode-renderer.tsx` — parses BB code into React elements; XSS-safe (no `dangerouslySetInnerHTML`); tags configurable in `src/config/bbcode.config.ts`
+- `src/components/ui/bbcode-toolbar.tsx` — floating popup on text selection; wraps selected text in the chosen BB tag
+- `src/components/ui/image-attachment-picker.tsx` — up to 4 files; holds `File[]` in state; parent uploads at send time
+- `src/components/ui/image-attachment-display.tsx` — 1-image full width, 2+: 2-col grid, click-to-lightbox
+- **Backend**: `POST /api/v1/images/upload` — validates JPEG/PNG/GIF/WebP, max 10 MB; resizes to 1200px max (JPEG 85%); uploads to Azure Blob `content-images` container; returns `{ Url: string }`
+- `MessageDto` and `ForumReplyDto` carry `imageUrls: string[]`; images are uploaded before the message/reply is sent
+
+---
+
+## ~~UX.10. Missing SEO Metadata~~ ✅ RESOLVED
+**Resolved**: April 18, 2026
+
+`index.html` now has full Open Graph and Twitter Card metadata.
+
+**What was implemented**:
+- `<title>AloeVera Dating - Знакомства для фанатов музыки</title>`
+- `<meta name="description">` and `<meta name="keywords">`
+- `<meta property="og:title">`, `og:description`, `og:type`, `og:image`
+- `<meta name="twitter:card">`, `twitter:site`, `twitter:image`
+
+Per-route metadata (via `react-helmet-async`) remains a future enhancement.
+
+---
+
 ## 📝 Changelog
 
+- **April 18, 2026** — PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), UX.10 (SEO metadata) resolved and moved here.
 - **March 20, 2026** — PB.2 (HTTPS) resolved and added to this archive.
 - **March 16, 2026** — MCF.2 (forum topic creation) resolved and added to this archive.
 - **March 16, 2026** — Archive created. Issues #1, #2, #3, #5, #6, #7, #9, #10, #17 moved here from `ISSUES.md`.

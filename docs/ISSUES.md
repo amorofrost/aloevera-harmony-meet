@@ -1,6 +1,6 @@
 # Known Issues & Technical Debt
 
-**Last Updated**: April 17, 2026
+**Last Updated**: April 18, 2026
 **Active issues only.** Resolved issues are archived in [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md).
 
 ---
@@ -8,16 +8,6 @@
 ## 🔴 Production Blockers
 
 These issues must be resolved before the app serves real users.
-
-### PB.1. Email Service Missing
-**Impact**: Account recovery impossible; password reset non-functional
-
-Email verification tokens are logged to the console only. Because `registerSchema` enforces a valid email address (treating email as first-class identity), email verification and account recovery must work at launch. Users who lose their password have no recourse.
-
-**Resolution**: Integrate SMTP or SendGrid in `Lovecraft.Backend`. Wire `POST /api/v1/auth/forgot-password` and `POST /api/v1/auth/reset-password` to send real emails. See `docs/AUTHENTICATION.md` in the backend repo.
-
----
-
 
 ### PB.4. No Account Lockout
 **Impact**: Unlimited failed login attempts with no lockout
@@ -36,17 +26,6 @@ There is no tracking of failed login attempts and no temporary lockout mechanism
 Bottom navigation is mobile-only. No navigation element exists on large screens. Desktop users have no way to switch between pages.
 
 **Resolution**: Add a sidebar or top navigation bar that is visible at `md:` breakpoints and above. Follow existing design system colours and active-state patterns from `src/components/ui/bottom-navigation.tsx`.
-
----
-
-### MCF.3. Profile Image Upload
-**Impact**: Users cannot set their own profile photo
-
-Profile images are hardcoded Unsplash URLs. Azure Blob Storage is not integrated. `UserDto.profileImage` is always an external URL.
-
-**Resolution**:
-- Backend: Integrate Azure Blob Storage. Add `POST /api/v1/users/{id}/images` endpoint. Store blob URL in `UserEntity`.
-- Frontend: Add file input to the profile edit form in `src/pages/SettingsPage.tsx`. Call new upload endpoint. Display uploaded image preview.
 
 ---
 
@@ -111,31 +90,6 @@ For events like yachting trips, attendees may be split into boats or other group
 
 ---
 
-### MCF.10. Gated Registration via Access Codes
-**Impact**: No way to restrict who can create accounts
-
-When enabled, only users with a valid access code can complete registration. Codes are time-limited and distributed at real-world events (printed QR codes or short keywords). Controlled via the admin panel (MCF.16).
-
-**Resolution**:
-- Backend: Add `AccessCode` entity and table. Add `POST /api/v1/admin/access-codes` (create), `GET /api/v1/admin/access-codes` (list), `POST /api/v1/auth/validate-code` (validate before registration). Check for valid code during `RegisterAsync` when gating is enabled via feature flag
-- Frontend: Add optional access code field to the registration form in `src/pages/Welcome.tsx`
-
----
-
-### ~~MCF.11. Rich Text and Media in Forum & Chat~~ ✅ RESOLVED
-**Impact**: Forum posts and messages are plain text only; no images or formatting
-
-Users cannot bold text, create lists, or attach images in forum replies or private messages. This is a baseline expectation for a community platform.
-
-**Resolution**:
-- ✅ BB code formatting via `src/components/ui/bbcode-renderer.tsx` (configurable per-tag in `src/config/bbcode.config.ts`)
-- ✅ BB code toolbar floating popup on text selection in `src/components/ui/bbcode-toolbar.tsx`
-- ✅ Image attachment picker and display in `src/components/ui/image-attachment-picker.tsx` and `src/components/ui/image-attachment-display.tsx`
-- ✅ Image upload endpoint `POST /api/v1/images/upload` (multipart/form-data, validates JPEG/PNG/GIF/WebP, max 10 MB, resizes to 1200px)
-- ✅ Frontend: `MessageDto` and `ForumReplyDto` now carry `imageUrls: string[]` arrays; `useChatSignalR` hook and forum reply UI handle uploads at send time
-
----
-
 ### MCF.12. Ranking & Badges System (partially resolved — rank & badge system shipped)
 **Impact**: Community engagement has no visible progression or recognition
 
@@ -180,20 +134,18 @@ Forum posts and chat messages are not screened. A single bad actor can flood the
 
 ---
 
-### MCF.16. Admin & Moderator Panel
-**Impact**: No interface for managing the platform — feature flags, user blocking, content removal
+### MCF.16. Admin & Moderator Panel *(partial — scaffold exists)*
+**Impact**: Platform management is incomplete — feature flags, user blocking, content removal not yet available
 
-There is no admin interface. A rogue user or spammer can only be stopped by directly modifying the database. Feature flags (e.g. gated registration from MCF.10) have no toggle UI.
+A basic admin shell exists (`admin.html` → `src/admin/`, routes at `/admin/login`, `/admin/users`, `/admin/config`). It covers user listing, staff role assignment, rank overrides, and read-only `appconfig` view. The following scope items remain unimplemented:
 
-**Scope**:
-- Feature flag management (enable/disable gated registration, maintenance mode, etc.)
-- User management: view, block, unblock accounts
-- Content management: delete forum posts and replies, clear chat messages
-- Access code management (for MCF.10)
-- AI moderation review queue (for MCF.15)
-- Platform metrics view (for MCF.14)
+- ❌ Feature flag management (enable/disable gated registration, maintenance mode via UI)
+- ❌ User blocking/unblocking (block flag on `UserEntity` not implemented)
+- ❌ Content management: delete forum posts and replies, clear chat messages
+- ❌ AI moderation review queue (for MCF.15)
+- ❌ Platform metrics view (for MCF.14)
 
-**Architecture note**: Consider a separate web application (`@aloevera-admin/`) with its own authentication (admin-only JWT role) for security isolation. Alternatively, add admin routes to the existing frontend behind a role check.
+**Resolution**: Extend the existing admin shell. Add block/unblock to `UsersController` + `AdminUsersPage`. Add content management endpoints to `ForumController` / `ChatsController` and corresponding admin pages.
 
 ---
 
@@ -268,13 +220,13 @@ The backend has no Serilog output configured for production and no Application I
 
 ---
 
-### TD.6. No CI/CD Pipeline
-**Impact**: Tests are never run automatically; deployment is fully manual
+### TD.6. No CI/CD Pipeline *(partial — backend CI exists)*
+**Impact**: Frontend tests never run automatically; deployment is fully manual
 
-There are no GitHub Actions (or equivalent) workflows. A breaking change can be pushed to the repo without any automated gate. Deployment requires SSH-ing into the Azure VM and running `docker compose up --build` manually.
+The backend (`@lovecraft/`) has a GitHub Actions workflow (`.github/workflows/dotnet-desktop.yml`) that runs `dotnet build` + `dotnet test` on every push and PR to `main`. The frontend has no CI workflow and deployment requires SSH-ing into the Azure VM manually.
 
 **Resolution**:
-- Add GitHub Actions workflow: run `npm run test:run` (frontend) and `dotnet test` (backend) on every push and PR
+- Add GitHub Actions workflow to `@aloevera-harmony-meet`: run `npm run test:run` on every push and PR
 - Add deployment workflow: on merge to `main`, SSH to the Azure VM and run `docker compose up --build -d`
 
 ---
@@ -387,15 +339,6 @@ Date formatting is duplicated across `Friends.tsx` (`formatDateShort`, `formatTi
 
 ---
 
-### UX.10. Missing SEO Metadata
-**Impact**: SEO, social sharing
-
-`index.html` has no Open Graph tags, no Twitter Card tags, generic title/description, no structured data.
-
-**Resolution**: Add `<meta property="og:*">` and `<meta name="twitter:*">` tags to `index.html`. Consider `react-helmet-async` for per-route metadata.
-
----
-
 ### UX.11. No Content Moderation UI Placeholder
 **Impact**: No user-facing reporting mechanism
 
@@ -418,16 +361,18 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 
 | Section | Count |
 |---|---|
-| 🔴 Production Blockers | 2 |
-| 🟠 Missing Core Features | 17 |
+| 🔴 Production Blockers | 1 |
+| 🟠 Missing Core Features | 14 |
 | 🟡 Technical Debt & Infrastructure | 8 |
-| 🟢 UX / Polish | 12 |
-| **Total active** | **41** |
-| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 11 |
+| 🟢 UX / Polish | 11 |
+| **Total active** | **34** |
+| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 16 |
 
 ---
 
 ## 📝 Changelog
+
+**April 18, 2026** — Audit pass. Moved PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), and UX.10 (SEO metadata) to `RESOLVED_ISSUES.md`. Updated MCF.16 to note basic admin scaffold exists. Updated TD.6 to note backend CI workflow exists.
 
 **April 15, 2026** — Profile image blobs renamed from `{userId}/profile.jpg` to `{userId}/{guid}.jpg` to eliminate sequential enumeration. Old blob deleted on re-upload. Added TD.8 tracking SAS tokens as the full privacy solution.
 
