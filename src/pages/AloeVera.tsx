@@ -11,13 +11,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import type { Event } from '@/types/user';
 import type { StoreItem } from '@/data/mockStoreItems';
 import type { BlogPost } from '@/data/mockBlogPosts';
-import { eventsApi, storeApi, blogApi } from '@/services/api';
+import { eventsApi, storeApi, blogApi, getCurrentUserIdFromToken } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const AloeVera = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'events';
-  const [joinedEvents, setJoinedEvents] = useState<string[]>(['2', '9']);
+  const [joinedEvents, setJoinedEvents] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -35,7 +35,13 @@ const AloeVera = () => {
         storeApi.getStoreItems(),
         blogApi.getBlogPosts(),
       ]);
-      if (eventsRes.success && eventsRes.data) setEvents(eventsRes.data);
+      if (eventsRes.success && eventsRes.data) {
+        setEvents(eventsRes.data);
+        const myId = getCurrentUserIdFromToken();
+        if (myId) {
+          setJoinedEvents(eventsRes.data.filter(e => e.attendees.includes(myId)).map(e => e.id));
+        }
+      }
       if (storeRes.success && storeRes.data) setStoreItems(storeRes.data);
       if (blogRes.success && blogRes.data) setBlogPosts(blogRes.data);
       setIsLoading(false);

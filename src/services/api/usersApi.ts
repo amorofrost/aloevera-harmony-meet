@@ -36,6 +36,7 @@ function mapUserFromApi(dto: any): User {
     },
     rank: (dto.rank ?? 'novice') as UserRank,
     staffRole: (dto.staffRole ?? 'none') as StaffRole,
+    registrationSourceEventId: dto.registrationSourceEventId,
   };
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, MapPin, Users, Clock, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,12 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Event, User } from '@/types/user';
-import { eventsApi, usersApi } from '@/services/api';
+import { eventsApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const EventDetails = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
 
   const [event, setEvent] = useState<Event | null>(null);
@@ -26,7 +27,8 @@ const EventDetails = () => {
     if (!eventId) return;
     const load = async () => {
       setIsLoading(true);
-      const eventRes = await eventsApi.getEventById(eventId);
+      const inviteCode = searchParams.get('code') ?? undefined;
+      const eventRes = await eventsApi.getEventById(eventId, inviteCode);
       if (!eventRes.success || !eventRes.data) {
         setNotFound(true);
         setIsLoading(false);
@@ -34,7 +36,8 @@ const EventDetails = () => {
       }
       const ev = eventRes.data;
       setEvent(ev);
-      setIsJoined(ev.attendees.includes('current-user'));
+      const myId = getCurrentUserIdFromToken();
+      setIsJoined(!!myId && ev.attendees.includes(myId));
 
       // Load attendee profiles (best-effort)
       const usersRes = await usersApi.getUsers();
@@ -45,7 +48,7 @@ const EventDetails = () => {
       setIsLoading(false);
     };
     load();
-  }, [eventId]);
+  }, [eventId, searchParams]);
 
   const handleJoinToggle = async () => {
     if (!event) return;

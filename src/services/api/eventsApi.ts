@@ -26,6 +26,7 @@ function mapEventFromApi(dto: any): Event {
     price: dto.price ?? undefined,
     organizer: dto.organizer,
     isSecret: dto.isSecret ?? false,
+    visibility: dto.visibility,
   };
 }
 
@@ -45,9 +46,10 @@ export const eventsApi = {
     return mockSuccess(mockEvents);
   },
 
-  async getEventById(id: string): Promise<ApiResponse<Event | null>> {
+  async getEventById(id: string, inviteCode?: string): Promise<ApiResponse<Event | null>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any>(`/api/v1/events/${id}`);
+      const q = inviteCode ? `?code=${encodeURIComponent(inviteCode)}` : '';
+      const res = await apiClient.get<any>(`/api/v1/events/${id}${q}`);
       if (res.success && res.data) {
         return { ...res, data: mapEventFromApi(res.data) };
       }

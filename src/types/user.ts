@@ -39,6 +39,7 @@ export interface User {
   };
   rank: UserRank;
   staffRole: StaffRole;
+  registrationSourceEventId?: string;
 }
 
 export interface Match {
@@ -70,5 +71,7 @@ export interface Event {
   price?: number;
   organizer: string;
   isSecret?: boolean;
+  /** Backend: public | secretHidden | secretTeaser */
+  visibility?: 'public' | 'secretHidden' | 'secretTeaser';
   forumTopicId?: string;
 }
