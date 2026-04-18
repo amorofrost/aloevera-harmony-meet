@@ -25,6 +25,8 @@ export const mockUsers: (User & { email: string; password: string })[] = [
       language: 'ru',
       notifications: true,
     },
+    rank: 'novice',
+    staffRole: 'none',
   },
   {
     id: 'user-2',
@@ -50,5 +52,7 @@ export const mockUsers: (User & { email: string; password: string })[] = [
       language: 'ru',
       notifications: true,
     },
+    rank: 'novice',
+    staffRole: 'none',
   },
 ];

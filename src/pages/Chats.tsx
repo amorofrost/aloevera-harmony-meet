@@ -25,7 +25,9 @@ const mockUsers: Record<string, User> = {
     lastSeen: new Date(),
     isOnline: true,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   '2': {
     id: '2',
@@ -39,7 +41,9 @@ const mockUsers: Record<string, User> = {
     lastSeen: new Date(),
     isOnline: false,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   }
 };
 

@@ -34,6 +34,8 @@ function mapUserFromApi(dto: any): User {
       language: dto.settings?.language ?? 'ru',
       notifications: dto.settings?.notifications ?? true,
     },
+    rank: 'novice',
+    staffRole: 'none',
   };
 }
 

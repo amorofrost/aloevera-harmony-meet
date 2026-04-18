@@ -13,6 +13,7 @@ export const mockSearchProfiles: User[] = [
     favoriteSong: mockSongs[0],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice', staffRole: 'none',
   },
   {
     id: '2', name: 'Дмитрий', age: 28,
@@ -22,6 +23,7 @@ export const mockSearchProfiles: User[] = [
     images: [], lastSeen: new Date(), isOnline: false,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice', staffRole: 'none',
   },
   {
     id: '3', name: 'Елена', age: 22,
@@ -33,6 +35,7 @@ export const mockSearchProfiles: User[] = [
     favoriteSong: mockSongs[2],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice', staffRole: 'none',
   },
   {
     id: '4', name: 'Мария', age: 23,
@@ -42,6 +45,7 @@ export const mockSearchProfiles: User[] = [
     images: [], lastSeen: new Date(), isOnline: true,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice', staffRole: 'none',
   },
 ];
 
@@ -58,6 +62,7 @@ export const mockMatches: MatchWithUser[] = [
       images: [], lastSeen: new Date(), isOnline: true,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
       settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+      rank: 'novice', staffRole: 'none',
     },
   },
 ];
@@ -71,6 +76,7 @@ export const mockSentLikes: SentLikeWithUser[] = [
       images: [], lastSeen: new Date(), isOnline: false,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
       settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+      rank: 'novice', staffRole: 'none',
     },
   },
 ];
@@ -84,6 +90,7 @@ export const mockReceivedLikes: ReceivedLikeWithUser[] = [
       images: [], lastSeen: new Date(), isOnline: true,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
       settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+      rank: 'novice', staffRole: 'none',
     },
   },
 ];

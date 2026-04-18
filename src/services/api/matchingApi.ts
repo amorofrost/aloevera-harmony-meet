@@ -58,6 +58,8 @@ function mapUserFromApi(dto: any): User {
       language: dto.settings?.language ?? 'ru',
       notifications: dto.settings?.notifications ?? true,
     },
+    rank: (dto.rank ?? 'novice') as User['rank'],
+    staffRole: (dto.staffRole ?? 'none') as User['staffRole'],
   };
 }
 
@@ -96,6 +98,7 @@ export const matchingApi = {
           profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
           preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
           settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
+          rank: 'novice' as const, staffRole: 'none' as const,
         };
         const match: Match = {
           id: dto.id,
@@ -124,6 +127,7 @@ export const matchingApi = {
           profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
           preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
           settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
+          rank: 'novice' as const, staffRole: 'none' as const,
         };
         const like: Like = {
           id: dto.id, fromUserId: dto.fromUserId, toUserId: dto.toUserId,
@@ -151,6 +155,7 @@ export const matchingApi = {
           profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
           preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
           settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
+          rank: 'novice' as const, staffRole: 'none' as const,
         };
         const like: Like = {
           id: dto.id, fromUserId: dto.fromUserId, toUserId: dto.toUserId,

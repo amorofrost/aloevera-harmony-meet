@@ -9,6 +9,9 @@ export interface AloeVeraSong {
   year: number;
 }
 
+export type UserRank = 'novice' | 'activeMember' | 'friendOfAloe' | 'aloeCrew';
+export type StaffRole = 'none' | 'moderator' | 'admin';
+
 export interface User {
   id: string;
   name: string;
@@ -34,6 +37,8 @@ export interface User {
     language: 'ru' | 'en';
     notifications: boolean;
   };
+  rank: UserRank;
+  staffRole: StaffRole;
 }
 
 export interface Match {

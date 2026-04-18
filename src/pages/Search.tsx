@@ -151,7 +151,9 @@ const mockUsers: User[] = [
     eventsAttended: [mockEvents[0]],
     favoriteSong: mockSongs[0],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   {
     id: '2',
@@ -166,7 +168,9 @@ const mockUsers: User[] = [
     isOnline: false,
     eventsAttended: [],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   {
     id: '3',
@@ -182,7 +186,9 @@ const mockUsers: User[] = [
     eventsAttended: [mockEvents[1], mockEvents[2], mockEvents[4], mockEvents[5], mockEvents[0], mockEvents[3]],
     favoriteSong: mockSongs[2],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   {
     id: '4',
@@ -197,7 +203,9 @@ const mockUsers: User[] = [
     isOnline: true,
     eventsAttended: [mockEvents[2], mockEvents[3]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   {
     id: '5',
@@ -212,7 +220,9 @@ const mockUsers: User[] = [
     isOnline: false,
     eventsAttended: [mockEvents[3], mockEvents[4]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   {
     id: '6',
@@ -227,7 +237,9 @@ const mockUsers: User[] = [
     isOnline: true,
     eventsAttended: [mockEvents[4], mockEvents[5]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   },
   {
     id: '7',
@@ -242,7 +254,9 @@ const mockUsers: User[] = [
     isOnline: false,
     eventsAttended: [mockEvents[4], mockEvents[5]],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+    settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+    rank: 'novice',
+    staffRole: 'none'
   }
 ];
 

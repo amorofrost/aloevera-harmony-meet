@@ -133,7 +133,9 @@ const mockUser: User = {
   eventsAttended: attendedEvents,
   favoriteSong: mockSongs[0],
   preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
-  settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true }
+  settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
+  rank: 'novice',
+  staffRole: 'none'
 };
 
 const Profile = () => {
