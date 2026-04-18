@@ -303,23 +303,7 @@ const SettingsPage = () => {
               </CardContent>
             </Card>
 
-            {songs.length > 0 && (
-              <Card className="profile-card">
-                <CardHeader><CardTitle>Любимая песня AloeVera</CardTitle></CardHeader>
-                <CardContent>
-                  <Select value={user.favoriteSong?.id || ''} onValueChange={(v) => setUser({...user, favoriteSong: songs.find(s => s.id === v)})} disabled={!isEditing}>
-                    <SelectTrigger><SelectValue placeholder="Выберите песню..." /></SelectTrigger>
-                    <SelectContent>{songs.map(s => <SelectItem key={s.id} value={s.id}>{s.title} - {s.album}</SelectItem>)}</SelectContent>
-                  </Select>
-                  {user.favoriteSong && (
-                    <div className="bg-muted/50 rounded-lg p-4 mt-4">
-                      <h4 className="font-medium">{user.favoriteSong.title}</h4>
-                      <p className="text-sm text-muted-foreground">{user.favoriteSong.album} · {user.favoriteSong.duration}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {/* Favorite AloeVera song — hidden for now, will be reimplemented later */}
 
             {user.eventsAttended && user.eventsAttended.length > 0 && (
               <Card className="profile-card">
