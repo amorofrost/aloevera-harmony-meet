@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { MessageSquare, Send, ArrowLeft, Calendar, ExternalLink, Pin } from 'lucide-react';
+import { MessageSquare, Send, ArrowLeft, Calendar, ExternalLink, Pin, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { eventsApi } from '@/services/api/eventsApi';
 import { forumsApi } from '@/services/api/forumsApi';
 import { useChatSignalR } from '@/hooks/useChatSignalR';
+import { toast } from '@/components/ui/sonner';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { meetsLevel } from '@/lib/acl';
 import type { ForumSection, ForumReply, ForumTopicDetail } from '@/data/mockForumData';
 import TopicDetail from '@/components/forum/TopicDetail';
 import { CreateTopicModal } from '@/components/forum/CreateTopicModal';
@@ -25,6 +28,7 @@ const Talks = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useCurrentUser();
 
   const [forumSections, setForumSections] = useState<ForumSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -271,24 +275,41 @@ const Talks = () => {
               <TopicDetail topicId={selectedTopic} onBack={() => setSelectedTopic(null)} />
             ) : !selectedSection ? (
               <div className="space-y-4">
-                {forumSections.map((section) => (
-                  <Card key={section.id} className="profile-card cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => setSelectedSection(section.id)}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">{section.icon}</div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{section.name}</h3>
-                          <p className="text-sm text-muted-foreground">{section.description}</p>
+                {forumSections.map((section) => {
+                  const allowed = !user
+                    ? true
+                    : meetsLevel(user.rank, user.staffRole, section.minRank ?? 'novice');
+                  return (
+                    <Card
+                      key={section.id}
+                      className={`profile-card cursor-pointer hover:shadow-lg transition-shadow ${allowed ? '' : 'opacity-60'}`}
+                      onClick={() => {
+                        if (!allowed) {
+                          toast.error(t('forum.lockedSection'));
+                          return;
+                        }
+                        setSelectedSection(section.id);
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl">{section.icon}</div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold flex items-center gap-2">
+                              {section.name}
+                              {!allowed && <Lock className="h-4 w-4" />}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">{section.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="secondary">{section.topicCount}</Badge>
+                            <p className="text-xs text-muted-foreground mt-1">тем</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <Badge variant="secondary">{section.topicCount}</Badge>
-                          <p className="text-xs text-muted-foreground mt-1">тем</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             ) : (
               <div className="space-y-3">
