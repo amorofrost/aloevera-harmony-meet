@@ -3,6 +3,8 @@ import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 export interface AppConfigDto {
   rankThresholds: Record<string, string>;
   permissions: Record<string, string>;
+  /** Site-wide registration policy (partition <code>registration</code> in appconfig). */
+  registration: Record<string, string>;
 }
 
 export const adminApi = {

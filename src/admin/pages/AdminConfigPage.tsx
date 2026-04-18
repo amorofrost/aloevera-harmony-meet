@@ -48,14 +48,16 @@ export default function AdminConfigPage() {
 
   const rankEntries = Object.entries(data.rankThresholds).sort(([a], [b]) => a.localeCompare(b));
   const permEntries = Object.entries(data.permissions).sort(([a], [b]) => a.localeCompare(b));
+  const regEntries = Object.entries(data.registration ?? {}).sort(([a], [b]) => a.localeCompare(b));
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">App configuration</h1>
         <p className="text-sm text-muted-foreground">
-          Read-only view of rank thresholds and permission gates from Azure Table Storage (
-          <code className="text-xs">appconfig</code>). Values refresh on the server cache (up to 1 hour).
+          Read-only view of rank thresholds, permission gates, and registration policy from Azure Table
+          Storage (<code className="text-xs">appconfig</code>). Values refresh on the server cache (up to
+          1 hour).
         </p>
       </div>
 
@@ -99,6 +101,33 @@ export default function AdminConfigPage() {
             </TableHeader>
             <TableBody>
               {permEntries.map(([k, v]) => (
+                <TableRow key={k}>
+                  <TableCell className="font-mono text-xs">{k}</TableCell>
+                  <TableCell>{v}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Registration</CardTitle>
+          <CardDescription>
+            Site-wide rules for new accounts (e.g. whether an event invite code is required to register).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[240px]">Key</TableHead>
+                <TableHead>Value</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {regEntries.map(([k, v]) => (
                 <TableRow key={k}>
                   <TableCell className="font-mono text-xs">{k}</TableCell>
                   <TableCell>{v}</TableCell>
