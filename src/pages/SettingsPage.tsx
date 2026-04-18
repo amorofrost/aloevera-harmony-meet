@@ -20,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { profileEditSchema, type ProfileEditSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
+import { UserBadges } from '@/components/ui/user-badges';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -207,7 +208,7 @@ const SettingsPage = () => {
                       </Button>
                     </div>
                   )}
-                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><p className="text-muted-foreground">{user.location}</p></div>
+                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} className="mt-1" /><p className="text-muted-foreground">{user.location}</p></div>
                 </div>
               </CardContent>
             </Card>
