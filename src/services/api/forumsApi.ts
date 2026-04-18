@@ -162,7 +162,8 @@ export const forumsApi = {
   async createTopic(
     sectionId: string,
     title: string,
-    content: string
+    content: string,
+    options?: { noviceVisible?: boolean; noviceCanReply?: boolean }
   ): Promise<ApiResponse<ForumTopicDetail>> {
     if (!isApiMode()) {
       const newId = `topic-${Date.now()}`;
@@ -181,6 +182,8 @@ export const forumsApi = {
         createdAt: now,
         lastActivity: now,
         replies: [],
+        noviceVisible: options?.noviceVisible,
+        noviceCanReply: options?.noviceCanReply,
       };
 
       const topicStub: ForumTopic = {
@@ -192,6 +195,8 @@ export const forumsApi = {
         lastActivity: now,
         isPinned: false,
         preview: content.substring(0, 100),
+        noviceVisible: options?.noviceVisible,
+        noviceCanReply: options?.noviceCanReply,
       };
 
       const section = mockForumSections.find(s => s.id === sectionId);
@@ -205,9 +210,13 @@ export const forumsApi = {
       return mockSuccess(topicDetail);
     }
 
+    const body: Record<string, unknown> = { title, content };
+    if (options?.noviceVisible !== undefined) body.noviceVisible = options.noviceVisible;
+    if (options?.noviceCanReply !== undefined) body.noviceCanReply = options.noviceCanReply;
+
     const response = await apiClient.post<ForumTopicDto>(
       `/api/v1/forum/sections/${sectionId}/topics`,
-      { title, content }
+      body
     );
     return {
       ...response,

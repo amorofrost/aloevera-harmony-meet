@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { createTopicSchema, type CreateTopicFormData } from '@/lib/validators';
 import { forumsApi } from '@/services/api/forumsApi';
 import { showApiError } from '@/lib/apiError';
@@ -33,6 +34,8 @@ export function CreateTopicModal({
 }: CreateTopicModalProps) {
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [noviceVisible, setNoviceVisible] = useState(true);
+  const [noviceCanReply, setNoviceCanReply] = useState(true);
 
   const form = useForm<CreateTopicFormData>({
     resolver: zodResolver(createTopicSchema),
@@ -42,9 +45,14 @@ export function CreateTopicModal({
   const handleSubmit = form.handleSubmit(async (data) => {
     setIsSubmitting(true);
     try {
-      const response = await forumsApi.createTopic(sectionId, data.title, data.content);
+      const response = await forumsApi.createTopic(sectionId, data.title, data.content, {
+        noviceVisible,
+        noviceCanReply,
+      });
       if (response.success && response.data) {
         form.reset();
+        setNoviceVisible(true);
+        setNoviceCanReply(true);
         onCreated(response.data);
       }
     } catch (err) {
@@ -92,6 +100,26 @@ export function CreateTopicModal({
                 {form.formState.errors.content.message}
               </p>
             )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="noviceVisible"
+              checked={noviceVisible}
+              onCheckedChange={(v) => {
+                setNoviceVisible(v);
+                if (!v) setNoviceCanReply(false);
+              }}
+            />
+            <Label htmlFor="noviceVisible">{t('forum.noviceVisible')}</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="noviceCanReply"
+              checked={noviceCanReply}
+              disabled={!noviceVisible}
+              onCheckedChange={setNoviceCanReply}
+            />
+            <Label htmlFor="noviceCanReply">{t('forum.noviceCanReply')}</Label>
           </div>
           <div className="flex gap-2 justify-end">
             <Button
