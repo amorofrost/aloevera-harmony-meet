@@ -22,6 +22,7 @@ const EventDetails = () => {
   const [isJoined, setIsJoined] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isPortraitImage, setIsPortraitImage] = useState(false);
 
   useEffect(() => {
     if (!eventId) return;
