@@ -284,7 +284,7 @@ export const adminApi = {
     if (res.success && res.data) {
       return { ...res, data: res.data.map((x) => mapInvite(x)) };
     }
-    return res as ApiResponse<EventInviteAdminDto[]>;
+    return res as unknown as ApiResponse<EventInviteAdminDto[]>;
   },
 
   async listInvitesForEvent(eventId: string): Promise<ApiResponse<EventInviteAdminDto[]>> {
@@ -301,7 +301,7 @@ export const adminApi = {
     if (res.success && res.data) {
       return { ...res, data: res.data.map((x) => mapInvite(x)) };
     }
-    return res as ApiResponse<EventInviteAdminDto[]>;
+    return res as unknown as ApiResponse<EventInviteAdminDto[]>;
   },
 
   async createCampaignInvite(body: {
