@@ -187,12 +187,12 @@ export const authApi = {
     return { success: true, timestamp: new Date().toISOString() };
   },
 
-  // Registration config — returns whether an invite code is required
+  // Registration config — whether appconfig requires an event invite to register
   async getRegistrationConfig() {
     if (isApiMode()) {
-      return apiClient.get<{ inviteCodeRequired: boolean }>('/api/v1/auth/registration-config');
+      return apiClient.get<{ requireEventInvite: boolean }>('/api/v1/auth/registration-config');
     }
-    return { success: true, data: { inviteCodeRequired: false }, timestamp: new Date().toISOString() };
+    return { success: true, data: { requireEventInvite: false }, timestamp: new Date().toISOString() };
   },
 
   // Reset password — data.password (form field) maps to newPassword in the API body

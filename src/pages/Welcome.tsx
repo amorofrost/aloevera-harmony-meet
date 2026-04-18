@@ -23,17 +23,17 @@ const Welcome = () => {
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
   });
-  // Ref allows the resolver (captured once) to read the current inviteCodeRequired
-  const inviteCodeRequiredRef = useRef(false);
+  // Ref allows the resolver (captured once) to read the current requireEventInvite
+  const requireEventInviteRef = useRef(false);
   const registerForm = useForm<RegisterSchemaWithInvite>({
     resolver: async (values, context, options) => {
-      const schema = inviteCodeRequiredRef.current ? registerSchemaWithInvite : registerSchema;
+      const schema = requireEventInviteRef.current ? registerSchemaWithInvite : registerSchema;
       return zodResolver(schema)(values, context, options);
     },
     mode: 'onBlur',
   });
   const [showRegister, setShowRegister] = useState(false);
-  const [inviteCodeRequired, setInviteCodeRequired] = useState(false);
+  const [requireEventInvite, setRequireEventInvite] = useState(false);
   const [configLoading, setConfigLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
@@ -44,8 +44,8 @@ const Welcome = () => {
     authApi.getRegistrationConfig()
       .then((res) => {
         if (res.success && res.data) {
-          inviteCodeRequiredRef.current = res.data.inviteCodeRequired;
-          setInviteCodeRequired(res.data.inviteCodeRequired);
+          requireEventInviteRef.current = res.data.requireEventInvite;
+          setRequireEventInvite(res.data.requireEventInvite);
         }
       })
       .catch(() => {
@@ -381,7 +381,7 @@ const Welcome = () => {
                   )}
                 </div>
 
-                {inviteCodeRequired && (
+                {requireEventInvite && (
                   <div className="space-y-2">
                     <Label htmlFor="inviteCode" className="text-white font-medium">
                       {t('register.inviteCode')} *

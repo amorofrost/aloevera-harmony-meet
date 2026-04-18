@@ -61,7 +61,7 @@ beforeEach(() => {
   vi.spyOn(apiClient, 'setRefreshToken').mockImplementation(() => {});
   (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValue({
     success: true,
-    data: { inviteCodeRequired: false },
+    data: { requireEventInvite: false },
     timestamp: new Date().toISOString(),
   });
 });
@@ -349,10 +349,10 @@ describe('Welcome — register form — invite code', () => {
     });
   }
 
-  it('does not render invite code field when inviteCodeRequired is false', async () => {
+  it('does not render invite code field when requireEventInvite is false', async () => {
     (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValueOnce({
       success: true,
-      data: { inviteCodeRequired: false },
+      data: { requireEventInvite: false },
       timestamp: new Date().toISOString(),
     });
     const user = userEvent.setup();
@@ -363,10 +363,10 @@ describe('Welcome — register form — invite code', () => {
     });
   });
 
-  it('renders invite code field when inviteCodeRequired is true', async () => {
+  it('renders invite code field when requireEventInvite is true', async () => {
     (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValueOnce({
       success: true,
-      data: { inviteCodeRequired: true },
+      data: { requireEventInvite: true },
       timestamp: new Date().toISOString(),
     });
     const user = userEvent.setup();
@@ -380,7 +380,7 @@ describe('Welcome — register form — invite code', () => {
   it('shows inline Zod error when invite code field is visible but empty on submit', async () => {
     (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValueOnce({
       success: true,
-      data: { inviteCodeRequired: true },
+      data: { requireEventInvite: true },
       timestamp: new Date().toISOString(),
     });
     const user = userEvent.setup();
@@ -406,7 +406,7 @@ describe('Welcome — register form — invite code', () => {
   it('includes inviteCode in payload when field is visible and filled', async () => {
     (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValueOnce({
       success: true,
-      data: { inviteCodeRequired: true },
+      data: { requireEventInvite: true },
       timestamp: new Date().toISOString(),
     });
     (vi.mocked(authApi.register) as any).mockResolvedValueOnce({ success: true });
@@ -434,7 +434,7 @@ describe('Welcome — register form — invite code', () => {
   it('sets inline error on invite code field for INVALID_INVITE_CODE response', async () => {
     (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValueOnce({
       success: true,
-      data: { inviteCodeRequired: true },
+      data: { requireEventInvite: true },
       timestamp: new Date().toISOString(),
     });
     (vi.mocked(authApi.register) as any).mockResolvedValueOnce({
