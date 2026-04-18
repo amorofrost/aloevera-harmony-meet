@@ -95,6 +95,7 @@ export default function AdminEventEditorPage() {
   const [inviteExpiryLocal, setInviteExpiryLocal] = useState(() =>
     toLocalInput(new Date(Date.now() + 7 * 86400000).toISOString()),
   );
+  const [invitePlainOverride, setInvitePlainOverride] = useState("");
 
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicContent, setNewTopicContent] = useState("");
@@ -230,10 +231,15 @@ export default function AdminEventEditorPage() {
       return;
     }
     const exp = fromLocalInput(inviteExpiryLocal);
-    const res = await adminApi.createInvite(eventId, new Date(exp));
+    const res = await adminApi.createInvite(
+      eventId,
+      new Date(exp),
+      invitePlainOverride.trim() || undefined,
+    );
     if (res.success && res.data) {
       await navigator.clipboard.writeText(res.data.plainCode);
       toast.success(`Invite code copied: ${res.data.plainCode}`);
+      setInvitePlainOverride("");
       if (eventId) await loadExtras(eventId);
     } else {
       toast.error(res.error?.message ?? "Invite failed");
@@ -481,6 +487,16 @@ export default function AdminEventEditorPage() {
                     type="datetime-local"
                     value={inviteExpiryLocal}
                     onChange={(e) => setInviteExpiryLocal(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 min-w-[200px] flex-1 max-w-md">
+                  <Label htmlFor="invPlain">Plain code (optional)</Label>
+                  <Input
+                    id="invPlain"
+                    value={invitePlainOverride}
+                    onChange={(e) => setInvitePlainOverride(e.target.value)}
+                    placeholder="Auto-generate if empty"
+                    autoComplete="off"
                   />
                 </div>
                 <Button type="button" variant="secondary" onClick={() => void onCreateInvite()}>

@@ -252,6 +252,7 @@ export const adminApi = {
   async createInvite(
     eventId: string,
     expiresAtUtc: Date,
+    plainCode?: string | null,
   ): Promise<ApiResponse<{ plainCode: string; expiresAtUtc: string }>> {
     if (!isApiMode()) {
       return {
@@ -260,9 +261,14 @@ export const adminApi = {
         timestamp: new Date().toISOString(),
       };
     }
+    const body: { expiresAtUtc: string; plainCode?: string } = {
+      expiresAtUtc: expiresAtUtc.toISOString(),
+    };
+    const trimmed = plainCode?.trim();
+    if (trimmed) body.plainCode = trimmed;
     return apiClient.post<{ plainCode: string; expiresAtUtc: string }>(
       `/api/v1/admin/events/${eventId}/invites`,
-      { expiresAtUtc: expiresAtUtc.toISOString() },
+      body,
     );
   },
 
