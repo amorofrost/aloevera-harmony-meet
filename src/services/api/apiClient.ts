@@ -152,8 +152,12 @@ class ApiClient {
           }
         }
 
-        // Refresh failed — redirect to login
-        window.location.href = '/';
+        // Refresh failed — redirect to login (main app vs admin shell)
+        if (typeof window !== 'undefined') {
+          const p = window.location.pathname;
+          window.location.href =
+            p.startsWith('/admin') || p.endsWith('admin.html') ? '/admin/login' : '/';
+        }
         return {
           success: false,
           error: { code: 'UNAUTHORIZED', message: 'Session expired. Please log in again.' },

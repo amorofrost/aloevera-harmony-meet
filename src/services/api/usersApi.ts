@@ -44,15 +44,42 @@ function mockSuccess<T>(data: T): ApiResponse<T> {
 }
 
 export const usersApi = {
-  async getUsers(): Promise<ApiResponse<User[]>> {
+  async getUsers(skip = 0, take = 100): Promise<ApiResponse<User[]>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>('/api/v1/users');
+      const res = await apiClient.get<any[]>(`/api/v1/users?skip=${skip}&take=${take}`);
       if (res.success && res.data) {
         return { ...res, data: res.data.map(mapUserFromApi) };
       }
       return res as ApiResponse<User[]>;
     }
     return mockSuccess(mockSearchProfiles);
+  },
+
+  /** Admin only — backend enforces [RequireStaffRole("admin")]. */
+  async setStaffRole(userId: string, role: StaffRole): Promise<ApiResponse<{ userId: string; staffRole: StaffRole }>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'NOT_AVAILABLE', message: 'API mode only' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.put(`/api/v1/users/${userId}/role`, { role });
+  },
+
+  /** Admin only — `null` clears rank override (use computed rank). */
+  async setRankOverride(
+    userId: string,
+    rank: UserRank | null
+  ): Promise<ApiResponse<{ userId: string; rankOverride: UserRank | null }>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'NOT_AVAILABLE', message: 'API mode only' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.put(`/api/v1/users/${userId}/rank-override`, { rank });
   },
 
   async getUserById(id: string): Promise<ApiResponse<User | null>> {

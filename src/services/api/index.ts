@@ -11,4 +11,5 @@ export { matchingApi, getCurrentUserIdFromToken } from './matchingApi';
 export { imagesApi, uploadImage } from './imagesApi';
 
 export type { ApiResponse } from './apiClient';
+export { adminApi, type AppConfigDto } from './adminApi';
 export type { LoginRequest, RegisterRequest, AuthResponse } from './authApi';

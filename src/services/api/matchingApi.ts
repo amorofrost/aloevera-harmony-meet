@@ -87,7 +87,7 @@ export const matchingApi = {
       const res = await apiClient.get<any[]>('/api/v1/matching/matches');
       if (!res.success || !res.data) return res as ApiResponse<MatchWithUser[]>;
 
-      const allUsersRes = await usersApi.getUsers();
+      const allUsersRes = await usersApi.getUsers(0, 500);
       const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
       const myId = getCurrentUserIdFromToken();
 
@@ -118,7 +118,7 @@ export const matchingApi = {
       const res = await apiClient.get<any[]>('/api/v1/matching/likes/sent');
       if (!res.success || !res.data) return res as ApiResponse<SentLikeWithUser[]>;
 
-      const allUsersRes = await usersApi.getUsers();
+      const allUsersRes = await usersApi.getUsers(0, 500);
       const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
 
       const enriched: SentLikeWithUser[] = res.data.map((dto: any): SentLikeWithUser => {
@@ -146,7 +146,7 @@ export const matchingApi = {
       const res = await apiClient.get<any[]>('/api/v1/matching/likes/received');
       if (!res.success || !res.data) return res as ApiResponse<ReceivedLikeWithUser[]>;
 
-      const allUsersRes = await usersApi.getUsers();
+      const allUsersRes = await usersApi.getUsers(0, 500);
       const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
 
       const enriched: ReceivedLikeWithUser[] = res.data.map((dto: any): ReceivedLikeWithUser => {

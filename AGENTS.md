@@ -209,6 +209,15 @@ Props: `{ rank?: UserRank; staffRole?: StaffRole; className?: string }`. Renders
 
 Rendered in: reply headers in `TopicDetail`, display name in `SettingsPage`, swipe card + chat-list items in `Friends`.
 
+### Admin shell (second Vite entry)
+
+- **HTML entry**: `admin.html` → `src/admin/main.tsx`. Production build emits `dist/admin.html` + `dist/assets/admin-*.js`.
+- **Routes**: `BrowserRouter` with `basename="/admin"` — e.g. `/admin/login`, `/admin/users`, `/admin/config`.
+- **Dev**: open `http://localhost:8080/admin` (middleware rewrites to `admin.html`). Requires `VITE_API_MODE=api`; sign in with an account whose JWT has `staffRole: admin`.
+- **Nginx**: `location ~ ^/admin { try_files $uri $uri/ /admin.html; }` so client-side routes work.
+- **APIs**: `GET /api/v1/users?skip=&take=` (list), `GET /api/v1/admin/config` (read-only tables), `PUT /api/v1/users/{id}/role`, `PUT /api/v1/users/{id}/rank-override` (admin-only).
+- **JWT helpers**: `getStaffRoleFromAccessToken` in `src/lib/jwt.ts` for gating the admin UI.
+
 **Component Guidelines**:
 - Functional components with TypeScript
 - Use `React.FC` type if you prefer, but not required
