@@ -58,7 +58,7 @@ const Welcome = () => {
   const handleLogin = loginForm.handleSubmit(async (data) => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(data);
+      const response = await authApi.login(data as { email: string; password: string });
       if (!response.success) {
         const message = (response as any).error?.message || 'Login failed';
         loginForm.setError('root', { message });
