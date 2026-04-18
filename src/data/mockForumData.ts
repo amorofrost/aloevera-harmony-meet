@@ -1,3 +1,6 @@
+import type { ForumMinRank } from '@/types/forum';
+import type { UserRank, StaffRole } from '@/types/user';
+
 export interface ForumReply {
   id: string;
   topicId: string;
@@ -8,6 +11,8 @@ export interface ForumReply {
   createdAt: Date;
   likes: number;
   imageUrls?: string[];
+  authorRank?: UserRank;
+  authorStaffRole?: StaffRole;
 }
 
 export interface ForumTopicDetail {
@@ -22,7 +27,11 @@ export interface ForumTopicDetail {
   replyCount: number;
   lastActivity: Date;
   isPinned?: boolean;
+  isLocked?: boolean;
   replies: ForumReply[];
+  minRank?: ForumMinRank;
+  noviceVisible?: boolean;
+  noviceCanReply?: boolean;
 }
 
 export interface ForumTopic {
@@ -34,6 +43,9 @@ export interface ForumTopic {
   lastActivity: Date;
   isPinned?: boolean;
   preview: string;
+  minRank?: ForumMinRank;
+  noviceVisible?: boolean;
+  noviceCanReply?: boolean;
 }
 
 export interface ForumSection {
@@ -43,6 +55,7 @@ export interface ForumSection {
   description: string;
   topicCount: number;
   topics: ForumTopic[];
+  minRank?: ForumMinRank;
 }
 
 export const mockForumSections: ForumSection[] = [

@@ -1,5 +1,7 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import { mockForumSections, mockTopicDetails, type ForumSection, type ForumTopic, type ForumTopicDetail, type ForumReply } from '@/data/mockForumData';
+import type { ForumMinRank } from '@/types/forum';
+import type { UserRank, StaffRole } from '@/types/user';
 
 // TODO: Import ForumTopicDto from backend types once available
 interface ForumTopicDto {
@@ -14,6 +16,10 @@ interface ForumTopicDto {
   updatedAt: string;
   replyCount: number;
   isPinned: boolean;
+  isLocked?: boolean;
+  minRank?: ForumMinRank;
+  noviceVisible?: boolean;
+  noviceCanReply?: boolean;
 }
 
 function mockSuccess<T>(data: T): ApiResponse<T> {
@@ -31,6 +37,8 @@ function mapReplyFromApi(dto: any): ForumReply {
     createdAt: new Date(dto.createdAt),
     likes: dto.likes ?? 0,
     imageUrls: dto.imageUrls ?? [],
+    authorRank: (dto.authorRank ?? 'novice') as UserRank,
+    authorStaffRole: (dto.authorStaffRole ?? 'none') as StaffRole,
   };
 }
 
@@ -47,7 +55,11 @@ function mapTopicDetailFromApi(dto: any, replies: ForumReply[]): ForumTopicDetai
     replyCount: dto.replyCount ?? replies.length,
     lastActivity: new Date(dto.updatedAt ?? dto.createdAt),
     isPinned: dto.isPinned ?? false,
+    isLocked: dto.isLocked ?? false,
     replies,
+    minRank: (dto.minRank ?? 'novice') as ForumMinRank,
+    noviceVisible: dto.noviceVisible ?? true,
+    noviceCanReply: dto.noviceCanReply ?? true,
   };
 }
 
@@ -61,6 +73,9 @@ function mapTopicFromApi(dto: any): ForumTopic {
     lastActivity: new Date(dto.updatedAt ?? dto.createdAt),
     isPinned: dto.isPinned ?? false,
     preview: dto.content ? dto.content.substring(0, 100) : '',
+    minRank: (dto.minRank ?? 'novice') as ForumMinRank,
+    noviceVisible: dto.noviceVisible ?? true,
+    noviceCanReply: dto.noviceCanReply ?? true,
   };
 }
 
@@ -72,6 +87,7 @@ function mapSectionFromApi(dto: any, topics: ForumTopic[]): ForumSection {
     description: dto.description ?? '',
     topicCount: dto.topicCount ?? topics.length,
     topics,
+    minRank: (dto.minRank ?? 'novice') as ForumMinRank,
   };
 }
 
