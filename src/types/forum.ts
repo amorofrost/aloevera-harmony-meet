@@ -28,6 +28,16 @@ export interface ForumTopic {
   noviceCanReply: boolean;
 }
 
+/** One row per event on Talks → «Обсуждения событий» (from GET .../forum/event-discussions/summary). */
+export interface EventDiscussionSection {
+  eventId: string;
+  title: string;
+  date: string;
+  visibility: string;
+  isAttending: boolean;
+  topicCount: number;
+}
+
 export interface ForumReply {
   id: string;
   topicId: string;

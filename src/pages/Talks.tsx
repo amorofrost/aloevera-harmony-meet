@@ -1,81 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { MessageSquare, Send, ArrowLeft, Calendar, ExternalLink, Pin, Lock } from 'lucide-react';
+import { MessageSquare, ArrowLeft, Calendar, ExternalLink, Pin, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { eventsApi } from '@/services/api/eventsApi';
 import { forumsApi } from '@/services/api/forumsApi';
-import { useChatSignalR } from '@/hooks/useChatSignalR';
 import { toast } from '@/components/ui/sonner';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { meetsLevel } from '@/lib/acl';
-import type { ForumSection, ForumReply, ForumTopicDetail } from '@/data/mockForumData';
+import type { ForumSection, ForumTopic, ForumTopicDetail } from '@/data/mockForumData';
+import type { EventDiscussionSection } from '@/types/forum';
 import TopicDetail from '@/components/forum/TopicDetail';
 import { CreateTopicModal } from '@/components/forum/CreateTopicModal';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const Talks = () => {
-  const [messageText, setMessageText] = useState('');
-  const [messageError, setMessageError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const activeTab = searchParams.get('tab') || 'forum';
   const selectedSection = searchParams.get('section');
   const selectedTopic = searchParams.get('topic');
-  const activeEventId = searchParams.get('eventId');
+  const eventSection = searchParams.get('eventSection');
   const { t } = useLanguage();
   const { user } = useCurrentUser();
 
   const [forumSections, setForumSections] = useState<ForumSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [eventDiscussionSections, setEventDiscussionSections] = useState<EventDiscussionSection[]>([]);
+  const [loadingEventSections, setLoadingEventSections] = useState(false);
+  const [eventTopics, setEventTopics] = useState<ForumTopic[]>([]);
+  const [loadingEventTopics, setLoadingEventTopics] = useState(false);
+
   const [createModalOpen, setCreateModalOpen] = useState(false);
-
-  // Event discussion state
-  const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
-  const [topicReplies, setTopicReplies] = useState<ForumReply[]>([]);
-  const [topicLoading, setTopicLoading] = useState(false);
-
-  // SignalR for event topic updates
-  const { onEvent } = useChatSignalR('topic', activeTopicId ?? '');
-
-  useEffect(() => {
-    if (!activeTopicId) return;
-    return onEvent('ReplyPosted', (reply: unknown, topicId: unknown) => {
-      if (topicId === activeTopicId) {
-        setTopicReplies(prev => [...prev, reply as ForumReply]);
-      }
-    });
-  }, [activeTopicId, onEvent]);
-
-  useEffect(() => {
-    if (!activeEventId) {
-      setActiveTopicId(null);
-      setTopicReplies([]);
-      return;
-    }
-    setTopicLoading(true);
-    eventsApi.getEventById(activeEventId).then(eventResult => {
-      if (eventResult.success && eventResult.data?.forumTopicId) {
-        const topicId = eventResult.data.forumTopicId;
-        setActiveTopicId(topicId);
-        forumsApi.getReplies(topicId).then(repliesResult => {
-          if (repliesResult.success && repliesResult.data) setTopicReplies(repliesResult.data);
-          setTopicLoading(false);
-        });
-      } else {
-        setActiveTopicId(null);
-        setTopicReplies([]);
-        setTopicLoading(false);
-      }
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeEventId]);
 
   useEffect(() => {
     const load = async () => {
@@ -86,6 +46,38 @@ const Talks = () => {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'events') return;
+    let cancelled = false;
+    setLoadingEventSections(true);
+    forumsApi.getEventDiscussionSummary().then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data) setEventDiscussionSections(res.data);
+      setLoadingEventSections(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'events' || !eventSection) {
+      setEventTopics([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingEventTopics(true);
+    forumsApi.getEventDiscussionTopics(eventSection).then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data) setEventTopics(res.data);
+      else setEventTopics([]);
+      setLoadingEventTopics(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, eventSection]);
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -98,23 +90,9 @@ const Talks = () => {
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
   };
 
-  const handleSendEventReply = async () => {
-    const content = messageText.trim();
-    if (!content || !activeTopicId) {
-      if (!content) setMessageError("Message can't be empty");
-      return;
-    }
-    setMessageError('');
-    setMessageText('');
-    const result = await forumsApi.createReply(activeTopicId, content);
-    if (result.success && result.data) {
-      setTopicReplies(prev => [...prev, result.data!]);
-    }
-  };
-
   const handleTopicCreated = (topic: ForumTopicDetail) => {
-    setForumSections(prev =>
-      prev.map(section => {
+    setForumSections((prev) =>
+      prev.map((section) => {
         if (section.id !== selectedSection) return section;
         return {
           ...section,
@@ -139,111 +117,64 @@ const Talks = () => {
     setCreateModalOpen(false);
   };
 
-  // Event discussion panel
-  if (activeEventId && activeTab === 'events') {
-    return (
-      <div className="min-h-screen bg-background pb-20 flex flex-col relative">
-        <div className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80" style={{ backgroundImage: `url(${heroBg})` }}>
-          <div className="absolute inset-0 bg-background/90"></div>
-        </div>
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
-          <div className="flex items-center gap-3 p-4">
-            <Button variant="ghost" size="sm" onClick={() => setSearchParams({ tab: 'events' })}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="font-semibold">Обсуждение события</h2>
-                <p className="text-xs text-muted-foreground">Форум события</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/aloevera/events/${activeEventId}`)}>
-              <ExternalLink className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex-1 p-4 overflow-y-auto relative z-10">
-          {topicLoading && (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            </div>
-          )}
-          {!topicLoading && !activeTopicId && (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              У этого события нет форумного обсуждения.
-            </p>
-          )}
-          {!topicLoading && topicReplies.map(reply => (
-            <div key={reply.id} className="flex gap-3 py-2">
-              {reply.authorAvatar && (
-                <img src={reply.authorAvatar} alt={reply.authorName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-medium text-sm">{reply.authorName}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(reply.createdAt).toLocaleTimeString()}
-                  </span>
-                </div>
-                <p className="text-sm mt-0.5 break-words">{reply.content}</p>
-              </div>
-            </div>
-          ))}
-          {!topicLoading && activeTopicId && topicReplies.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Нет сообщений. Начните обсуждение!
-            </p>
-          )}
-        </div>
-        {activeTopicId && (
-          <div className="border-t p-4 relative z-10">
-            <div className="flex gap-2">
-              <Input
-                value={messageText}
-                onChange={(e) => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
-                placeholder="Введи сообщение..."
-                onKeyPress={(e) => e.key === 'Enter' && handleSendEventReply()}
-                className="flex-1"
-              />
-              <Button onClick={handleSendEventReply} disabled={!messageText.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-            {messageError && (
-              <p className="text-xs text-destructive mt-1">{messageError}</p>
-            )}
-          </div>
-        )}
-        <BottomNavigation />
-      </div>
-    );
-  }
+  const currentSection = selectedSection ? forumSections.find((s) => s.id === selectedSection) : null;
+  const currentEventMeta = eventSection
+    ? eventDiscussionSections.find((s) => s.eventId === eventSection)
+    : undefined;
 
-  const currentSection = selectedSection ? forumSections.find(s => s.id === selectedSection) : null;
+  const eventsHeaderTitle =
+    activeTab === 'events'
+      ? selectedTopic
+        ? 'Тема'
+        : eventSection
+          ? currentEventMeta?.title ?? 'Событие'
+          : 'Обсуждения событий'
+      : currentSection
+        ? currentSection.name
+        : t('nav.talks');
 
   return (
     <div className="min-h-screen bg-background pb-20 relative">
-      <div className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80" style={{ backgroundImage: `url(${heroBg})` }}>
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
         <div className="absolute inset-0 bg-background/90"></div>
       </div>
 
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
-          {(selectedSection || selectedTopic) && (
-            <Button variant="ghost" size="sm" onClick={() => {
-              if (selectedTopic) setSearchParams({ tab: 'forum', section: selectedSection! });
-              else setSearchParams({ tab: 'forum' });
-            }} className="mr-2">
+          {activeTab === 'forum' && (selectedSection || selectedTopic) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (selectedTopic) setSearchParams({ tab: 'forum', section: selectedSection! });
+                else setSearchParams({ tab: 'forum' });
+              }}
+              className="mr-2"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
           )}
-          <h1 className="text-2xl font-bold text-foreground flex-1">
-            {currentSection ? currentSection.name : t('nav.talks')}
-          </h1>
-          {selectedSection && !selectedTopic && (
+          {activeTab === 'events' && (eventSection || selectedTopic) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (selectedTopic && eventSection) {
+                  setSearchParams({ tab: 'events', eventSection });
+                } else {
+                  setSearchParams({ tab: 'events' });
+                }
+              }}
+              className="mr-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
+          <h1 className="text-2xl font-bold text-foreground flex-1 truncate">{eventsHeaderTitle}</h1>
+          {activeTab === 'forum' && selectedSection && !selectedTopic && (
             <Button
               size="sm"
               onClick={() => setCreateModalOpen(true)}
@@ -252,7 +183,15 @@ const Talks = () => {
               {t('forum.newTopic')}
             </Button>
           )}
-          <MessageSquare className="w-6 h-6 text-primary" />
+          {activeTab === 'events' && eventSection && !selectedTopic && (
+            <Button variant="outline" size="sm" asChild className="shrink-0">
+              <a href={`/aloevera/events/${eventSection}`} onClick={(e) => { e.preventDefault(); navigate(`/aloevera/events/${eventSection}`); }}>
+                <ExternalLink className="w-4 h-4 mr-1" />
+                К событию
+              </a>
+            </Button>
+          )}
+          <MessageSquare className="w-6 h-6 text-primary shrink-0" />
         </div>
       </div>
 
@@ -263,12 +202,14 @@ const Talks = () => {
             <TabsTrigger value="events">Обсуждения событий</TabsTrigger>
           </TabsList>
 
-          {/* Forum Tab */}
           <TabsContent value="forum" className="mt-6">
             {isLoading ? (
               <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
             ) : selectedTopic ? (
-              <TopicDetail topicId={selectedTopic} onBack={() => setSearchParams({ tab: 'forum', section: selectedSection! })} />
+              <TopicDetail
+                topicId={selectedTopic}
+                onBack={() => setSearchParams({ tab: 'forum', section: selectedSection! })}
+              />
             ) : !selectedSection ? (
               <div className="space-y-4">
                 {forumSections.map((section) => {
@@ -298,7 +239,9 @@ const Talks = () => {
                             <p className="text-sm text-muted-foreground">{section.description}</p>
                           </div>
                           <div className="text-right">
-                            <Badge variant="secondary">{section.topicCount}</Badge>
+                            <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-sm">
+                              {section.topicCount}
+                            </span>
                             <p className="text-xs text-muted-foreground mt-1">тем</p>
                           </div>
                         </div>
@@ -316,8 +259,13 @@ const Talks = () => {
                     return b.lastActivity.getTime() - a.lastActivity.getTime();
                   })
                   .map((topic) => (
-                    <Card key={topic.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id })}>
+                    <Card
+                      key={topic.id}
+                      className="profile-card cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() =>
+                        setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id })
+                      }
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-1 min-w-0">
@@ -342,23 +290,110 @@ const Talks = () => {
             )}
           </TabsContent>
 
-          {/* Event Discussions Tab */}
           <TabsContent value="events" className="mt-6">
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Обсуждения событий</h3>
-              <p className="text-muted-foreground">
-                Перейдите к событию и откройте его форумное обсуждение оттуда.
-              </p>
-              <Button className="mt-4" variant="outline" onClick={() => navigate('/aloevera')}>
-                К событиям
-              </Button>
-            </div>
+            {loadingEventSections && !eventSection ? (
+              <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+            ) : selectedTopic && eventSection ? (
+              <TopicDetail
+                topicId={selectedTopic}
+                onBack={() => setSearchParams({ tab: 'events', eventSection })}
+              />
+            ) : eventSection ? (
+              loadingEventTopics ? (
+                <div className="text-center py-12 text-muted-foreground">Загрузка тем...</div>
+              ) : (
+                <div className="space-y-3">
+                  {eventTopics.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      Пока нет тем в этом обсуждении.
+                    </p>
+                  )}
+                  {eventTopics
+                    .sort((a, b) => {
+                      if (a.isPinned && !b.isPinned) return -1;
+                      if (!a.isPinned && b.isPinned) return 1;
+                      return b.lastActivity.getTime() - a.lastActivity.getTime();
+                    })
+                    .map((topic) => (
+                      <Card
+                        key={topic.id}
+                        className="profile-card cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() =>
+                          setSearchParams({
+                            tab: 'events',
+                            eventSection,
+                            topic: topic.id,
+                          })
+                        }
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Calendar className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                {topic.isPinned && <Pin className="w-3 h-3 text-primary" />}
+                                <h4 className="font-semibold truncate">{topic.title}</h4>
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{topic.preview}</p>
+                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                <span>{topic.authorName}</span>
+                                <span>·</span>
+                                <span>{topic.replyCount} ответов</span>
+                                <span>·</span>
+                                <span>{formatDate(topic.lastActivity)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              )
+            ) : (
+              <div className="space-y-4">
+                {eventDiscussionSections.length === 0 && !loadingEventSections && (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Нет доступных обсуждений событий.
+                  </p>
+                )}
+                {eventDiscussionSections.map((ev) => (
+                  <Card
+                    key={ev.eventId}
+                    className="profile-card cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setSearchParams({ tab: 'events', eventSection: ev.eventId })}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-8 h-8 text-primary shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{ev.title}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(ev.date).toLocaleDateString('ru-RU')}
+                            {ev.isAttending && (
+                              <span className="ml-2 text-primary">Вы участвуете</span>
+                            )}
+                            {ev.visibility === 'secretTeaser' && (
+                              <span className="ml-2 text-amber-600">Тизер</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-sm">
+                            {ev.topicCount}
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1">тем</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
 
-      {selectedSection && (
+      {selectedSection && activeTab === 'forum' && (
         <CreateTopicModal
           sectionId={selectedSection}
           sectionName={currentSection?.name ?? ''}

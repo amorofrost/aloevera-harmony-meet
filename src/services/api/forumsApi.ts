@@ -1,6 +1,8 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import { mockForumSections, mockTopicDetails, type ForumSection, type ForumTopic, type ForumTopicDetail, type ForumReply } from '@/data/mockForumData';
-import type { ForumMinRank } from '@/types/forum';
+import type { EventDiscussionSection, ForumMinRank } from '@/types/forum';
+import { eventsApi } from './eventsApi';
+import { getCurrentUserIdFromToken } from './matchingApi';
 import type { UserRank, StaffRole } from '@/types/user';
 
 // TODO: Import ForumTopicDto from backend types once available
@@ -91,7 +93,60 @@ function mapSectionFromApi(dto: any, topics: ForumTopic[]): ForumSection {
   };
 }
 
+function mapEventDiscussionSection(dto: any): EventDiscussionSection {
+  const d = dto.date ?? dto.Date;
+  return {
+    eventId: dto.eventId,
+    title: dto.title,
+    date: typeof d === 'string' ? d : new Date(d).toISOString(),
+    visibility: dto.visibility ?? 'public',
+    isAttending: dto.isAttending ?? false,
+    topicCount: dto.topicCount ?? 0,
+  };
+}
+
 export const forumsApi = {
+  /** Event-linked areas for the Talks → event discussions tab (visibility matches /events). */
+  async getEventDiscussionSummary(): Promise<ApiResponse<EventDiscussionSection[]>> {
+    if (isApiMode()) {
+      const res = await apiClient.get<any[]>('/api/v1/forum/event-discussions/summary');
+      if (res.success && res.data) {
+        return { ...res, data: res.data.map(mapEventDiscussionSection) };
+      }
+      return res as ApiResponse<EventDiscussionSection[]>;
+    }
+    const evRes = await eventsApi.getEvents();
+    if (!evRes.success || !evRes.data) {
+      return { success: true, data: [], timestamp: new Date().toISOString() };
+    }
+    const uid = getCurrentUserIdFromToken();
+    const data: EventDiscussionSection[] = [];
+    for (const e of evRes.data) {
+      const vis = e.visibility ?? (e.isSecret ? 'secretTeaser' : 'public');
+      if (vis === 'secretHidden' && !(uid && e.attendees.includes(uid))) continue;
+      data.push({
+        eventId: e.id,
+        title: e.title,
+        date: e.date.toISOString(),
+        visibility: vis,
+        isAttending: !!(uid && e.attendees.includes(uid)),
+        topicCount: 0,
+      });
+    }
+    return { success: true, data, timestamp: new Date().toISOString() };
+  },
+
+  async getEventDiscussionTopics(eventId: string): Promise<ApiResponse<ForumTopic[]>> {
+    if (isApiMode()) {
+      const res = await apiClient.get<any[]>(`/api/v1/forum/event-discussions/${encodeURIComponent(eventId)}/topics`);
+      if (res.success && res.data) {
+        return { ...res, data: res.data.map(mapTopicFromApi) };
+      }
+      return res as ApiResponse<ForumTopic[]>;
+    }
+    return { success: true, data: [], timestamp: new Date().toISOString() };
+  },
+
   async getSections(): Promise<ApiResponse<ForumSection[]>> {
     if (isApiMode()) {
       const sectionsRes = await apiClient.get<any[]>('/api/v1/forum/sections');

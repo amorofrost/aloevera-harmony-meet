@@ -128,6 +128,7 @@ export const mockEvents: Event[] = [
     price: 25000,
     organizer: 'Veter Veter',
     isSecret: true,
+    visibility: 'secretHidden',
   },
   {
     id: '10',
