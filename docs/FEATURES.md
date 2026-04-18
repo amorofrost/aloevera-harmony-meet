@@ -565,6 +565,44 @@ Artistic postage stamp-style badges for events:
 
 ---
 
+## 🎖️ 9. Roles & Ranks
+
+### Ranks (auto-computed)
+
+- **Novice** — default. Baseline permissions.
+- **Active Member** — 5 forum replies OR 3 likes received OR 1 event attended.
+- **Friend of Aloe** — 25 replies OR 15 likes OR 3 events.
+- **Aloe Crew** — 100 replies OR 50 likes OR 10 events OR 10 matches.
+
+Thresholds live in the `appconfig` Azure Table (partition `rank_thresholds`) and are cached for 1 hour on the backend. An admin can override any single user's rank via `PUT /api/v1/users/{id}/rank-override`.
+
+### Staff Roles (manually assigned)
+
+- `none` — no staff privileges.
+- `moderator` — can delete any reply/topic, pin topics, ban users (effective level 4).
+- `admin` — can assign staff roles, override ranks, manage events/blog/store (effective level 5).
+
+Staff roles are stored on `UserEntity.StaffRole`, returned on `UserDto.staffRole`, and embedded as the `staffRole` JWT claim so action filters can authorise requests without hitting storage.
+
+### Badges
+
+`<UserBadges rank staffRole />` (in `src/components/ui/user-badges.tsx`) renders a coloured rank dot plus the translated rank name, and — when staff role is set — a coloured uppercase pill. Rendered on forum reply headers, on the profile/settings page, and on peer profiles in the swipe card and chat-list items. Novice + `none` renders nothing (null return) so unranked users stay visually quiet.
+
+### Gating
+
+Forum sections can set `minRank` (stored on `ForumSectionEntity`) — sections below a user's effective level are shown with a lock icon on Talks and clicking them triggers a toast instead of navigating. Topics can additionally set `noviceVisible=false` (hidden from novices entirely) and `noviceCanReply=false` (novices can read but the reply form is replaced with a restricted-reply message). Both flags are controlled per-topic via toggles in `CreateTopicModal`.
+
+### Admin endpoints
+
+- `PUT /api/v1/users/{id}/role` — assign staff role (admin-only)
+- `PUT /api/v1/users/{id}/rank-override` — override computed rank (admin-only)
+- `GET /api/v1/admin/config` — read current `appconfig` values (admin-only)
+- `PUT /api/v1/forum/topics/{id}` — edit topic; author + moderator can update `noviceVisible`; only moderator+ can pin/lock
+
+See `docs/ARCHITECTURE.md` ("ACL enforcement" subsection) for how `PermissionGuard`, `RequireStaffRoleAttribute`, and `RequirePermissionAttribute` compose to authorise these endpoints.
+
+---
+
 ## 🔮 Future Feature Ideas
 
 ### Premium Features
