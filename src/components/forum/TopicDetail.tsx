@@ -19,6 +19,8 @@ import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
 import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display';
 import { uploadImage } from '@/services/api/imagesApi';
 import { UserBadges } from '@/components/ui/user-badges';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TopicDetailProps {
   topicId: string;
@@ -35,6 +37,9 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     resolver: zodResolver(replySchema),
   });
   const navigate = useNavigate();
+  const { user } = useCurrentUser();
+  const { t } = useLanguage();
+  const canReply = (topic?.noviceCanReply ?? true) || (!!user && user.rank !== 'novice');
 
   useEffect(() => {
     const load = async () => {
@@ -197,31 +202,37 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
       </div>
 
       {/* Reply input */}
-      <form onSubmit={handleSendReply} className="pt-2 pb-4 space-y-1">
-        <div className="space-y-2">
-          <div className="relative">
-            <BbcodeToolbar textareaRef={contentRef} />
-            <Textarea
-              {...registerRest}
-              ref={(el) => {
-                registerRef(el);
-                contentRef.current = el;
-              }}
-              placeholder="Написать ответ..."
-              className="min-h-[100px]"
-            />
+      {canReply ? (
+        <form onSubmit={handleSendReply} className="pt-2 pb-4 space-y-1">
+          <div className="space-y-2">
+            <div className="relative">
+              <BbcodeToolbar textareaRef={contentRef} />
+              <Textarea
+                {...registerRest}
+                ref={(el) => {
+                  registerRef(el);
+                  contentRef.current = el;
+                }}
+                placeholder="Написать ответ..."
+                className="min-h-[100px]"
+              />
+            </div>
+            <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSending}>
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSending}>
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-        {replyForm.formState.errors.content && (
-          <p className="text-xs text-destructive">{replyForm.formState.errors.content.message}</p>
-        )}
-      </form>
+          {replyForm.formState.errors.content && (
+            <p className="text-xs text-destructive">{replyForm.formState.errors.content.message}</p>
+          )}
+        </form>
+      ) : (
+        <p className="text-sm text-muted-foreground italic">
+          {t('forum.replyRestricted')}
+        </p>
+      )}
     </div>
   );
 };
