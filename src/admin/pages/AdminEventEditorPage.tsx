@@ -200,7 +200,10 @@ export default function AdminEventEditorPage() {
         navigate(`/events/${res.data.id}`, { replace: true });
         return;
       }
-      if (!eventId) return;
+      if (!eventId) {
+        toast.error("Missing event id — check the URL.");
+        return;
+      }
       const res = await adminApi.updateEvent(eventId, payload);
       if (!res.success || !res.data) {
         toast.error(res.error?.message ?? "Save failed");

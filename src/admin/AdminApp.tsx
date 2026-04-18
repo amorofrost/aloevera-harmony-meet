@@ -27,7 +27,7 @@ export default function AdminApp() {
             <Route path="/" element={<Navigate to="/users" replace />} />
             <Route path="/users" element={<AdminUsersPage />} />
             <Route path="/events" element={<AdminEventsPage />} />
-            <Route path="/events/new" element={<AdminEventEditorPage />} />
+            {/* Single dynamic route so :eventId is "new" for /events/new (static route would omit params). */}
             <Route path="/events/:eventId" element={<AdminEventEditorPage />} />
             <Route path="/invites" element={<AdminInvitesPage />} />
             <Route path="/config" element={<AdminConfigPage />} />
