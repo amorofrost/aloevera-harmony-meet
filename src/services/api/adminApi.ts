@@ -73,6 +73,30 @@ export interface ForumTopicAdminDto {
   noviceCanReply: boolean;
 }
 
+export interface EventInviteAdminDto {
+  plainCode: string;
+  eventId: string;
+  campaignLabel: string | null;
+  expiresAtUtc: string;
+  revoked: boolean;
+  createdAtUtc: string;
+  registrationCount: number;
+  eventAttendanceClaimCount: number;
+}
+
+function mapInvite(d: Record<string, unknown>): EventInviteAdminDto {
+  return {
+    plainCode: String(d.plainCode ?? ''),
+    eventId: String(d.eventId ?? ''),
+    campaignLabel: d.campaignLabel != null && String(d.campaignLabel) !== '' ? String(d.campaignLabel) : null,
+    expiresAtUtc: String(d.expiresAtUtc ?? ''),
+    revoked: Boolean(d.revoked),
+    createdAtUtc: String(d.createdAtUtc ?? ''),
+    registrationCount: Number(d.registrationCount ?? 0),
+    eventAttendanceClaimCount: Number(d.eventAttendanceClaimCount ?? 0),
+  };
+}
+
 function mapEvent(d: Record<string, unknown>): AdminEventDto {
   const cat = String(d.category ?? 'other').toLowerCase();
   const vis = String(d.visibility ?? 'public');
@@ -239,6 +263,57 @@ export const adminApi = {
     return apiClient.post<{ plainCode: string; expiresAtUtc: string }>(
       `/api/v1/admin/events/${eventId}/invites`,
       { expiresAtUtc: expiresAtUtc.toISOString() },
+    );
+  },
+
+  async listInvites(): Promise<ApiResponse<EventInviteAdminDto[]>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<Record<string, unknown>[]>('/api/v1/admin/invites');
+    if (res.success && res.data) {
+      return { ...res, data: res.data.map((x) => mapInvite(x)) };
+    }
+    return res as ApiResponse<EventInviteAdminDto[]>;
+  },
+
+  async listInvitesForEvent(eventId: string): Promise<ApiResponse<EventInviteAdminDto[]>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<Record<string, unknown>[]>(
+      `/api/v1/admin/events/${eventId}/invites`,
+    );
+    if (res.success && res.data) {
+      return { ...res, data: res.data.map((x) => mapInvite(x)) };
+    }
+    return res as ApiResponse<EventInviteAdminDto[]>;
+  },
+
+  async createCampaignInvite(body: {
+    campaignId: string;
+    campaignLabel?: string | null;
+    expiresAtUtc: string;
+    plainCode?: string | null;
+  }): Promise<ApiResponse<{ plainCode: string; expiresAtUtc: string } | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.post<{ plainCode: string; expiresAtUtc: string }>(
+      '/api/v1/admin/invites/campaigns',
+      body,
     );
   },
 

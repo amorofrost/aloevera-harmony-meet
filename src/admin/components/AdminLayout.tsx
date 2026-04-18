@@ -22,6 +22,9 @@ export default function AdminLayout() {
             <Link to="/events" className="hover:text-foreground">
               Events
             </Link>
+            <Link to="/invites" className="hover:text-foreground">
+              Invites
+            </Link>
             <Link to="/config" className="hover:text-foreground">
               App config
             </Link>

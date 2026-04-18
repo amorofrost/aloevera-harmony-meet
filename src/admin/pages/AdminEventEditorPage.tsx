@@ -4,6 +4,7 @@ import {
   adminApi,
   type AdminEventWritePayload,
   type EventAttendeeAdminDto,
+  type EventInviteAdminDto,
   type ForumTopicAdminDto,
 } from "@/services/api/adminApi";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 function toLocalInput(iso: string): string {
@@ -89,6 +91,7 @@ export default function AdminEventEditorPage() {
 
   const [attendees, setAttendees] = useState<EventAttendeeAdminDto[]>([]);
   const [topics, setTopics] = useState<ForumTopicAdminDto[]>([]);
+  const [eventInvites, setEventInvites] = useState<EventInviteAdminDto[]>([]);
   const [inviteExpiryLocal, setInviteExpiryLocal] = useState(() =>
     toLocalInput(new Date(Date.now() + 7 * 86400000).toISOString()),
   );
@@ -132,9 +135,14 @@ export default function AdminEventEditorPage() {
   ]);
 
   const loadExtras = useCallback(async (id: string) => {
-    const [a, t] = await Promise.all([adminApi.getAttendees(id), adminApi.getForumTopics(id)]);
+    const [a, t, inv] = await Promise.all([
+      adminApi.getAttendees(id),
+      adminApi.getForumTopics(id),
+      adminApi.listInvitesForEvent(id),
+    ]);
     if (a.success && a.data) setAttendees(a.data);
     if (t.success && t.data) setTopics(t.data);
+    if (inv.success && inv.data) setEventInvites(inv.data);
   }, []);
 
   useEffect(() => {
@@ -226,6 +234,7 @@ export default function AdminEventEditorPage() {
     if (res.success && res.data) {
       await navigator.clipboard.writeText(res.data.plainCode);
       toast.success(`Invite code copied: ${res.data.plainCode}`);
+      if (eventId) await loadExtras(eventId);
     } else {
       toast.error(res.error?.message ?? "Invite failed");
     }
@@ -456,25 +465,69 @@ export default function AdminEventEditorPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Invite link</CardTitle>
+              <CardTitle>Invite codes</CardTitle>
               <CardDescription>
-                Creates a new invite code (previous codes for this event are revoked). The plaintext code is
-                shown once and copied to your clipboard.
+                Codes are stored as readable plaintext in Azure Table. Creating a new code revokes earlier
+                codes for this event. New signups increment &quot;Registrations&quot;; existing users who join
+                with a code in the app increment &quot;Attendance by code&quot;.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap items-end gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="invExp">Code expiry (local)</Label>
-                <Input
-                  id="invExp"
-                  type="datetime-local"
-                  value={inviteExpiryLocal}
-                  onChange={(e) => setInviteExpiryLocal(e.target.value)}
-                />
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invExp">New code expiry (local)</Label>
+                  <Input
+                    id="invExp"
+                    type="datetime-local"
+                    value={inviteExpiryLocal}
+                    onChange={(e) => setInviteExpiryLocal(e.target.value)}
+                  />
+                </div>
+                <Button type="button" variant="secondary" onClick={() => void onCreateInvite()}>
+                  Create / rotate invite
+                </Button>
               </div>
-              <Button type="button" variant="secondary" onClick={() => void onCreateInvite()}>
-                Create invite code
-              </Button>
+              {eventInvites.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No invite rows for this event yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Code (plaintext)</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Registrations</TableHead>
+                      <TableHead>Attendance by code</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {eventInvites.map((inv) => (
+                      <TableRow key={inv.plainCode}>
+                        <TableCell>
+                          <code className="text-sm">{inv.plainCode}</code>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-2 h-7"
+                            onClick={() => void navigator.clipboard.writeText(inv.plainCode)}
+                          >
+                            Copy
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {new Date(inv.expiresAtUtc).toLocaleString()}
+                        </TableCell>
+                        <TableCell>{inv.registrationCount}</TableCell>
+                        <TableCell>{inv.eventAttendanceClaimCount}</TableCell>
+                        <TableCell>
+                          {inv.revoked ? <Badge variant="secondary">Revoked</Badge> : <Badge>Active</Badge>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 

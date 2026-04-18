@@ -56,7 +56,8 @@ const EventDetails = () => {
       await eventsApi.unregisterFromEvent(event.id);
       setIsJoined(false);
     } else {
-      await eventsApi.registerForEvent(event.id);
+      const inviteCode = searchParams.get("code") ?? undefined;
+      await eventsApi.registerForEvent(event.id, inviteCode);
       setIsJoined(true);
     }
   };

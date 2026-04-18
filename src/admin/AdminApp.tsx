@@ -7,6 +7,7 @@ import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminConfigPage from "./pages/AdminConfigPage";
 import AdminEventsPage from "./pages/AdminEventsPage";
 import AdminEventEditorPage from "./pages/AdminEventEditorPage";
+import AdminInvitesPage from "./pages/AdminInvitesPage";
 
 function RequireAdmin() {
   const token = apiClient.getAccessToken();
@@ -28,6 +29,7 @@ export default function AdminApp() {
             <Route path="/events" element={<AdminEventsPage />} />
             <Route path="/events/new" element={<AdminEventEditorPage />} />
             <Route path="/events/:eventId" element={<AdminEventEditorPage />} />
+            <Route path="/invites" element={<AdminInvitesPage />} />
             <Route path="/config" element={<AdminConfigPage />} />
           </Route>
         </Route>

@@ -59,9 +59,11 @@ export const eventsApi = {
     return mockSuccess(event);
   },
 
-  async registerForEvent(id: string): Promise<ApiResponse<boolean>> {
+  async registerForEvent(id: string, inviteCode?: string): Promise<ApiResponse<boolean>> {
     if (isApiMode()) {
-      return apiClient.post<boolean>(`/api/v1/events/${id}/register`);
+      const body =
+        inviteCode && inviteCode.trim() !== "" ? { inviteCode: inviteCode.trim() } : undefined;
+      return apiClient.post<boolean>(`/api/v1/events/${id}/register`, body);
     }
     return mockSuccess(true);
   },
