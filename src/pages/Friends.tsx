@@ -221,7 +221,7 @@ const Friends = () => {
           <div className="absolute inset-0 bg-background/90"></div>
         </div>
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
-          <div className="flex items-center gap-3 p-4">
+          <div className="flex items-center gap-3 p-4 max-w-3xl mx-auto w-full">
             <Button variant="ghost" size="sm" onClick={() => setSearchParams({ tab: 'chats' })}><ArrowLeft className="w-5 h-5" /></Button>
             <div className="flex items-center gap-3 flex-1">
               <div className="relative">
@@ -236,7 +236,8 @@ const Friends = () => {
             <Button variant="ghost" size="sm"><MoreVertical className="w-5 h-5" /></Button>
           </div>
         </div>
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto relative z-10">
+        <div className="flex-1 overflow-y-auto relative z-10">
+          <div className="p-4 space-y-4 max-w-3xl mx-auto w-full">
           <div className="text-center"><p className="text-sm text-muted-foreground">Начало переписки с {chat.otherUser.name}</p></div>
           {activeChatId && messagePage > 0 && (
             <button
@@ -276,9 +277,10 @@ const Friends = () => {
               </div>
             )
           )}
+          </div>
         </div>
         <div className="border-t p-4 relative z-10">
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-w-3xl mx-auto w-full">
             <div className="relative flex-1">
               <BbcodeToolbar textareaRef={chatInputRef} />
               <textarea
