@@ -142,6 +142,18 @@ const translations = {
     'forum.createTopic.posting': 'Публикация...',
     'forum.createTopic.post': 'Опубликовать',
     'forum.newTopic': '+ Новая тема',
+    'forum.lockedSection': 'Только для активных участников+',
+    'forum.replyRestricted': 'Ответы доступны только активным участникам',
+    'forum.noviceVisible': 'Видно новичкам',
+    'forum.noviceCanReply': 'Новички могут отвечать',
+
+    // Ranks & staff roles
+    'rank.novice': 'Новичок',
+    'rank.activeMember': 'Активный участник',
+    'rank.friendOfAloe': 'Друг AloeVera',
+    'rank.aloeCrew': 'Команда AloeVera',
+    'staffRole.moderator': 'Мод',
+    'staffRole.admin': 'Админ',
   },
   en: {
     // Navigation
@@ -266,6 +278,18 @@ const translations = {
     'forum.createTopic.posting': 'Posting...',
     'forum.createTopic.post': 'Post Topic',
     'forum.newTopic': '+ New Topic',
+    'forum.lockedSection': 'Active Member+ only',
+    'forum.replyRestricted': 'Replies for Active Members only',
+    'forum.noviceVisible': 'Visible to new users',
+    'forum.noviceCanReply': 'New users can reply',
+
+    // Ranks & staff roles
+    'rank.novice': 'Novice',
+    'rank.activeMember': 'Active Member',
+    'rank.friendOfAloe': 'Friend of Aloe',
+    'rank.aloeCrew': 'Aloe Crew',
+    'staffRole.moderator': 'Mod',
+    'staffRole.admin': 'Admin',
   },
 };
 
