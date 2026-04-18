@@ -236,7 +236,8 @@ const Friends = () => {
             <Button variant="ghost" size="sm"><MoreVertical className="w-5 h-5" /></Button>
           </div>
         </div>
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto relative z-10">
+        <div className="flex-1 overflow-y-auto relative z-10">
+          <div className="p-4 space-y-4 max-w-3xl mx-auto w-full">
           <div className="text-center"><p className="text-sm text-muted-foreground">Начало переписки с {chat.otherUser.name}</p></div>
           {activeChatId && messagePage > 0 && (
             <button
