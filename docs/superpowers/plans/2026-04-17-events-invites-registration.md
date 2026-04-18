@@ -242,4 +242,4 @@ Response: `{ "plainCode": "...", "expiresAt": "..." }` once.
 1. **Subagent-driven (recommended)** — one subagent per task, review between tasks.
 2. **Inline execution** — run tasks in this session in order with checkpoints.
 
-Which approach do you want to use?
+**Execution:** Subagent-driven batches completed in-repo (2026-04-17).
