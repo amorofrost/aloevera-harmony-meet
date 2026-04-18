@@ -15,8 +15,8 @@ import { eventsApi, storeApi, blogApi } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const AloeVera = () => {
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'events');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'events';
   const [joinedEvents, setJoinedEvents] = useState<string[]>(['2', '9']);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -78,7 +78,7 @@ const AloeVera = () => {
       </div>
 
       <div className="p-4 relative z-10">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="events">События</TabsTrigger>
             <TabsTrigger value="store">Магазин</TabsTrigger>

@@ -20,13 +20,15 @@ import { CreateTopicModal } from '@/components/forum/CreateTopicModal';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const Talks = () => {
-  const [activeTab, setActiveTab] = useState('forum');
-  const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [messageError, setMessageError] = useState('');
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const activeTab = searchParams.get('tab') || 'forum';
+  const selectedSection = searchParams.get('section');
+  const selectedTopic = searchParams.get('topic');
+  const activeEventId = searchParams.get('eventId');
   const { t } = useLanguage();
   const { user } = useCurrentUser();
 
@@ -36,7 +38,6 @@ const Talks = () => {
 
   // Event discussion state
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [topicReplies, setTopicReplies] = useState<ForumReply[]>([]);
   const [topicLoading, setTopicLoading] = useState(false);
 
@@ -53,15 +54,28 @@ const Talks = () => {
   }, [activeTopicId, onEvent]);
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    const eventId = searchParams.get('eventId');
-    if (tab === 'events') setActiveTab('events');
-    if (eventId) {
-      setActiveTab('events');
-      handleOpenEventDiscussion(eventId);
+    if (!activeEventId) {
+      setActiveTopicId(null);
+      setTopicReplies([]);
+      return;
     }
+    setTopicLoading(true);
+    eventsApi.getEventById(activeEventId).then(eventResult => {
+      if (eventResult.success && eventResult.data?.forumTopicId) {
+        const topicId = eventResult.data.forumTopicId;
+        setActiveTopicId(topicId);
+        forumsApi.getReplies(topicId).then(repliesResult => {
+          if (repliesResult.success && repliesResult.data) setTopicReplies(repliesResult.data);
+          setTopicLoading(false);
+        });
+      } else {
+        setActiveTopicId(null);
+        setTopicReplies([]);
+        setTopicLoading(false);
+      }
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [activeEventId]);
 
   useEffect(() => {
     const load = async () => {
@@ -82,24 +96,6 @@ const Talks = () => {
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}д назад`;
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
-  };
-
-  const handleOpenEventDiscussion = async (eventId: string) => {
-    setActiveEventId(eventId);
-    setTopicLoading(true);
-    const eventResult = await eventsApi.getEventById(eventId);
-    if (eventResult.success && eventResult.data?.forumTopicId) {
-      const topicId = eventResult.data.forumTopicId;
-      setActiveTopicId(topicId);
-      const repliesResult = await forumsApi.getReplies(topicId);
-      if (repliesResult.success && repliesResult.data) {
-        setTopicReplies(repliesResult.data);
-      }
-    } else {
-      setActiveTopicId(null);
-      setTopicReplies([]);
-    }
-    setTopicLoading(false);
   };
 
   const handleSendEventReply = async () => {
@@ -139,7 +135,7 @@ const Talks = () => {
         };
       })
     );
-    setSelectedTopic(topic.id);
+    setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id });
     setCreateModalOpen(false);
   };
 
@@ -152,7 +148,7 @@ const Talks = () => {
         </div>
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
           <div className="flex items-center gap-3 p-4">
-            <Button variant="ghost" size="sm" onClick={() => { setActiveEventId(null); setActiveTopicId(null); setTopicReplies([]); }}>
+            <Button variant="ghost" size="sm" onClick={() => setSearchParams({ tab: 'events' })}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-3 flex-1">
@@ -238,8 +234,8 @@ const Talks = () => {
         <div className="flex items-center justify-between p-4">
           {(selectedSection || selectedTopic) && (
             <Button variant="ghost" size="sm" onClick={() => {
-              if (selectedTopic) { setSelectedTopic(null); }
-              else { setSelectedSection(null); }
+              if (selectedTopic) setSearchParams({ tab: 'forum', section: selectedSection! });
+              else setSearchParams({ tab: 'forum' });
             }} className="mr-2">
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -261,7 +257,7 @@ const Talks = () => {
       </div>
 
       <div className="p-4 relative z-10">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="forum">Форум</TabsTrigger>
             <TabsTrigger value="events">Обсуждения событий</TabsTrigger>
@@ -272,7 +268,7 @@ const Talks = () => {
             {isLoading ? (
               <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
             ) : selectedTopic ? (
-              <TopicDetail topicId={selectedTopic} onBack={() => setSelectedTopic(null)} />
+              <TopicDetail topicId={selectedTopic} onBack={() => setSearchParams({ tab: 'forum', section: selectedSection! })} />
             ) : !selectedSection ? (
               <div className="space-y-4">
                 {forumSections.map((section) => {
@@ -288,7 +284,7 @@ const Talks = () => {
                           toast.error(t('forum.lockedSection'));
                           return;
                         }
-                        setSelectedSection(section.id);
+                        setSearchParams({ tab: 'forum', section: section.id });
                       }}
                     >
                       <CardContent className="p-4">
@@ -321,7 +317,7 @@ const Talks = () => {
                   })
                   .map((topic) => (
                     <Card key={topic.id} className="profile-card cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSelectedTopic(topic.id)}>
+                      onClick={() => setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id })}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-1 min-w-0">

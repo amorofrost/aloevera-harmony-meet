@@ -25,11 +25,8 @@ import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const Friends = () => {
-  const [activeTab, setActiveTab] = useState('search');
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
-  const [likesTab, setLikesTab] = useState('matches');
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [messageError, setMessageError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,6 +34,9 @@ const Friends = () => {
   const { t } = useLanguage();
 
   const viewingUserId = searchParams.get('userId');
+  const activeTab = searchParams.get('tab') || 'search';
+  const likesTab = searchParams.get('sub') || 'matches';
+  const selectedChat = searchParams.get('chat');
 
   const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
   const [matches, setMatches] = useState<MatchWithUser[]>([]);
@@ -115,6 +115,24 @@ const Friends = () => {
     load();
   }, []);
 
+  // Sync activeChatId with URL and load messages when selectedChat changes
+  useEffect(() => {
+    if (!selectedChat) {
+      setActiveChatId(null);
+      setMessages([]);
+      return;
+    }
+    setActiveChatId(selectedChat);
+    setMessagesLoading(true);
+    chatsApi.getMessages(selectedChat, 1).then(msgsResult => {
+      if (msgsResult.success && msgsResult.data) {
+        setMessages(msgsResult.data);
+        setMessagePage(1);
+      }
+      setMessagesLoading(false);
+    });
+  }, [selectedChat]);
+
   // Load specific user profile when userId param is present
   useEffect(() => {
     if (!viewingUserId) {
@@ -149,14 +167,9 @@ const Friends = () => {
   };
 
   const handleOpenChat = async (targetUserId: string) => {
-    setMessagesLoading(true);
     const chatResult = await chatsApi.getOrCreateChat(targetUserId);
     if (chatResult.success && chatResult.data) {
       const chatId = chatResult.data.id;
-      setActiveChatId(chatId);
-      setSelectedChat(chatId);
-
-      // If this chat isn't in privateChats yet (just created), add it so the chat view renders
       if (!privateChats.find(c => c.id === chatId)) {
         const otherUser =
           matches.find(m => m.otherUser.id === targetUserId)?.otherUser ??
@@ -166,26 +179,12 @@ const Friends = () => {
           setPrivateChats(prev => [...prev, { ...chatResult.data!, otherUser }]);
         }
       }
-
-      const msgsResult = await chatsApi.getMessages(chatId, 1);
-      if (msgsResult.success && msgsResult.data) {
-        setMessages(msgsResult.data);
-        setMessagePage(1);
-      }
+      setSearchParams({ tab: 'chats', chat: chatId });
     }
-    setMessagesLoading(false);
   };
 
-  const handleOpenChatById = async (chatId: string) => {
-    setSelectedChat(chatId);
-    setActiveChatId(chatId);
-    setMessagesLoading(true);
-    const msgsResult = await chatsApi.getMessages(chatId, 1);
-    if (msgsResult.success && msgsResult.data) {
-      setMessages(msgsResult.data);
-      setMessagePage(1);
-    }
-    setMessagesLoading(false);
+  const handleOpenChatById = (chatId: string) => {
+    setSearchParams({ tab: 'chats', chat: chatId });
   };
 
   const handleSendMessage = async () => {
@@ -223,7 +222,7 @@ const Friends = () => {
         </div>
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
           <div className="flex items-center gap-3 p-4">
-            <Button variant="ghost" size="sm" onClick={() => { setSelectedChat(null); setActiveChatId(null); setMessages([]); }}><ArrowLeft className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="sm" onClick={() => setSearchParams({ tab: 'chats' })}><ArrowLeft className="w-5 h-5" /></Button>
             <div className="flex items-center gap-3 flex-1">
               <div className="relative">
                 <img src={chat.otherUser.profileImage} alt={chat.otherUser.name} className="w-10 h-10 rounded-full object-cover" />
@@ -384,7 +383,7 @@ const Friends = () => {
       </div>
 
       <div className="p-4 relative z-10">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(tab) => setSearchParams({ tab })} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="search">
               <SearchIcon className="w-4 h-4 mr-1" />
@@ -455,7 +454,7 @@ const Friends = () => {
 
           {/* Likes Tab */}
           <TabsContent value="likes" className="mt-6">
-            <Tabs value={likesTab} onValueChange={setLikesTab} className="w-full">
+            <Tabs value={likesTab} onValueChange={(sub) => setSearchParams({ tab: 'likes', sub })} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="matches">{t('likes.matches')} <Badge variant="secondary" className="ml-1 text-xs">{matches.length}</Badge></TabsTrigger>
                 <TabsTrigger value="sent">{t('likes.sent')} <Badge variant="secondary" className="ml-1 text-xs">{sentLikes.length}</Badge></TabsTrigger>
