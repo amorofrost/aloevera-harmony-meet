@@ -349,7 +349,7 @@ describe('Welcome — register form — invite code', () => {
     });
   }
 
-  it('does not render invite code field when requireEventInvite is false', async () => {
+  it('renders invite code field as optional when requireEventInvite is false', async () => {
     (vi.mocked(authApi.getRegistrationConfig) as any).mockResolvedValueOnce({
       success: true,
       data: { requireEventInvite: false },
@@ -359,8 +359,9 @@ describe('Welcome — register form — invite code', () => {
     renderWithProviders(<Welcome />);
     await openRegisterForm(user);
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText(/inviteCodePlaceholder/i)).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
+    expect(screen.getByText(/register\.inviteCodeOptional/i)).toBeInTheDocument();
   });
 
   it('renders invite code field when requireEventInvite is true', async () => {

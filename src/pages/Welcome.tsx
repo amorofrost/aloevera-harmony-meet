@@ -13,7 +13,7 @@ import appIcon from '@/assets/app-icon.jpg';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
-import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchemaWithInvite } from '@/lib/validators';
+import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 
@@ -25,7 +25,7 @@ const Welcome = () => {
   });
   // Ref allows the resolver (captured once) to read the current requireEventInvite
   const requireEventInviteRef = useRef(false);
-  const registerForm = useForm<RegisterSchemaWithInvite>({
+  const registerForm = useForm<RegisterSchema>({
     resolver: async (values, context, options) => {
       const schema = requireEventInviteRef.current ? registerSchemaWithInvite : registerSchema;
       return zodResolver(schema)(values, context, options);
@@ -90,7 +90,7 @@ const Welcome = () => {
         location: data.location,
         gender: data.gender,
         bio: data.bio,
-        inviteCode: data.inviteCode,
+        inviteCode: data.inviteCode?.trim() || undefined,
       });
       if (!response.success) {
         const apiErr = (response as any).error;
@@ -381,23 +381,24 @@ const Welcome = () => {
                   )}
                 </div>
 
-                {requireEventInvite && (
-                  <div className="space-y-2">
-                    <Label htmlFor="inviteCode" className="text-white font-medium">
-                      {t('register.inviteCode')} *
-                    </Label>
-                    <Input
-                      id="inviteCode"
-                      placeholder={t('register.inviteCodePlaceholder')}
-                      {...registerForm.register('inviteCode')}
-                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                      disabled={isLoading}
-                    />
-                    {registerForm.formState.errors.inviteCode && (
-                      <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.inviteCode.message}</p>
-                    )}
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode" className="text-white font-medium">
+                    {t('register.inviteCode')}
+                    {requireEventInvite ? ' *' : ` (${t('register.inviteCodeOptional')})`}
+                  </Label>
+                  <p className="text-xs text-white/70 text-left">{t('register.inviteCodeHint')}</p>
+                  <Input
+                    id="inviteCode"
+                    placeholder={t('register.inviteCodePlaceholder')}
+                    autoComplete="off"
+                    {...registerForm.register('inviteCode')}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                    disabled={isLoading || configLoading}
+                  />
+                  {registerForm.formState.errors.inviteCode && (
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.inviteCode.message}</p>
+                  )}
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="bio" className="text-white font-medium">

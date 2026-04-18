@@ -111,6 +111,8 @@ const translations = {
     'auth.other': 'Другой',
     'register.inviteCode': 'Инвайт-код',
     'register.inviteCodePlaceholder': 'Введите инвайт-код',
+    'register.inviteCodeOptional': 'необязательно',
+    'register.inviteCodeHint': 'Если у вас есть код приглашения на событие, введите его здесь.',
     // Forgot password modal
     'auth.forgotPassword': 'Забыли пароль?',
     'forgotPassword.title': 'Восстановление пароля',
@@ -248,6 +250,8 @@ const translations = {
     'auth.other': 'Other',
     'register.inviteCode': 'Invite code',
     'register.inviteCodePlaceholder': 'Enter invite code',
+    'register.inviteCodeOptional': 'optional',
+    'register.inviteCodeHint': 'If you have an event invite code, enter it here.',
     // Forgot password modal
     'auth.forgotPassword': 'Forgot password?',
     'forgotPassword.title': 'Reset Password',

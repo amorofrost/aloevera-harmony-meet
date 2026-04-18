@@ -23,6 +23,8 @@ export const registerSchema = z.object({
   location: z.string().min(1, 'Location is required'),
   gender: z.string().min(1, 'Gender is required'),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+  /** Event invite; optional when registration is open, validated as required via registerSchemaWithInvite when policy demands it */
+  inviteCode: z.string().optional(),
 });
 
 export const profileEditSchema = z.object({
