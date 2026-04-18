@@ -21,14 +21,16 @@ Ranks are **computed on-demand** from activity counters stored on `UserEntity`. 
 
 ### `UserEntity` — new fields
 
-| Field | Type | Default | Notes |
-|---|---|---|---|
-| `ReplyCount` | int | 0 | Incremented on every forum reply posted |
-| `LikesReceived` | int | 0 | Incremented when another user sends a like to this user |
-| `EventsAttended` | int | 0 | Incremented on event registration |
-| `MatchCount` | int | 0 | Incremented on both users when a mutual like creates a match |
-| `StaffRole` | string | `"none"` | `"none"` \| `"moderator"` \| `"admin"` |
-| `RankOverride` | string? | null | Admin-set override; null = use computed rank |
+
+| Field            | Type    | Default  | Notes                                                        |
+| ---------------- | ------- | -------- | ------------------------------------------------------------ |
+| `ReplyCount`     | int     | 0        | Incremented on every forum reply posted                      |
+| `LikesReceived`  | int     | 0        | Incremented when another user sends a like to this user      |
+| `EventsAttended` | int     | 0        | Incremented on event registration                            |
+| `MatchCount`     | int     | 0        | Incremented on both users when a mutual like creates a match |
+| `StaffRole`      | string  | `"none"` | `"none"`                                                     |
+| `RankOverride`   | string? | null     | Admin-set override; null = use computed rank                 |
+
 
 ### `UserDto` — new fields
 
@@ -48,19 +50,23 @@ authorStaffRole: 'none' | 'moderator' | 'admin'
 
 ### `ForumSectionEntity` — new field
 
-| Field | Type | Default | Notes |
-|---|---|---|---|
+
+| Field     | Type   | Default    | Notes                                                        |
+| --------- | ------ | ---------- | ------------------------------------------------------------ |
 | `MinRank` | string | `"novice"` | Minimum rank required to read and post. `"novice"` = public. |
+
 
 `ForumSectionDto` exposes `minRank: string`.
 
 ### `ForumTopicEntity` — new fields
 
-| Field | Type | Default | Notes |
-|---|---|---|---|
-| `MinRank` | string | `"novice"` | Minimum rank to read this topic (section-level default, overridable per topic). |
-| `NoviceVisible` | bool? | null | Can Novice users see this topic in the list? null = true (backward compat). |
-| `NoviceCanReply` | bool? | null | Can Novice users post a reply? null = true (backward compat). |
+
+| Field            | Type   | Default    | Notes                                                                           |
+| ---------------- | ------ | ---------- | ------------------------------------------------------------------------------- |
+| `MinRank`        | string | `"novice"` | Minimum rank to read this topic (section-level default, overridable per topic). |
+| `NoviceVisible`  | bool?  | null       | Can Novice users see this topic in the list? null = true (backward compat).     |
+| `NoviceCanReply` | bool?  | null       | Can Novice users post a reply? null = true (backward compat).                   |
+
 
 `ForumTopicDto` exposes all three: `minRank: string`, `noviceVisible: boolean`, `noviceCanReply: boolean`. Missing/null values are resolved to `true` before mapping to DTO so the frontend never sees null.
 
@@ -79,18 +85,20 @@ General-purpose key-value config store with two partition keys used by this feat
 
 #### Partition `rank_thresholds` — activity counters for tier promotion
 
-| RowKey | Default | Meaning |
-|---|---|---|
-| `active_replies` | 5 | Replies needed for Novice → Active Member |
-| `active_likes` | 3 | Likes received needed for Novice → Active Member |
-| `active_events` | 1 | Events attended needed for Novice → Active Member |
-| `friend_replies` | 25 | Replies needed for Active → Friend of Aloe |
-| `friend_likes` | 15 | Likes received needed for Active → Friend of Aloe |
-| `friend_events` | 3 | Events attended needed for Active → Friend of Aloe |
-| `crew_replies` | 100 | Replies needed for Friend → Aloe Crew |
-| `crew_likes` | 50 | Likes received needed for Friend → Aloe Crew |
-| `crew_events` | 10 | Events attended needed for Friend → Aloe Crew |
-| `crew_matches` | 10 | Matches needed for Friend → Aloe Crew |
+
+| RowKey           | Default | Meaning                                            |
+| ---------------- | ------- | -------------------------------------------------- |
+| `active_replies` | 5       | Replies needed for Novice → Active Member          |
+| `active_likes`   | 3       | Likes received needed for Novice → Active Member   |
+| `active_events`  | 1       | Events attended needed for Novice → Active Member  |
+| `friend_replies` | 25      | Replies needed for Active → Friend of Aloe         |
+| `friend_likes`   | 15      | Likes received needed for Active → Friend of Aloe  |
+| `friend_events`  | 3       | Events attended needed for Active → Friend of Aloe |
+| `crew_replies`   | 100     | Replies needed for Friend → Aloe Crew              |
+| `crew_likes`     | 50      | Likes received needed for Friend → Aloe Crew       |
+| `crew_events`    | 10      | Events attended needed for Friend → Aloe Crew      |
+| `crew_matches`   | 10      | Matches needed for Friend → Aloe Crew              |
+
 
 Promotion logic: **OR** — meeting any single criterion at a tier is sufficient. Ranks are sequential — a user must pass through each tier; they cannot skip levels. Matches are only a criterion for the Friend → Aloe Crew transition.
 
@@ -104,19 +112,21 @@ novice(0) < activeMember(1) < friendOfAloe(2) < aloeCrew(3) < moderator(4) < adm
 
 A user's **effective level** is `max(rank level, staff role level)`. A Novice Moderator has effective level 4. An Aloe Crew user with no staff role has effective level 3.
 
-| RowKey | Default | Meaning |
-|---|---|---|
-| `create_topic` | `activeMember` | Minimum level to create a new forum topic |
-| `delete_own_reply` | `novice` | Minimum level to delete your own reply |
-| `delete_any_reply` | `moderator` | Minimum level to delete anyone's reply |
-| `delete_any_topic` | `moderator` | Minimum level to delete any topic |
-| `pin_topic` | `moderator` | Minimum level to pin or lock a topic |
-| `ban_user` | `moderator` | Minimum level to ban or suspend a user |
-| `assign_role` | `admin` | Minimum level to assign a staff role |
-| `override_rank` | `admin` | Minimum level to manually override a user's rank |
-| `manage_events` | `admin` | Minimum level to create, edit, or delete events |
-| `manage_blog` | `admin` | Minimum level to create, edit, or delete blog posts |
-| `manage_store` | `admin` | Minimum level to create, edit, or delete store items |
+
+| RowKey             | Default        | Meaning                                              |
+| ------------------ | -------------- | ---------------------------------------------------- |
+| `create_topic`     | `activeMember` | Minimum level to create a new forum topic            |
+| `delete_own_reply` | `novice`       | Minimum level to delete your own reply               |
+| `delete_any_reply` | `moderator`    | Minimum level to delete anyone's reply               |
+| `delete_any_topic` | `moderator`    | Minimum level to delete any topic                    |
+| `pin_topic`        | `moderator`    | Minimum level to pin or lock a topic                 |
+| `ban_user`         | `moderator`    | Minimum level to ban or suspend a user               |
+| `assign_role`      | `admin`        | Minimum level to assign a staff role                 |
+| `override_rank`    | `admin`        | Minimum level to manually override a user's rank     |
+| `manage_events`    | `admin`        | Minimum level to create, edit, or delete events      |
+| `manage_blog`      | `admin`        | Minimum level to create, edit, or delete blog posts  |
+| `manage_store`     | `admin`        | Minimum level to create, edit, or delete store items |
+
 
 Changing a value in this table reconfigures the system within one hour (cache TTL). The `IAppConfigService` returns a typed `PermissionConfig` record alongside `RankThresholds`.
 
@@ -147,14 +157,16 @@ Location: `Lovecraft.Backend/Services/EffectiveLevel.cs`
 
 Unified level map covering both ranks and staff roles:
 
-| Value | Level |
-|---|---|
-| `novice` | 0 |
-| `activeMember` | 1 |
-| `friendOfAloe` | 2 |
-| `aloeCrew` | 3 |
-| `moderator` | 4 |
-| `admin` | 5 |
+
+| Value          | Level |
+| -------------- | ----- |
+| `novice`       | 0     |
+| `activeMember` | 1     |
+| `friendOfAloe` | 2     |
+| `aloeCrew`     | 3     |
+| `moderator`    | 4     |
+| `admin`        | 5     |
+
 
 ```
 EffectiveLevel.For(UserEntity user, UserRank computedRank):
@@ -164,6 +176,7 @@ EffectiveLevel.For(UserEntity user, UserRank computedRank):
 ```
 
 Used by all ACL checks:
+
 ```
 // Permission from appconfig:
 required = EffectiveLevel.Parse(permissionConfig.CreateTopic)  // e.g. 1
@@ -180,8 +193,8 @@ Replaces the previous `RankOrder` helper — single source of truth for all leve
 
 Singleton service with two implementations:
 
-- **`AzureAppConfigService`** — reads `appconfig` table on startup, returns a typed `AppConfig` record containing both `RankThresholds` and `PermissionConfig`. Cache TTL: 1 hour.
-- **`MockAppConfigService`** — returns hardcoded defaults (matching the Seeder defaults). Used when `USE_AZURE_STORAGE=false`.
+- `**AzureAppConfigService**` — reads `appconfig` table on startup, returns a typed `AppConfig` record containing both `RankThresholds` and `PermissionConfig`. Cache TTL: 1 hour.
+- `**MockAppConfigService**` — returns hardcoded defaults (matching the Seeder defaults). Used when `USE_AZURE_STORAGE=false`.
 
 ```csharp
 record AppConfig(RankThresholds Ranks, PermissionConfig Permissions);
@@ -197,31 +210,37 @@ All services receive it via constructor injection. DI registration mirrors the e
 
 ### New endpoints
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `PUT` | `/api/v1/users/{id}/role` | Admin JWT | Assign `staffRole` (`"moderator"` \| `"admin"` \| `"none"`) |
-| `PUT` | `/api/v1/users/{id}/rank-override` | Admin JWT | Set manual rank override; body `{ rankOverride: string \| null }`, null clears override |
-| `GET` | `/api/v1/admin/config` | Admin JWT | Read current `appconfig` table (rank thresholds + any future keys) |
+
+| Method | Path                               | Auth      | Description                                                        |
+| ------ | ---------------------------------- | --------- | ------------------------------------------------------------------ |
+| `PUT`  | `/api/v1/users/{id}/role`          | Admin JWT | Assign `staffRole` (`"moderator"`                                  |
+| `PUT`  | `/api/v1/users/{id}/rank-override` | Admin JWT | Set manual rank override; body `{ rankOverride: string             |
+| `GET`  | `/api/v1/admin/config`             | Admin JWT | Read current `appconfig` table (rank thresholds + any future keys) |
+
 
 ### Modified endpoints
 
-| Endpoint | Change |
-|---|---|
-| `GET /users`, `GET /users/{id}`, `GET /users/me` | Response includes `rank`, `staffRole` |
-| `GET /forum/sections` | Response includes `minRank` per section |
-| `GET /forum/sections/{id}/topics` | Response includes `minRank`, `noviceVisible`, `noviceCanReply` per topic. Topics where `noviceVisible=false` are excluded from the list for Novice callers. |
-| `GET /forum/topics/{id}` | Returns 403 `INSUFFICIENT_RANK` for Novice callers if `noviceVisible=false` |
-| `POST /forum/sections/{sectionId}/topics` | Checks `permissions.create_topic` via `EffectiveLevel`; accepts optional `noviceVisible` and `noviceCanReply` in body |
-| `POST /forum/topics/{id}/replies` | Checks caller level ≥ section/topic `MinRank`; additionally checks `noviceCanReply` for Novice callers |
-| `PUT /forum/topics/{id}` | **New** — update `noviceVisible`, `noviceCanReply`, `isPinned`, `isLocked`. Allowed for topic author (own topic settings) or Moderator+ (any topic). |
+
+| Endpoint                                         | Change                                                                                                                                                      |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /users`, `GET /users/{id}`, `GET /users/me` | Response includes `rank`, `staffRole`                                                                                                                       |
+| `GET /forum/sections`                            | Response includes `minRank` per section                                                                                                                     |
+| `GET /forum/sections/{id}/topics`                | Response includes `minRank`, `noviceVisible`, `noviceCanReply` per topic. Topics where `noviceVisible=false` are excluded from the list for Novice callers. |
+| `GET /forum/topics/{id}`                         | Returns 403 `INSUFFICIENT_RANK` for Novice callers if `noviceVisible=false`                                                                                 |
+| `POST /forum/sections/{sectionId}/topics`        | Checks `permissions.create_topic` via `EffectiveLevel`; accepts optional `noviceVisible` and `noviceCanReply` in body                                       |
+| `POST /forum/topics/{id}/replies`                | Checks caller level ≥ section/topic `MinRank`; additionally checks `noviceCanReply` for Novice callers                                                      |
+| `PUT /forum/topics/{id}`                         | **New** — update `noviceVisible`, `noviceCanReply`, `isPinned`, `isLocked`. Allowed for topic author (own topic settings) or Moderator+ (any topic).        |
+
 
 ### Error codes
 
-| Code | HTTP | Meaning |
-|---|---|---|
-| `INSUFFICIENT_RANK` | 403 | Caller's effective level is below the required minimum |
-| `ADMIN_REQUIRED` | 403 | Operation requires Admin staff role (returned when `permissions.assign_role = admin` and caller is not admin) |
-| `MODERATOR_REQUIRED` | 403 | Operation requires Moderator or Admin staff role |
+
+| Code                 | HTTP | Meaning                                                                                                       |
+| -------------------- | ---- | ------------------------------------------------------------------------------------------------------------- |
+| `INSUFFICIENT_RANK`  | 403  | Caller's effective level is below the required minimum                                                        |
+| `ADMIN_REQUIRED`     | 403  | Operation requires Admin staff role (returned when `permissions.assign_role = admin` and caller is not admin) |
+| `MODERATOR_REQUIRED` | 403  | Operation requires Moderator or Admin staff role                                                              |
+
 
 ---
 
@@ -229,12 +248,14 @@ All services receive it via constructor injection. DI registration mirrors the e
 
 Each counter is incremented by calling `IUserService.IncrementCounterAsync(userId, counter)` inside the relevant service method. This keeps counter logic out of controller layer.
 
-| Event | Counter | Location |
-|---|---|---|
-| Forum reply posted | `ReplyCount` on author | `ForumService.CreateReplyAsync` |
-| Like sent to a user | `LikesReceived` on target | `MatchingService.CreateLikeAsync` |
-| Event registered | `EventsAttended` on registrant | `EventService.RegisterAsync` |
-| Mutual like (match created) | `MatchCount` on both users | `MatchingService.CreateLikeAsync` |
+
+| Event                       | Counter                        | Location                          |
+| --------------------------- | ------------------------------ | --------------------------------- |
+| Forum reply posted          | `ReplyCount` on author         | `ForumService.CreateReplyAsync`   |
+| Like sent to a user         | `LikesReceived` on target      | `MatchingService.CreateLikeAsync` |
+| Event registered            | `EventsAttended` on registrant | `EventService.RegisterAsync`      |
+| Mutual like (match created) | `MatchCount` on both users     | `MatchingService.CreateLikeAsync` |
+
 
 ---
 
@@ -242,29 +263,31 @@ Each counter is incremented by calling `IUserService.IncrementCounterAsync(userI
 
 > The defaults below match the `permissions` partition in `appconfig`. Starred rows (★) are stored in `appconfig` and can be changed at runtime. Unstarred rows are always-allowed (all authenticated users) and are not stored in config.
 
-| Action | Novice | Active | Friend | Crew | Mod | Admin | Config key |
-|---|---|---|---|---|---|---|---|
-| Read public forum | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Read gated section/topic (minRank gate) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-entity `minRank` |
-| Read topic with `noviceVisible=false` | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-topic field |
-| Post reply (public topic) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Post reply (topic with `noviceCanReply=false`) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-topic field |
-| Post reply (minRank-gated section) | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | per-entity `minRank` |
-| ★ Create topic | ✕ | ✓ | ✓ | ✓ | ✓ | ✓ | `create_topic` = `activeMember` |
-| Edit / delete own reply | own | own | own | own | ✓ | ✓ | `delete_own_reply` = `novice` |
-| ★ Delete any reply or topic | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ | `delete_any_reply` / `delete_any_topic` = `moderator` |
-| ★ Pin / lock topic | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ | `pin_topic` = `moderator` |
-| Update own topic settings (noviceVisible etc.) | own | own | own | own | ✓ | ✓ | — |
-| Send likes / swipe | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Send / receive private messages | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Delete own chat message | own | own | own | own | ✓ | ✓ | — |
-| Edit own profile | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| ★ Ban / suspend user | ✕ | ✕ | ✕ | ✕ | ✓ | ✓ | `ban_user` = `moderator` |
-| ★ Assign staff role | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `assign_role` = `admin` |
-| ★ Override user rank | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `override_rank` = `admin` |
-| Register for events | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| ★ Create / edit / delete events | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `manage_events` = `admin` |
-| ★ Manage blog posts & store items | ✕ | ✕ | ✕ | ✕ | ✕ | ✓ | `manage_blog` / `manage_store` = `admin` |
+
+| Action                                         | Novice | Active | Friend | Crew | Mod | Admin | Config key                                            |
+| ---------------------------------------------- | ------ | ------ | ------ | ---- | --- | ----- | ----------------------------------------------------- |
+| Read public forum                              | ✓      | ✓      | ✓      | ✓    | ✓   | ✓     | —                                                     |
+| Read gated section/topic (minRank gate)        | ✕      | ✓      | ✓      | ✓    | ✓   | ✓     | per-entity `minRank`                                  |
+| Read topic with `noviceVisible=false`          | ✕      | ✓      | ✓      | ✓    | ✓   | ✓     | per-topic field                                       |
+| Post reply (public topic)                      | ✓      | ✓      | ✓      | ✓    | ✓   | ✓     | —                                                     |
+| Post reply (topic with `noviceCanReply=false`) | ✕      | ✓      | ✓      | ✓    | ✓   | ✓     | per-topic field                                       |
+| Post reply (minRank-gated section)             | ✕      | ✓      | ✓      | ✓    | ✓   | ✓     | per-entity `minRank`                                  |
+| ★ Create topic                                 | ✕      | ✓      | ✓      | ✓    | ✓   | ✓     | `create_topic` = `activeMember`                       |
+| Edit / delete own reply                        | own    | own    | own    | own  | ✓   | ✓     | `delete_own_reply` = `novice`                         |
+| ★ Delete any reply or topic                    | ✕      | ✕      | ✕      | ✕    | ✓   | ✓     | `delete_any_reply` / `delete_any_topic` = `moderator` |
+| ★ Pin / lock topic                             | ✕      | ✕      | ✕      | ✕    | ✓   | ✓     | `pin_topic` = `moderator`                             |
+| Update own topic settings (noviceVisible etc.) | own    | own    | own    | own  | ✓   | ✓     | —                                                     |
+| Send likes / swipe                             | ✓      | ✓      | ✓      | ✓    | ✓   | ✓     | —                                                     |
+| Send / receive private messages                | ✓      | ✓      | ✓      | ✓    | ✓   | ✓     | —                                                     |
+| Delete own chat message                        | own    | own    | own    | own  | ✓   | ✓     | —                                                     |
+| Edit own profile                               | ✓      | ✓      | ✓      | ✓    | ✓   | ✓     | —                                                     |
+| ★ Ban / suspend user                           | ✕      | ✕      | ✕      | ✕    | ✓   | ✓     | `ban_user` = `moderator`                              |
+| ★ Assign staff role                            | ✕      | ✕      | ✕      | ✕    | ✕   | ✓     | `assign_role` = `admin`                               |
+| ★ Override user rank                           | ✕      | ✕      | ✕      | ✕    | ✕   | ✓     | `override_rank` = `admin`                             |
+| Register for events                            | ✓      | ✓      | ✓      | ✓    | ✓   | ✓     | —                                                     |
+| ★ Create / edit / delete events                | ✕      | ✕      | ✕      | ✕    | ✕   | ✓     | `manage_events` = `admin`                             |
+| ★ Manage blog posts & store items              | ✕      | ✕      | ✕      | ✕    | ✕   | ✓     | `manage_blog` / `manage_store` = `admin`              |
+
 
 ---
 
@@ -284,6 +307,7 @@ interface UserBadgesProps {
 Renders Style B: coloured dot + rank name inline, staff role as a small uppercase pill to the right. Renders nothing if both are absent or `staffRole === 'none'` and rank is `'novice'` (novice is the default state — no badge noise for new users).
 
 Rank dot colours match existing design system variables:
+
 - novice: `--muted`
 - activeMember: `--aloe-sage` (#34d399 equivalent)
 - friendOfAloe: `--aloe-ocean`
@@ -308,16 +332,19 @@ Rank dot colours match existing design system variables:
 
 ### Where `<UserBadges />` is used
 
-| Location | Component | Detail |
-|---|---|---|
-| Forum reply header | `TopicDetail.tsx` | Next to author name, before timestamp |
-| Profile / settings header | `SettingsPage.tsx` | Below display name |
-| User swipe cards | `Friends.tsx` | Below name on profile card |
-| Chat list items | `Friends.tsx` | Below name in chat list |
+
+| Location                  | Component          | Detail                                |
+| ------------------------- | ------------------ | ------------------------------------- |
+| Forum reply header        | `TopicDetail.tsx`  | Next to author name, before timestamp |
+| Profile / settings header | `SettingsPage.tsx` | Below display name                    |
+| User swipe cards          | `Friends.tsx`      | Below name on profile card            |
+| Chat list items           | `Friends.tsx`      | Below name in chat list               |
+
 
 ### Gated forum sections and topics (UI)
 
 **Section-level gating** (`Talks.tsx`): sections where `minRank > 'novice'` and the current user's level is insufficient:
+
 - Lock icon next to section name, muted style
 - Click shows `toast.error(t('forum.lockedSection'))` instead of navigating
 
@@ -326,6 +353,7 @@ Rank dot colours match existing design system variables:
 **Reply gating** (`TopicDetail.tsx`): when `noviceCanReply=false` and the current user is Novice, the reply input is hidden and replaced with `t('forum.replyRestricted')` message.
 
 **Create topic form** (`Talks.tsx`): when creating a new topic (Active Member+), show two optional toggles:
+
 - "Visible to new users (Novice)" — default on
 - "New users can reply" — default on
 
@@ -343,6 +371,7 @@ Toggling "Visible" off also disables and resets "Can reply" (a hidden topic can'
 ### Type updates
 
 `src/types/user.ts`:
+
 ```ts
 type UserRank  = 'novice' | 'activeMember' | 'friendOfAloe' | 'aloeCrew'
 type StaffRole = 'none' | 'moderator' | 'admin'
@@ -367,12 +396,14 @@ interface User {
 1. **Seed `appconfig` table** with all 10 rank threshold rows and all 11 permission rows (upsert — safe to re-run)
 2. **Seed mock user activity counters** to make all four rank tiers visible immediately:
 
-| User | ReplyCount | LikesReceived | EventsAttended | MatchCount | Rank |
-|---|---|---|---|---|---|
-| Anna | 120 | 60 | 12 | 11 | Aloe Crew |
-| Dmitry | 30 | 18 | 4 | 0 | Friend of Aloe |
-| Elena | 8 | 4 | 2 | 0 | Active Member |
-| Maria | 1 | 0 | 0 | 0 | Novice |
+
+| User   | ReplyCount | LikesReceived | EventsAttended | MatchCount | Rank           |
+| ------ | ---------- | ------------- | -------------- | ---------- | -------------- |
+| Anna   | 120        | 60            | 12             | 11         | Aloe Crew      |
+| Dmitry | 30         | 18            | 4              | 0          | Friend of Aloe |
+| Elena  | 8          | 4             | 2              | 0          | Active Member  |
+| Maria  | 1          | 0             | 0              | 0          | Novice         |
+
 
 ### MockDataStore (mock mode — `USE_AZURE_STORAGE=false`)
 
@@ -384,14 +415,16 @@ interface User {
 
 ### Backend — new test classes
 
-**`RankCalculatorTests`** (12 tests):
+`**RankCalculatorTests`** (12 tests):
+
 - Boundary values for each of the three tier transitions
 - OR logic: meeting any single criterion is sufficient
 - Top-down evaluation: crew checked before friend before active
 - `RankOverride` takes precedence over computed rank
 - `null` override falls back to computed rank
 
-**`AclTests`** (14 tests):
+`**AclTests`** (14 tests):
+
 - Novice blocked from creating topic → `INSUFFICIENT_RANK` (from `permissions.create_topic`)
 - Active Member allowed to create topic
 - Novice blocked from minRank-gated section → `INSUFFICIENT_RANK`
@@ -417,13 +450,15 @@ interface User {
 
 The following docs are updated as part of this implementation:
 
-| File | Change |
-|---|---|
-| `docs/ISSUES.md` | Mark MCF.12 partially resolved (rank/badge system implemented); update active count |
-| `docs/FEATURES.md` | Add section 9: Roles & Ranks |
-| `docs/ARCHITECTURE.md` | Add ACL system to architecture layers; mention `RankCalculator` and `IAppConfigService` |
-| `AGENTS.md` | Add `<UserBadges />` to component patterns; add `UserRank` / `StaffRole` types to type guidelines; note `appconfig` table |
-| `lovecraft/Lovecraft/docs/IMPLEMENTATION_SUMMARY.md` | Add new endpoints, new tables (`appconfig`), new unit test count |
+
+| File                                                 | Change                                                                                                                    |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `docs/ISSUES.md`                                     | Mark MCF.12 partially resolved (rank/badge system implemented); update active count                                       |
+| `docs/FEATURES.md`                                   | Add section 9: Roles & Ranks                                                                                              |
+| `docs/ARCHITECTURE.md`                               | Add ACL system to architecture layers; mention `RankCalculator` and `IAppConfigService`                                   |
+| `AGENTS.md`                                          | Add `<UserBadges />` to component patterns; add `UserRank` / `StaffRole` types to type guidelines; note `appconfig` table |
+| `lovecraft/Lovecraft/docs/IMPLEMENTATION_SUMMARY.md` | Add new endpoints, new tables (`appconfig`), new unit test count                                                          |
+
 
 ---
 
@@ -435,3 +470,4 @@ The following docs are updated as part of this implementation:
 - Edit/delete own reply UI — permission defined; backend enforcement and frontend UI deferred (no edit endpoint exists yet)
 - Delete own chat message — permission defined; deferred to chat feature work
 - Notification when user ranks up — future enhancement
+
