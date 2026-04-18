@@ -1,6 +1,6 @@
 # Known Issues & Technical Debt
 
-**Last Updated**: March 16, 2026
+**Last Updated**: April 17, 2026
 **Active issues only.** Resolved issues are archived in [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md).
 
 ---
@@ -136,7 +136,7 @@ Users cannot bold text, create lists, or attach images in forum replies or priva
 
 ---
 
-### MCF.12. Ranking & Badges System
+### MCF.12. Ranking & Badges System (partially resolved — rank & badge system shipped)
 **Impact**: Community engagement has no visible progression or recognition
 
 Active users receive no visible acknowledgement for their participation. No ranks, no badges, no profile distinction between a new user and a long-term community member.
@@ -144,8 +144,10 @@ Active users receive no visible acknowledgement for their participation. No rank
 **Proposed tiers**: Novice → Active Member → Friend of Aloe → Aloe Crew (criteria: forum post count, match count, likes received, events attended)
 
 **Resolution**:
-- Backend: Add rank computation logic to `UserService`. Expose `rank` and `badgeCount` on `UserDto`
-- Frontend: Display rank badge on profile cards in `src/pages/Friends.tsx` and in `src/pages/SettingsPage.tsx`
+- ✅ Backend: `UserService.GetUserByIdAsync` returns computed `rank` on `UserDto` (derived from activity counters against thresholds in the `appconfig` table)
+- ✅ Backend: `StaffRole` exposed on `UserDto` and embedded as JWT claim
+- ✅ Frontend: `<UserBadges rank staffRole />` in `src/components/ui/user-badges.tsx` — rendered on forum replies, profile, swipe cards, and chat list items
+- ⏳ Future: automated rank-up notifications; admin UI for threshold tuning (tracked under MCF.16)
 
 ---
 
