@@ -1,5 +1,5 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
-import type { User } from '@/types/user';
+import type { User, UserRank, StaffRole } from '@/types/user';
 import { mockSearchProfiles } from '@/data/mockProfiles';
 import { mockCurrentUser } from '@/data/mockCurrentUser';
 
@@ -34,8 +34,8 @@ function mapUserFromApi(dto: any): User {
       language: dto.settings?.language ?? 'ru',
       notifications: dto.settings?.notifications ?? true,
     },
-    rank: 'novice',
-    staffRole: 'none',
+    rank: (dto.rank ?? 'novice') as UserRank,
+    staffRole: (dto.staffRole ?? 'none') as StaffRole,
   };
 }
 
