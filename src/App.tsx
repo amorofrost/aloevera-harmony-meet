@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { isMockMode } from "@/config/api.config";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import GuestRoute from "@/components/GuestRoute";
 import Welcome from "./pages/Welcome";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
@@ -34,8 +35,8 @@ const App = () => (
         <BrowserRouter>
           <div className={isMockMode() ? "pt-10" : ""}>
             <Routes>
-              {/* Public — authentication page */}
-              <Route path="/" element={<Welcome />} />
+              {/* Public — authentication page (redirects to /friends if already logged in) */}
+              <Route path="/" element={<GuestRoute><Welcome /></GuestRoute>} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 

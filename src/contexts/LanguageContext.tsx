@@ -54,6 +54,7 @@ const translations = {
     'profile.savingPhoto': 'Сохранение...',
     'profile.photoUpdated': 'Фото обновлено',
     'profile.photoUploadFailed': 'Не удалось загрузить фото',
+    'profile.photoTooLarge': 'Файл слишком большой. Максимальный размер — 20 МБ',
 
     // Search
     'search.title': 'Найди тех самых',
@@ -190,6 +191,7 @@ const translations = {
     'profile.savingPhoto': 'Saving...',
     'profile.photoUpdated': 'Photo updated',
     'profile.photoUploadFailed': 'Failed to upload photo',
+    'profile.photoTooLarge': 'File too large. Maximum size is 20 MB',
 
     // Search
     'search.title': 'Find Love',
