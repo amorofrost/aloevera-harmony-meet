@@ -13,6 +13,7 @@ import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
 import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display';
 import { uploadImage } from '@/services/api/imagesApi';
 import { UserBadges } from '@/components/ui/user-badges';
+import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
@@ -357,6 +358,20 @@ const Friends = () => {
                 <h2 className="text-2xl font-bold mb-1">{viewingUser.name}, {viewingUser.age}</h2>
                 <p className="text-sm opacity-90 mb-2">{viewingUser.location}</p>
                 <p className="text-sm opacity-75">{viewingUser.bio}</p>
+                {viewingUser.eventsAttended && viewingUser.eventsAttended.length > 0 ? (
+                  <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                    {viewingUser.eventsAttended.map((ev) => (
+                      <div key={ev.id} className="flex-shrink-0">
+                        <EventAttendanceMark
+                          event={ev}
+                          size="sm"
+                          showEventName
+                          onClick={() => navigate(`/aloevera/events/${ev.id}`)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </Card>

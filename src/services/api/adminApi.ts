@@ -22,6 +22,7 @@ export interface AdminEventDto {
   title: string;
   description: string;
   imageUrl: string;
+  badgeImageUrl: string;
   date: string;
   endDate?: string | null;
   location: string;
@@ -40,6 +41,7 @@ export interface AdminEventWritePayload {
   title: string;
   description: string;
   imageUrl: string;
+  badgeImageUrl: string;
   date: string;
   endDate?: string | null;
   location: string;
@@ -105,6 +107,7 @@ function mapEvent(d: Record<string, unknown>): AdminEventDto {
     title: String(d.title ?? ''),
     description: String(d.description ?? ''),
     imageUrl: String(d.imageUrl ?? ''),
+    badgeImageUrl: String(d.badgeImageUrl ?? ''),
     date: String(d.date ?? ''),
     endDate: d.endDate != null ? String(d.endDate) : null,
     location: String(d.location ?? ''),

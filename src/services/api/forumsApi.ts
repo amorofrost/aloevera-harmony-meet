@@ -41,6 +41,8 @@ function mapReplyFromApi(dto: any): ForumReply {
     imageUrls: dto.imageUrls ?? [],
     authorRank: (dto.authorRank ?? 'novice') as UserRank,
     authorStaffRole: (dto.authorStaffRole ?? 'none') as StaffRole,
+    authorEventBadgeImageUrls: dto.authorEventBadgeImageUrls ?? [],
+    authorEventBadgeTotalCount: dto.authorEventBadgeTotalCount ?? 0,
   };
 }
 

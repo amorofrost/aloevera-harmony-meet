@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import EventPostmark from '@/components/ui/event-postmark';
+import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { User, AloeVeraSong } from '@/types/user';
@@ -315,7 +315,12 @@ const SettingsPage = () => {
                       <div id="events-scroll-container" className="flex gap-3 overflow-x-auto scrollbar-hide flex-1" style={{ scrollbarWidth: 'none' }}>
                         {user.eventsAttended.map((event) => (
                           <div key={event.id} className="flex-shrink-0">
-                            <EventPostmark location={event.location} date={event.date} title={event.title} category={event.category} className="w-12 h-12" showEventName onClick={() => navigate(`/aloevera/events/${event.id}`)} />
+                            <EventAttendanceMark
+                              event={event}
+                              size="sm"
+                              showEventName
+                              onClick={() => navigate(`/aloevera/events/${event.id}`)}
+                            />
                           </div>
                         ))}
                       </div>

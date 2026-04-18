@@ -2,6 +2,7 @@ import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import type { User, UserRank, StaffRole } from '@/types/user';
 import { mockSearchProfiles } from '@/data/mockProfiles';
 import { mockCurrentUser } from '@/data/mockCurrentUser';
+import { mapEventFromApi } from './eventsApi';
 
 function mapGender(g: string): User['gender'] {
   const map: Record<string, User['gender']> = {
@@ -37,6 +38,9 @@ function mapUserFromApi(dto: any): User {
     rank: (dto.rank ?? 'novice') as UserRank,
     staffRole: (dto.staffRole ?? 'none') as StaffRole,
     registrationSourceEventId: dto.registrationSourceEventId,
+    eventsAttended: Array.isArray(dto.attendedEvents)
+      ? (dto.attendedEvents as unknown[]).map((ev) => mapEventFromApi(ev))
+      : undefined,
   };
 }
 

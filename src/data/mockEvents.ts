@@ -6,6 +6,7 @@ export const mockEvents: Event[] = [
     title: 'Концерт AloeVera: Новые горизонты',
     description: 'Эксклюзивный концерт с новыми песнями и встречей с фанатами. Приходите знакомиться под любимую музыку!',
     imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop',
+    badgeImageUrl: 'https://placehold.co/96x96/1a1a2e/ffffff?text=NH',
     date: new Date('2024-12-15T19:00:00'),
     endDate: new Date('2024-12-15T23:00:00'),
     location: 'Театр "Мир", Москва',

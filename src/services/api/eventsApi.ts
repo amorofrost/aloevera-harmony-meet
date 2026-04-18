@@ -11,12 +11,13 @@ function mapCategory(cat: string): Event['category'] {
   return map[cat?.toLowerCase()] ?? 'other';
 }
 
-function mapEventFromApi(dto: any): Event {
+export function mapEventFromApi(dto: any): Event {
   return {
     id: dto.id,
     title: dto.title,
     description: dto.description,
     imageUrl: dto.imageUrl,
+    badgeImageUrl: dto.badgeImageUrl ?? undefined,
     date: new Date(dto.date),
     endDate: dto.endDate ? new Date(dto.endDate) : undefined,
     location: dto.location,

@@ -13,6 +13,8 @@ export interface ForumReply {
   imageUrls?: string[];
   authorRank?: UserRank;
   authorStaffRole?: StaffRole;
+  authorEventBadgeImageUrls?: string[];
+  authorEventBadgeTotalCount?: number;
 }
 
 export interface ForumTopicDetail {
@@ -115,7 +117,23 @@ export const mockTopicDetails: Record<string, ForumTopicDetail> = {
     authorId: '1', authorName: 'Анна', content: 'Привет всем! Давайте делиться любимыми треками AloeVera и обсуждать, почему они нам нравятся. Я начну — мне очень нравится "Сладкая жизнь", потому что текст невероятно глубокий.',
     createdAt: new Date('2024-02-20T12:00:00'), replyCount: 24, lastActivity: new Date('2024-02-23T09:15:00'), isPinned: true,
     replies: [
-      { id: 'r1', topicId: 't1', authorId: '2', authorName: 'Дмитрий', content: 'Однозначно "На краю"! Мурашки каждый раз.', createdAt: new Date('2024-02-20T13:10:00'), likes: 12 },
+      {
+        id: 'r1',
+        topicId: 't1',
+        authorId: '2',
+        authorName: 'Дмитрий',
+        content: 'Однозначно "На краю"! Мурашки каждый раз.',
+        createdAt: new Date('2024-02-20T13:10:00'),
+        likes: 12,
+        authorRank: 'friendOfAloe',
+        authorStaffRole: 'moderator',
+        authorEventBadgeImageUrls: [
+          'https://placehold.co/48x48/111/fff?text=1',
+          'https://placehold.co/48x48/222/fff?text=2',
+          'https://placehold.co/48x48/333/fff?text=3',
+        ],
+        authorEventBadgeTotalCount: 5,
+      },
       { id: 'r2', topicId: 't1', authorId: '3', authorName: 'Елена', content: 'А мне "Розовый закат" больше всего зашёл. Атмосфера потрясающая.', createdAt: new Date('2024-02-20T15:30:00'), likes: 8 },
       { id: 'r3', topicId: 't1', authorId: '4', authorName: 'Мария', content: 'Согласна с Анной! "Сладкая жизнь" — шедевр. Особенно припев.', createdAt: new Date('2024-02-21T09:00:00'), likes: 5 },
       { id: 'r4', topicId: 't1', authorName: 'Алексей', content: 'Для меня это "Ночной город". Слушаю на повторе уже месяц.', createdAt: new Date('2024-02-22T18:45:00'), likes: 15 },

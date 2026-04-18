@@ -259,14 +259,18 @@ const Events = () => {
                     <span className="text-sm font-semibold">{event.price}₽</span>
                   </div>
                 )}
-                {/* Event Postmark */}
-                <div className="absolute bottom-4 right-4">
-                  <EventPostmark 
-                    location={event.location} 
-                    date={event.date} 
+                <div className="absolute bottom-4 right-4 flex items-end gap-2">
+                  <EventPostmark
+                    location={event.location}
+                    date={event.date}
                     title={event.title}
                     category={event.category}
                   />
+                  {event.badgeImageUrl?.trim() ? (
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-white/90 shadow-lg">
+                      <img src={event.badgeImageUrl} alt="" className="h-full w-full object-cover" />
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -364,14 +368,18 @@ const Events = () => {
                     <span className="text-sm font-semibold">{event.price}₽</span>
                   </div>
                 )}
-                {/* Event Postmark - grayscale effect */}
-                <div className="absolute bottom-4 right-4 transition-all duration-300 group-hover:grayscale-0 grayscale">
-                  <EventPostmark 
-                    location={event.location} 
-                    date={event.date} 
+                <div className="absolute bottom-4 right-4 flex items-end gap-2 transition-all duration-300 group-hover:grayscale-0 grayscale">
+                  <EventPostmark
+                    location={event.location}
+                    date={event.date}
                     title={event.title}
                     category={event.category}
                   />
+                  {event.badgeImageUrl?.trim() ? (
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-white/90 shadow-lg">
+                      <img src={event.badgeImageUrl} alt="" className="h-full w-full object-cover" />
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

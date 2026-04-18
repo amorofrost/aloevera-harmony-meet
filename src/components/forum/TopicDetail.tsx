@@ -19,6 +19,7 @@ import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
 import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display';
 import { uploadImage } from '@/services/api/imagesApi';
 import { UserBadges } from '@/components/ui/user-badges';
+import { AttendedEventBadges } from '@/components/ui/attended-event-badges';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -182,8 +183,12 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
         {topic.replies.map((reply) => (
           <Card key={reply.id} className="profile-card">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
                 <AuthorBadge authorId={reply.authorId} authorName={reply.authorName} authorAvatar={reply.authorAvatar} size="sm" />
+                <AttendedEventBadges
+                  imageUrls={reply.authorEventBadgeImageUrls ?? []}
+                  totalCount={reply.authorEventBadgeTotalCount ?? 0}
+                />
                 <UserBadges rank={reply.authorRank} staffRole={reply.authorStaffRole} />
                 <span className="text-xs text-muted-foreground">· {formatDate(reply.createdAt)}</span>
               </div>

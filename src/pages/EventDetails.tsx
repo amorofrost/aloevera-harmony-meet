@@ -149,8 +149,13 @@ const EventDetails = () => {
                   <span className="text-sm font-semibold">{event.price}₽</span>
                 </div>
               )}
-              <div className="absolute bottom-4 right-4">
+              <div className="absolute bottom-4 right-4 flex items-end gap-2">
                 <EventPostmark location={event.location} date={event.date} title={event.title} category={event.category} />
+                {event.badgeImageUrl?.trim() ? (
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-white/90 shadow-lg">
+                    <img src={event.badgeImageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
+                ) : null}
               </div>
             </div>
           );

@@ -62,6 +62,8 @@ export interface Event {
   title: string;
   description: string;
   imageUrl: string;
+  /** Small badge / stamp image for profiles and forum (optional). */
+  badgeImageUrl?: string;
   date: Date;
   endDate?: Date;
   location: string;

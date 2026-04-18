@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import BottomNavigation from '@/components/ui/bottom-navigation';
-import EventPostmark from '@/components/ui/event-postmark';
+import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Event, AloeVeraSong } from '@/types/user';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -406,13 +406,10 @@ const Profile = () => {
                   >
                     {user.eventsAttended.map((event) => (
                       <div key={event.id} className="flex-shrink-0">
-                        <EventPostmark
-                          location={event.location}
-                          date={event.date}
-                          title={event.title}
-                          category={event.category}
-                          className="w-12 h-12"
-                          showEventName={true}
+                        <EventAttendanceMark
+                          event={event}
+                          size="sm"
+                          showEventName
                           onClick={() => navigate(`/events/${event.id}`)}
                         />
                       </div>

@@ -80,6 +80,9 @@ export default function AdminEventEditorPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [badgeImageUrl, setBadgeImageUrl] = useState("");
+  const [uploadingBadgeImage, setUploadingBadgeImage] = useState(false);
+  const badgeFileInputRef = useRef<HTMLInputElement>(null);
   const [dateLocal, setDateLocal] = useState(toLocalInput(defaultStart()));
   const [endLocal, setEndLocal] = useState("");
   const [location, setLocation] = useState("");
@@ -113,6 +116,7 @@ export default function AdminEventEditorPage() {
       title: title.trim(),
       description,
       imageUrl,
+      badgeImageUrl,
       date: fromLocalInput(dateLocal),
       endDate: endLocal.trim() === "" ? null : fromLocalInput(endLocal),
       location,
@@ -127,6 +131,7 @@ export default function AdminEventEditorPage() {
     title,
     description,
     imageUrl,
+    badgeImageUrl,
     dateLocal,
     endLocal,
     location,
@@ -169,6 +174,7 @@ export default function AdminEventEditorPage() {
       setTitle(e.title);
       setDescription(e.description);
       setImageUrl(e.imageUrl);
+      setBadgeImageUrl(e.badgeImageUrl ?? "");
       setDateLocal(toLocalInput(e.date));
       setEndLocal(e.endDate ? toLocalInput(e.endDate) : "");
       setLocation(e.location);
@@ -228,6 +234,22 @@ export default function AdminEventEditorPage() {
       navigate("/events", { replace: true });
     } else {
       toast.error(res.error?.message ?? "Delete failed");
+    }
+  }
+
+  async function onBadgeImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingBadgeImage(true);
+    try {
+      const { url } = await uploadImage(file);
+      setBadgeImageUrl(url);
+      toast.success("Badge image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingBadgeImage(false);
     }
   }
 
@@ -445,6 +467,54 @@ export default function AdminEventEditorPage() {
                   src={imageUrl}
                   alt=""
                   className="max-h-40 max-w-full rounded-md border object-contain"
+                  onError={(ev) => {
+                    ev.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
+          <div className="sm:col-span-2 space-y-2">
+            <Label>Badge image</Label>
+            <p className="text-sm text-muted-foreground">
+              Small image for profiles and forum (e.g. stamp). Paste a URL or upload (same rules as main image).
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1 space-y-1">
+                <Label htmlFor="badge-img" className="text-xs font-normal text-muted-foreground">
+                  Badge image URL
+                </Label>
+                <Input
+                  id="badge-img"
+                  value={badgeImageUrl}
+                  onChange={(e) => setBadgeImageUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <input
+                  ref={badgeFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="sr-only"
+                  onChange={onBadgeImageFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingBadgeImage}
+                  onClick={() => badgeFileInputRef.current?.click()}
+                >
+                  {uploadingBadgeImage ? "Uploading…" : "Upload badge"}
+                </Button>
+              </div>
+            </div>
+            {badgeImageUrl.trim() ? (
+              <div className="pt-1">
+                <img
+                  src={badgeImageUrl}
+                  alt=""
+                  className="h-16 w-16 rounded-md border object-cover"
                   onError={(ev) => {
                     ev.currentTarget.style.display = "none";
                   }}

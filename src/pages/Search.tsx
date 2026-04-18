@@ -4,7 +4,7 @@ import { Heart, X, Info, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import SwipeCard from '@/components/ui/swipe-card';
-import EventPostmark from '@/components/ui/event-postmark';
+import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { User, Event, AloeVeraSong } from '@/types/user';
@@ -484,14 +484,11 @@ const Search = () => {
                           >
                             {currentUser.eventsAttended.map((event) => (
                               <div key={event.id} className="flex-shrink-0">
-                                <EventPostmark
-                                  location={event.location}
-                                  date={event.date}
-                                  title={event.title}
-                                  category={event.category}
-                                  className="w-12 h-12"
-                                  showEventName={true}
-                                  onClick={() => navigate(`/events/${event.id}`)}
+                                <EventAttendanceMark
+                                  event={event}
+                                  size="sm"
+                                  showEventName
+                                  onClick={() => navigate(`/aloevera/events/${event.id}`)}
                                 />
                               </div>
                             ))}
