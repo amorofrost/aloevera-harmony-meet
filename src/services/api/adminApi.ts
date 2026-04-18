@@ -151,7 +151,7 @@ export const adminApi = {
     if (res.success && res.data) {
       return { ...res, data: res.data.map((x) => mapEvent(x)) };
     }
-    return res as ApiResponse<AdminEventDto[]>;
+    return res as unknown as ApiResponse<AdminEventDto[]>;
   },
 
   async getEvent(eventId: string): Promise<ApiResponse<AdminEventDto | null>> {
@@ -166,7 +166,7 @@ export const adminApi = {
     if (res.success && res.data) {
       return { ...res, data: mapEvent(res.data) };
     }
-    return res as ApiResponse<AdminEventDto | null>;
+    return res as unknown as ApiResponse<AdminEventDto | null>;
   },
 
   async createEvent(body: AdminEventWritePayload): Promise<ApiResponse<AdminEventDto | null>> {
@@ -181,7 +181,7 @@ export const adminApi = {
     if (res.success && res.data) {
       return { ...res, data: mapEvent(res.data) };
     }
-    return res as ApiResponse<AdminEventDto | null>;
+    return res as unknown as ApiResponse<AdminEventDto | null>;
   },
 
   async updateEvent(
@@ -199,7 +199,7 @@ export const adminApi = {
     if (res.success && res.data) {
       return { ...res, data: mapEvent(res.data) };
     }
-    return res as ApiResponse<AdminEventDto | null>;
+    return res as unknown as ApiResponse<AdminEventDto | null>;
   },
 
   async deleteEvent(eventId: string): Promise<ApiResponse<null>> {
