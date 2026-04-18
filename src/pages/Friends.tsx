@@ -277,9 +277,10 @@ const Friends = () => {
               </div>
             )
           )}
+          </div>
         </div>
         <div className="border-t p-4 relative z-10">
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-w-3xl mx-auto w-full">
             <div className="relative flex-1">
               <BbcodeToolbar textareaRef={chatInputRef} />
               <textarea
