@@ -12,6 +12,7 @@ import { BbcodeToolbar } from '@/components/ui/bbcode-toolbar';
 import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
 import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display';
 import { uploadImage } from '@/services/api/imagesApi';
+import { UserBadges } from '@/components/ui/user-badges';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
@@ -425,6 +426,7 @@ const Friends = () => {
                           <span className="text-sm opacity-90">{currentUser.isOnline ? 'Онлайн' : 'Недавно'}</span>
                         </div>
                         <h2 className="text-2xl font-bold mb-1">{currentUser.name}, {currentUser.age}</h2>
+                        <UserBadges rank={currentUser.rank} staffRole={currentUser.staffRole} />
                         <p className="text-sm opacity-90 mb-2">{currentUser.location}</p>
                         {!showDetails && <p className="text-sm opacity-75 line-clamp-2">{currentUser.bio}</p>}
                       </div>
@@ -505,6 +507,7 @@ const Friends = () => {
                             <h3 className="font-semibold truncate">{chat.otherUser.name}</h3>
                             {chat.lastMessage && <span className="text-xs text-muted-foreground">{formatChatDate(chat.lastMessage.timestamp)}</span>}
                           </div>
+                          <UserBadges rank={chat.otherUser.rank} staffRole={chat.otherUser.staffRole} />
                           {chat.lastMessage && (
                             <div className="flex items-center justify-between">
                               <p className="text-sm text-muted-foreground truncate">{chat.lastMessage.content}</p>
