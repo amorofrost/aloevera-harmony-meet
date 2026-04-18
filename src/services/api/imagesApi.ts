@@ -15,7 +15,10 @@ export async function uploadImage(file: File): Promise<UploadImageResponse> {
   const formData = new FormData();
   formData.append('file', file);
   const res = await apiClient.postForm<{ url: string }>('/api/v1/images/upload', formData);
-  return { url: res.data!.url };
+  if (!res.success || !res.data?.url) {
+    throw new Error(res.error?.message ?? 'Image upload failed');
+  }
+  return { url: res.data.url };
 }
 
 export const imagesApi = { uploadImage };

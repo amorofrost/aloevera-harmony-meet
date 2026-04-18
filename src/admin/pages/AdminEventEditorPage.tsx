@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   adminApi,
@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { uploadImage } from "@/services/api/imagesApi";
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -88,6 +89,8 @@ export default function AdminEventEditorPage() {
   const [organizer, setOrganizer] = useState("");
   const [visibility, setVisibility] = useState<AdminEventWritePayload["visibility"]>("public");
   const [archived, setArchived] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
 
   const [attendees, setAttendees] = useState<EventAttendeeAdminDto[]>([]);
   const [topics, setTopics] = useState<ForumTopicAdminDto[]>([]);
@@ -225,6 +228,22 @@ export default function AdminEventEditorPage() {
       navigate("/events", { replace: true });
     } else {
       toast.error(res.error?.message ?? "Delete failed");
+    }
+  }
+
+  async function onEventImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const { url } = await uploadImage(file);
+      setImageUrl(url);
+      toast.success("Image uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingImage(false);
     }
   }
 
@@ -386,8 +405,52 @@ export default function AdminEventEditorPage() {
             <Textarea id="desc" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
           <div className="sm:col-span-2 space-y-2">
-            <Label htmlFor="img">Image URL</Label>
-            <Input id="img" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+            <Label>Event image</Label>
+            <p className="text-sm text-muted-foreground">
+              Paste an external image URL, or upload a file (JPEG, PNG, GIF, or WebP; max 10 MB).
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1 space-y-1">
+                <Label htmlFor="img" className="text-xs font-normal text-muted-foreground">
+                  Image URL
+                </Label>
+                <Input
+                  id="img"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <input
+                  ref={imageFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="sr-only"
+                  onChange={onEventImageFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingImage}
+                  onClick={() => imageFileInputRef.current?.click()}
+                >
+                  {uploadingImage ? "Uploading…" : "Upload image"}
+                </Button>
+              </div>
+            </div>
+            {imageUrl.trim() ? (
+              <div className="pt-1">
+                <img
+                  src={imageUrl}
+                  alt=""
+                  className="max-h-40 max-w-full rounded-md border object-contain"
+                  onError={(ev) => {
+                    ev.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="start">Start (local)</Label>
