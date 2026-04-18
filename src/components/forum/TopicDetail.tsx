@@ -18,6 +18,7 @@ import { BbcodeToolbar } from '@/components/ui/bbcode-toolbar';
 import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
 import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display';
 import { uploadImage } from '@/services/api/imagesApi';
+import { UserBadges } from '@/components/ui/user-badges';
 
 interface TopicDetailProps {
   topicId: string;
@@ -178,6 +179,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <AuthorBadge authorId={reply.authorId} authorName={reply.authorName} authorAvatar={reply.authorAvatar} size="sm" />
+                <UserBadges rank={reply.authorRank} staffRole={reply.authorStaffRole} />
                 <span className="text-xs text-muted-foreground">· {formatDate(reply.createdAt)}</span>
               </div>
               <div className="pl-9">
