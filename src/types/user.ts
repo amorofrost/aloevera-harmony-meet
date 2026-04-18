@@ -74,4 +74,6 @@ export interface Event {
   /** Backend: public | secretHidden | secretTeaser */
   visibility?: 'public' | 'secretHidden' | 'secretTeaser';
   forumTopicId?: string;
+  /** Admin API only: hidden from public event lists when true */
+  archived?: boolean;
 }
