@@ -130,56 +130,87 @@ const EventDetails = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-6 relative z-10">
-        <Card className="profile-card overflow-hidden">
-          <div className="h-64 bg-cover bg-center relative" style={{ backgroundImage: `url(${event.imageUrl})` }}>
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute top-4 left-4 flex gap-2">
-              <Badge className={getCategoryColor(event.category)}>{getCategoryLabel(event.category)}</Badge>
-              {event.isSecret && (
-                <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">Секретный</Badge>
-              )}
-            </div>
-            {event.price && (
-              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-sm font-semibold">{event.price}₽</span>
-              </div>
-            )}
-            <div className="absolute bottom-4 right-4">
-              <EventPostmark location={event.location} date={event.date} title={event.title} category={event.category} />
-            </div>
-          </div>
-
-          <CardContent className="p-6 space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">{event.title}</h2>
-              <p className="text-muted-foreground leading-relaxed">{event.description}</p>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span>{formatDate(event.date)}</span>
-                {event.endDate && (
-                  <>
-                    <Clock className="w-4 h-4 text-muted-foreground ml-2" />
-                    <span className="text-muted-foreground">до {formatDate(event.endDate)}</span>
-                  </>
+      <div className="p-4 space-y-6 relative z-10 max-w-6xl mx-auto">
+        {(() => {
+          const imageBlock = (
+            <div
+              className={`bg-cover bg-center relative ${isPortraitImage ? 'h-64 lg:h-[36rem]' : 'h-64'}`}
+              style={{ backgroundImage: `url(${event.imageUrl})` }}
+            >
+              <div className="absolute inset-0 bg-black/40" />
+              <div className="absolute top-4 left-4 flex gap-2">
+                <Badge className={getCategoryColor(event.category)}>{getCategoryLabel(event.category)}</Badge>
+                {event.isSecret && (
+                  <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">Секретный</Badge>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span>{event.location}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Users className="w-4 h-4 text-primary" />
-                <span>{event.attendees.length} участников{event.capacity && ` из ${event.capacity}`}</span>
+              {event.price && (
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
+                  <span className="text-sm font-semibold">{event.price}₽</span>
+                </div>
+              )}
+              <div className="absolute bottom-4 right-4">
+                <EventPostmark location={event.location} date={event.date} title={event.title} category={event.category} />
               </div>
             </div>
-            <div className="pt-2 border-t">
-              <p className="text-xs text-muted-foreground">Организатор: {event.organizer}</p>
-            </div>
-          </CardContent>
-        </Card>
+          );
+
+          const detailsBlock = (
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">{event.title}</h2>
+                <p className="text-muted-foreground leading-relaxed">{event.description}</p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span>{formatDate(event.date)}</span>
+                  {event.endDate && (
+                    <>
+                      <Clock className="w-4 h-4 text-muted-foreground ml-2" />
+                      <span className="text-muted-foreground">до {formatDate(event.endDate)}</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span>{event.location}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span>{event.attendees.length} участников{event.capacity && ` из ${event.capacity}`}</span>
+                </div>
+              </div>
+              <div className="pt-2 border-t">
+                <p className="text-xs text-muted-foreground">Организатор: {event.organizer}</p>
+              </div>
+            </CardContent>
+          );
+
+          if (isPortraitImage) {
+            return (
+              <>
+                {/* Mobile/tablet: stacked single card */}
+                <Card className="profile-card overflow-hidden lg:hidden">
+                  {imageBlock}
+                  {detailsBlock}
+                </Card>
+                {/* Desktop wide: two columns */}
+                <div className="hidden lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
+                  <Card className="profile-card overflow-hidden">{imageBlock}</Card>
+                  <Card className="profile-card overflow-hidden">{detailsBlock}</Card>
+                </div>
+              </>
+            );
+          }
+
+          return (
+            <Card className="profile-card overflow-hidden">
+              {imageBlock}
+              {detailsBlock}
+            </Card>
+          );
+        })()}
 
         {isJoined && (
           <Button onClick={handleGroupChatClick} className="w-full btn-like" size="lg">
