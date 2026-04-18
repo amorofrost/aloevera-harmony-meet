@@ -8,8 +8,8 @@ import { componentTagger } from "lovable-tagger";
 function adminHtmlFallback() {
   return {
     name: "admin-html-fallback",
-    configureServer(server) {
-      server.middlewares.use((req, _res, next) => {
+    configureServer(server: any) {
+      server.middlewares.use((req: any, _res: any, next: any) => {
         const raw = req.url ?? "";
         const pathname = raw.split("?")[0];
         if (pathname === "/admin" || pathname.startsWith("/admin/")) {
