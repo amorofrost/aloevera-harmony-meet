@@ -23,6 +23,7 @@ const EventDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isPortraitImage, setIsPortraitImage] = useState(false);
+  const [badgeLightboxOpen, setBadgeLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (!eventId) return;
@@ -132,6 +133,7 @@ const EventDetails = () => {
 
       <div className="p-4 space-y-6 relative z-10 max-w-6xl mx-auto">
         {(() => {
+          const badgeSrc = event.badgeImageUrl?.trim();
           const imageBlock = (
             <div
               className={`bg-cover bg-center relative ${isPortraitImage ? 'h-64 lg:h-[36rem]' : 'h-64'}`}
@@ -156,6 +158,7 @@ const EventDetails = () => {
                   title={event.title}
                   category={event.category}
                   badgeImageUrl={event.badgeImageUrl}
+                  onClick={badgeSrc ? () => setBadgeLightboxOpen(true) : undefined}
                 />
               </div>
             </div>
@@ -265,6 +268,21 @@ const EventDetails = () => {
           </Button>
         </div>
       </div>
+
+      {badgeLightboxOpen && event.badgeImageUrl?.trim() ? (
+        <div
+          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/85 p-4"
+          onClick={() => setBadgeLightboxOpen(false)}
+          role="presentation"
+        >
+          <img
+            src={event.badgeImageUrl.trim()}
+            alt=""
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };
