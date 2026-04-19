@@ -165,7 +165,8 @@ const EventDetails = () => {
   };
 
   const handleGroupChatClick = () => {
-    navigate(`/talks?tab=events&eventId=${eventId}`);
+    if (!event?.id) return;
+    navigate(`/talks?tab=events&eventSection=${encodeURIComponent(event.id)}`);
   };
 
   if (isLoading) {

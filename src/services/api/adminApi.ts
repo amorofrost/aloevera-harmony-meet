@@ -166,7 +166,177 @@ function mapEvent(d: Record<string, unknown>): AdminEventDto {
   };
 }
 
+export interface AdminForumSectionDto {
+  id: string;
+  name: string;
+  description: string;
+  topicCount: number;
+  orderIndex: number;
+  minRank: string;
+}
+
+function mapForumSectionRow(x: unknown): AdminForumSectionDto {
+  const o = x as Record<string, unknown>;
+  return {
+    id: String(o.id ?? ''),
+    name: String(o.name ?? ''),
+    description: String(o.description ?? ''),
+    topicCount: Number(o.topicCount ?? 0),
+    orderIndex: Number(o.orderIndex ?? o.OrderIndex ?? 0),
+    minRank: String(o.minRank ?? 'novice'),
+  };
+}
+
+/** Non-event forum topic row (admin list). */
+export interface AdminStandardForumTopicDto {
+  id: string;
+  sectionId: string;
+  title: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  isPinned: boolean;
+  isLocked: boolean;
+  replyCount: number;
+  createdAt: string;
+  updatedAt: string;
+  noviceVisible: boolean;
+  noviceCanReply: boolean;
+}
+
+function mapStandardForumTopicRow(x: unknown): AdminStandardForumTopicDto {
+  const o = x as Record<string, unknown>;
+  return {
+    id: String(o.id ?? ''),
+    sectionId: String(o.sectionId ?? ''),
+    title: String(o.title ?? ''),
+    content: String(o.content ?? ''),
+    authorId: String(o.authorId ?? ''),
+    authorName: String(o.authorName ?? ''),
+    isPinned: Boolean(o.isPinned),
+    isLocked: Boolean(o.isLocked),
+    replyCount: Number(o.replyCount ?? 0),
+    createdAt: String(o.createdAt ?? ''),
+    updatedAt: String(o.updatedAt ?? ''),
+    noviceVisible: o.noviceVisible !== false,
+    noviceCanReply: o.noviceCanReply !== false,
+  };
+}
+
 export const adminApi = {
+  async listForumSections(): Promise<ApiResponse<AdminForumSectionDto[]>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<unknown[]>('/api/v1/admin/forum-sections');
+    if (res.success && Array.isArray(res.data)) {
+      return { ...res, data: res.data.map(mapForumSectionRow) };
+    }
+    return res as ApiResponse<AdminForumSectionDto[]>;
+  },
+
+  async createForumSection(body: {
+    id: string;
+    name: string;
+    description: string;
+    minRank: string;
+  }): Promise<ApiResponse<AdminForumSectionDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.post<unknown>('/api/v1/admin/forum-sections', body);
+    if (res.success && res.data) {
+      return { ...res, data: mapForumSectionRow(res.data) };
+    }
+    return res as ApiResponse<AdminForumSectionDto | null>;
+  },
+
+  async updateForumSection(
+    sectionId: string,
+    body: { name?: string; description?: string; minRank?: string },
+  ): Promise<ApiResponse<AdminForumSectionDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.put<unknown>(`/api/v1/admin/forum-sections/${sectionId}`, body);
+    if (res.success && res.data) {
+      return { ...res, data: mapForumSectionRow(res.data) };
+    }
+    return res as ApiResponse<AdminForumSectionDto | null>;
+  },
+
+  async deleteForumSection(sectionId: string): Promise<ApiResponse<boolean>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.delete<boolean>(`/api/v1/admin/forum-sections/${sectionId}`);
+  },
+
+  async reorderForumSections(sectionIds: string[]): Promise<ApiResponse<boolean>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.put<boolean>('/api/v1/admin/forum-sections/order', { sectionIds });
+  },
+
+  async listForumSectionTopics(sectionId: string): Promise<ApiResponse<AdminStandardForumTopicDto[]>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<unknown[]>(
+      `/api/v1/admin/forum-sections/${encodeURIComponent(sectionId)}/topics`,
+    );
+    if (res.success && Array.isArray(res.data)) {
+      return { ...res, data: res.data.map(mapStandardForumTopicRow) };
+    }
+    return res as ApiResponse<AdminStandardForumTopicDto[]>;
+  },
+
+  async createForumSectionTopic(
+    sectionId: string,
+    body: { title: string; content: string; noviceVisible?: boolean; noviceCanReply?: boolean },
+  ): Promise<ApiResponse<AdminStandardForumTopicDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.post<unknown>(
+      `/api/v1/admin/forum-sections/${encodeURIComponent(sectionId)}/topics`,
+      body,
+    );
+    if (res.success && res.data) {
+      return { ...res, data: mapStandardForumTopicRow(res.data) };
+    }
+    return res as ApiResponse<AdminStandardForumTopicDto | null>;
+  },
+
   async getConfig(): Promise<ApiResponse<AppConfigDto>> {
     if (!isApiMode()) {
       return {

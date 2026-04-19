@@ -8,6 +8,8 @@ import AdminConfigPage from "./pages/AdminConfigPage";
 import AdminEventsPage from "./pages/AdminEventsPage";
 import AdminEventEditorPage from "./pages/AdminEventEditorPage";
 import AdminInvitesPage from "./pages/AdminInvitesPage";
+import AdminForumPage from "./pages/AdminForumPage";
+import AdminForumSectionTopicsPage from "./pages/AdminForumSectionTopicsPage";
 
 function RequireAdmin() {
   const token = apiClient.getAccessToken();
@@ -30,6 +32,8 @@ export default function AdminApp() {
             {/* Single dynamic route so :eventId is "new" for /events/new (static route would omit params). */}
             <Route path="/events/:eventId" element={<AdminEventEditorPage />} />
             <Route path="/invites" element={<AdminInvitesPage />} />
+            <Route path="/forum" element={<AdminForumPage />} />
+            <Route path="/forum/:sectionId" element={<AdminForumSectionTopicsPage />} />
             <Route path="/config" element={<AdminConfigPage />} />
           </Route>
         </Route>
