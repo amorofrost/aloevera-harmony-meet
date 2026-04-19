@@ -69,6 +69,8 @@ export interface Event {
   location: string;
   capacity?: number;
   attendees: string[];
+  /** Users who marked "interested" (not yet confirmed attendees). */
+  interestedUserIds?: string[];
   category: 'concert' | 'meetup' | 'party' | 'festival' | 'yachting' | 'other';
   price?: number;
   organizer: string;

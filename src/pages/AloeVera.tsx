@@ -18,6 +18,7 @@ const AloeVera = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'events';
   const [joinedEvents, setJoinedEvents] = useState<string[]>([]);
+  const [interestedEvents, setInterestedEvents] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -40,6 +41,9 @@ const AloeVera = () => {
         const myId = getCurrentUserIdFromToken();
         if (myId) {
           setJoinedEvents(eventsRes.data.filter(e => e.attendees.includes(myId)).map(e => e.id));
+          setInterestedEvents(
+            eventsRes.data.filter(e => (e.interestedUserIds ?? []).includes(myId)).map(e => e.id)
+          );
         }
       }
       if (storeRes.success && storeRes.data) setStoreItems(storeRes.data);
@@ -49,14 +53,15 @@ const AloeVera = () => {
     load();
   }, []);
 
-  const handleJoinEvent = async (eventId: string) => {
-    const isJoined = joinedEvents.includes(eventId);
-    if (isJoined) {
-      await eventsApi.unregisterFromEvent(eventId);
-      setJoinedEvents(prev => prev.filter(id => id !== eventId));
+  const handleInterestToggle = async (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const isInterested = interestedEvents.includes(eventId);
+    if (isInterested) {
+      const res = await eventsApi.removeEventInterest(eventId);
+      if (res.success) setInterestedEvents(prev => prev.filter(id => id !== eventId));
     } else {
-      await eventsApi.registerForEvent(eventId);
-      setJoinedEvents(prev => [...prev, eventId]);
+      const res = await eventsApi.addEventInterest(eventId);
+      if (res.success) setInterestedEvents(prev => [...prev, eventId]);
     }
   };
 
@@ -97,6 +102,8 @@ const AloeVera = () => {
               <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
             ) : events.map((event) => {
               const isJoined = joinedEvents.includes(event.id);
+              const isInterested = interestedEvents.includes(event.id);
+              const interestedCount = event.interestedUserIds?.length ?? 0;
               return (
                 <Card key={event.id} className="profile-card overflow-hidden cursor-pointer"
                   onClick={() => navigate(`/aloevera/events/${event.id}`)}>
@@ -130,10 +137,23 @@ const AloeVera = () => {
                       <div className="flex items-center gap-3 text-sm"><Calendar className="w-4 h-4 text-primary" /><span>{formatDate(event.date)}</span></div>
                       <div className="flex items-center gap-3 text-sm"><MapPin className="w-4 h-4 text-primary" /><span>{event.location}</span></div>
                       <div className="flex items-center gap-3 text-sm"><Users className="w-4 h-4 text-primary" /><span>{event.attendees.length} {t('events.attendees')}{event.capacity && ` из ${event.capacity}`}</span></div>
+                      {interestedCount > 0 && (
+                        <p className="text-xs text-muted-foreground">{interestedCount} {t('events.interestedCount')}</p>
+                      )}
                     </div>
-                    <Button onClick={(e) => { e.stopPropagation(); handleJoinEvent(event.id); }}
-                      className={`w-full ${isJoined ? 'btn-match' : 'btn-like'}`} variant={isJoined ? 'secondary' : 'default'}>
-                      {isJoined ? <><Check className="w-4 h-4 mr-2" />{t('events.joined')}</> : t('events.join')}
+                    <Button
+                      onClick={(e) => handleInterestToggle(event.id, e)}
+                      disabled={isJoined}
+                      className={`w-full ${isInterested ? 'btn-match' : 'btn-like'}`}
+                      variant={isInterested ? 'secondary' : 'default'}
+                    >
+                      {isJoined ? (
+                        <><Check className="w-4 h-4 mr-2" />{t('events.joined')}</>
+                      ) : isInterested ? (
+                        t('events.notInterested')
+                      ) : (
+                        t('events.interested')
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

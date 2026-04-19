@@ -1,6 +1,7 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import type { Event } from '@/types/user';
 import { mockEvents } from '@/data/mockEvents';
+import { getCurrentUserIdFromToken } from './matchingApi';
 
 // Map backend event category string (camelCase) to frontend type
 function mapCategory(cat: string): Event['category'] {
@@ -23,16 +24,29 @@ export function mapEventFromApi(dto: any): Event {
     location: dto.location,
     capacity: dto.capacity ?? undefined,
     attendees: dto.attendees ?? [],
+    interestedUserIds: dto.interestedUserIds ?? [],
     category: mapCategory(dto.category),
     price: dto.price ?? undefined,
     organizer: dto.organizer,
     isSecret: dto.isSecret ?? false,
     visibility: dto.visibility,
+    forumTopicId: dto.forumTopicId,
+    archived: dto.archived,
   };
 }
 
 function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
+}
+
+/** Mock-only: mutable interest sets by event id (session memory). */
+const mockInterestSets = new Map<string, Set<string>>();
+
+function mergeMockInterest(e: Event): Event {
+  const extra = mockInterestSets.get(e.id);
+  const base = [...(e.interestedUserIds ?? [])];
+  if (!extra?.size) return { ...e, interestedUserIds: base };
+  return { ...e, interestedUserIds: [...new Set([...base, ...extra])] };
 }
 
 export const eventsApi = {
@@ -44,7 +58,7 @@ export const eventsApi = {
       }
       return res as ApiResponse<Event[]>;
     }
-    return mockSuccess(mockEvents);
+    return mockSuccess(mockEvents.map(mergeMockInterest));
   },
 
   async getEventById(id: string, inviteCode?: string): Promise<ApiResponse<Event | null>> {
@@ -57,14 +71,19 @@ export const eventsApi = {
       return res as ApiResponse<Event | null>;
     }
     const event = mockEvents.find(e => e.id === id) ?? null;
-    return mockSuccess(event);
+    return mockSuccess(event ? mergeMockInterest(event) : null);
   },
 
+  /** Register as attendee — backend requires a valid invite code (except moderators/admins). */
   async registerForEvent(id: string, inviteCode?: string): Promise<ApiResponse<boolean>> {
     if (isApiMode()) {
       const body =
-        inviteCode && inviteCode.trim() !== "" ? { inviteCode: inviteCode.trim() } : undefined;
+        inviteCode && inviteCode.trim() !== '' ? { inviteCode: inviteCode.trim() } : {};
       return apiClient.post<boolean>(`/api/v1/events/${id}/register`, body);
+    }
+    const uid = getCurrentUserIdFromToken();
+    if (uid) {
+      mockInterestSets.get(id)?.delete(uid);
     }
     return mockSuccess(true);
   },
@@ -73,6 +92,26 @@ export const eventsApi = {
     if (isApiMode()) {
       return apiClient.delete<boolean>(`/api/v1/events/${id}/register`);
     }
+    return mockSuccess(true);
+  },
+
+  async addEventInterest(id: string): Promise<ApiResponse<boolean>> {
+    if (isApiMode()) {
+      return apiClient.post<boolean>(`/api/v1/events/${id}/interest`, {});
+    }
+    const uid = getCurrentUserIdFromToken();
+    if (!uid) return { success: false, error: { code: 'NO_USER', message: 'Not logged in' }, timestamp: new Date().toISOString() };
+    if (!mockInterestSets.has(id)) mockInterestSets.set(id, new Set());
+    mockInterestSets.get(id)!.add(uid);
+    return mockSuccess(true);
+  },
+
+  async removeEventInterest(id: string): Promise<ApiResponse<boolean>> {
+    if (isApiMode()) {
+      return apiClient.delete<boolean>(`/api/v1/events/${id}/interest`);
+    }
+    const uid = getCurrentUserIdFromToken();
+    if (uid) mockInterestSets.get(id)?.delete(uid);
     return mockSuccess(true);
   },
 };

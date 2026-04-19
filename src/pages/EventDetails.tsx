@@ -4,26 +4,36 @@ import { ArrowLeft, Calendar, MapPin, Users, Clock, MessageCircle } from 'lucide
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Event, User } from '@/types/user';
 import { eventsApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
+import { showApiError } from '@/lib/apiError';
+import { toast } from '@/components/ui/sonner';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const EventDetails = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [attendeeUsers, setAttendeeUsers] = useState<User[]>([]);
   const [isJoined, setIsJoined] = useState(false);
+  const [isInterested, setIsInterested] = useState(false);
+  const [inviteInput, setInviteInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isPortraitImage, setIsPortraitImage] = useState(false);
   const [badgeLightboxOpen, setBadgeLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    setInviteInput(searchParams.get('code') ?? '');
+  }, [searchParams]);
 
   useEffect(() => {
     if (!eventId) return;
@@ -40,13 +50,14 @@ const EventDetails = () => {
       setEvent(ev);
       const myId = getCurrentUserIdFromToken();
       setIsJoined(!!myId && ev.attendees.includes(myId));
+      setIsInterested(!!myId && (ev.interestedUserIds ?? []).includes(myId));
 
-      // Load attendee profiles (best-effort)
       const usersRes = await usersApi.getUsers();
       if (usersRes.success && usersRes.data) {
         setAttendeeUsers(usersRes.data.filter(u => ev.attendees.includes(u.id)));
       }
 
+      setNotFound(false);
       setIsLoading(false);
     };
     load();
@@ -62,15 +73,94 @@ const EventDetails = () => {
     img.src = event.imageUrl;
   }, [event?.imageUrl]);
 
-  const handleJoinToggle = async () => {
+  const effectiveInviteCode = () =>
+    inviteInput.trim() || searchParams.get('code')?.trim() || undefined;
+
+  const handleApplyInviteCode = () => {
+    const c = inviteInput.trim();
+    if (!c) return;
+    setSearchParams(prev => {
+      const p = new URLSearchParams(prev);
+      p.set('code', c);
+      return p;
+    });
+  };
+
+  const handleInterestToggle = async () => {
     if (!event) return;
-    if (isJoined) {
-      await eventsApi.unregisterFromEvent(event.id);
-      setIsJoined(false);
-    } else {
-      const inviteCode = searchParams.get("code") ?? undefined;
-      await eventsApi.registerForEvent(event.id, inviteCode);
+    const myId = getCurrentUserIdFromToken();
+    if (!myId) return;
+    try {
+      if (isInterested) {
+        const r = await eventsApi.removeEventInterest(event.id);
+        if (!r.success) throw r;
+        setIsInterested(false);
+        setEvent({
+          ...event,
+          interestedUserIds: (event.interestedUserIds ?? []).filter(id => id !== myId),
+        });
+      } else {
+        const r = await eventsApi.addEventInterest(event.id);
+        if (!r.success) throw r;
+        setIsInterested(true);
+        setEvent({
+          ...event,
+          interestedUserIds: [...(event.interestedUserIds ?? []), myId],
+        });
+        toast.success(t('events.interested'));
+      }
+    } catch (err) {
+      showApiError(err, t('common.error'));
+    }
+  };
+
+  const handleConfirmAttendance = async () => {
+    if (!event) return;
+    const code = effectiveInviteCode();
+    if (!code) {
+      toast.error(t('events.inviteCodePlaceholder'));
+      return;
+    }
+    try {
+      const r = await eventsApi.registerForEvent(event.id, code);
+      if (!r.success) throw r;
       setIsJoined(true);
+      setIsInterested(false);
+      toast.success(t('events.joined'));
+      const inviteCode = searchParams.get('code') ?? undefined;
+      const eventRes = await eventsApi.getEventById(event.id, inviteCode);
+      if (eventRes.success && eventRes.data) {
+        const ev = eventRes.data;
+        setEvent(ev);
+        const myId = getCurrentUserIdFromToken();
+        setIsInterested(!!myId && (ev.interestedUserIds ?? []).includes(myId));
+        const usersRes = await usersApi.getUsers();
+        if (usersRes.success && usersRes.data) {
+          setAttendeeUsers(usersRes.data.filter(u => ev.attendees.includes(u.id)));
+        }
+      }
+    } catch (err) {
+      showApiError(err, t('common.error'));
+    }
+  };
+
+  const handleLeaveEvent = async () => {
+    if (!event) return;
+    try {
+      const r = await eventsApi.unregisterFromEvent(event.id);
+      if (!r.success) throw r;
+      setIsJoined(false);
+      toast.success(t('events.leaveEvent'));
+      const inviteCode = searchParams.get('code') ?? undefined;
+      const eventRes = await eventsApi.getEventById(event.id, inviteCode);
+      if (eventRes.success && eventRes.data) {
+        const ev = eventRes.data;
+        setEvent(ev);
+        const myId = getCurrentUserIdFromToken();
+        setIsInterested(!!myId && (ev.interestedUserIds ?? []).includes(myId));
+      }
+    } catch (err) {
+      showApiError(err, t('common.error'));
     }
   };
 
@@ -115,6 +205,8 @@ const EventDetails = () => {
     const colors: Record<string, string> = { concert: 'bg-aloe-flame text-white', meetup: 'bg-aloe-gold text-white', festival: 'bg-aloe-coral text-white', party: 'bg-aloe-lavender text-white', yachting: 'bg-blue-600 text-white', other: 'bg-aloe-sage text-white' };
     return colors[category] || 'bg-gray-500 text-white';
   };
+
+  const interestedCount = event.interestedUserIds?.length ?? 0;
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -187,7 +279,12 @@ const EventDetails = () => {
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <Users className="w-4 h-4 text-primary" />
-                  <span>{event.attendees.length} участников{event.capacity && ` из ${event.capacity}`}</span>
+                  <span>
+                    {event.attendees.length} участников{event.capacity && ` из ${event.capacity}`}
+                    {interestedCount > 0 && (
+                      <span className="text-muted-foreground"> · {interestedCount} {t('events.interestedCount')}</span>
+                    )}
+                  </span>
                 </div>
               </div>
               <div className="pt-2 border-t">
@@ -199,12 +296,10 @@ const EventDetails = () => {
           if (isPortraitImage) {
             return (
               <>
-                {/* Mobile/tablet: stacked single card */}
                 <Card className="profile-card overflow-hidden lg:hidden">
                   {imageBlock}
                   {detailsBlock}
                 </Card>
-                {/* Desktop wide: two columns */}
                 <div className="hidden lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
                   <Card className="profile-card overflow-hidden">{imageBlock}</Card>
                   <Card className="profile-card overflow-hidden">{detailsBlock}</Card>
@@ -261,12 +356,48 @@ const EventDetails = () => {
           </Card>
         )}
 
-        <div className="text-center">
-          <Button className={`w-full ${isJoined ? 'btn-match' : 'btn-like'}`}
-            variant={isJoined ? 'secondary' : 'default'} size="lg" onClick={handleJoinToggle}>
-            {isJoined ? 'Покинуть событие' : 'Присоединиться к событию'}
+        {!isJoined && (
+          <div className="space-y-3">
+            <Button
+              className={`w-full ${isInterested ? 'btn-match' : 'btn-like'}`}
+              variant={isInterested ? 'secondary' : 'default'}
+              size="lg"
+              onClick={handleInterestToggle}
+            >
+              {isInterested ? t('events.notInterested') : t('events.interested')}
+            </Button>
+          </div>
+        )}
+
+        {isJoined ? (
+          <Button type="button" variant="secondary" className="w-full" size="lg" onClick={handleLeaveEvent}>
+            {t('events.leaveEvent')}
           </Button>
-        </div>
+        ) : (
+          <Card className="profile-card">
+            <CardContent className="p-6 space-y-4">
+              <Label htmlFor="event-invite-code">{t('events.inviteCodeLabel')}</Label>
+              <Input
+                id="event-invite-code"
+                value={inviteInput}
+                onChange={e => setInviteInput(e.target.value)}
+                placeholder={t('events.inviteCodePlaceholder')}
+                autoComplete="off"
+              />
+              {import.meta.env.DEV && (
+                <p className="text-xs text-muted-foreground">{t('events.inviteDevHint')}</p>
+              )}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" className="flex-1" onClick={handleApplyInviteCode}>
+                  {t('events.applyCode')}
+                </Button>
+                <Button type="button" className="flex-1 btn-like" onClick={handleConfirmAttendance}>
+                  {t('events.attendWithInvite')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {badgeLightboxOpen && event.badgeImageUrl?.trim() ? (
@@ -279,7 +410,7 @@ const EventDetails = () => {
             src={event.badgeImageUrl.trim()}
             alt=""
             className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           />
         </div>
       ) : null}
