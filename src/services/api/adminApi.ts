@@ -247,6 +247,36 @@ function mapStoreItemRow(x: unknown): AdminStoreItemDto {
   };
 }
 
+export interface AdminBlogPostDto {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  imageUrl: string;
+  author: string;
+  tags: string[];
+  /** ISO date string from API */
+  date: string;
+}
+
+function mapBlogPostRow(x: unknown): AdminBlogPostDto {
+  const o = x as Record<string, unknown>;
+  const tagsRaw = o.tags;
+  const tags = Array.isArray(tagsRaw)
+    ? (tagsRaw as unknown[]).map((t) => String(t).trim()).filter(Boolean)
+    : [];
+  return {
+    id: String(o.id ?? ''),
+    title: String(o.title ?? ''),
+    excerpt: String(o.excerpt ?? ''),
+    content: String(o.content ?? ''),
+    imageUrl: String(o.imageUrl ?? ''),
+    author: String(o.author ?? ''),
+    tags,
+    date: String(o.date ?? ''),
+  };
+}
+
 export const adminApi = {
   async listForumSections(): Promise<ApiResponse<AdminForumSectionDto[]>> {
     if (!isApiMode()) {
@@ -451,6 +481,100 @@ export const adminApi = {
       };
     }
     return apiClient.delete<boolean>(`/api/v1/admin/store-items/${encodeURIComponent(itemId)}`);
+  },
+
+  async listBlogPosts(): Promise<ApiResponse<AdminBlogPostDto[]>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<unknown[]>('/api/v1/admin/blog-posts');
+    if (res.success && Array.isArray(res.data)) {
+      return { ...res, data: res.data.map(mapBlogPostRow) };
+    }
+    return res as ApiResponse<AdminBlogPostDto[]>;
+  },
+
+  async getBlogPost(postId: string): Promise<ApiResponse<AdminBlogPostDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<unknown>(`/api/v1/admin/blog-posts/${encodeURIComponent(postId)}`);
+    if (res.success && res.data) {
+      return { ...res, data: mapBlogPostRow(res.data) };
+    }
+    return res as ApiResponse<AdminBlogPostDto | null>;
+  },
+
+  async createBlogPost(body: {
+    id: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    imageUrl: string;
+    author: string;
+    tags: string[];
+    date: string;
+  }): Promise<ApiResponse<AdminBlogPostDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.post<unknown>('/api/v1/admin/blog-posts', body);
+    if (res.success && res.data) {
+      return { ...res, data: mapBlogPostRow(res.data) };
+    }
+    return res as ApiResponse<AdminBlogPostDto | null>;
+  },
+
+  async updateBlogPost(
+    postId: string,
+    body: {
+      title: string;
+      excerpt: string;
+      content: string;
+      imageUrl: string;
+      author: string;
+      tags: string[];
+      date: string;
+    },
+  ): Promise<ApiResponse<AdminBlogPostDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.put<unknown>(
+      `/api/v1/admin/blog-posts/${encodeURIComponent(postId)}`,
+      body,
+    );
+    if (res.success && res.data) {
+      return { ...res, data: mapBlogPostRow(res.data) };
+    }
+    return res as ApiResponse<AdminBlogPostDto | null>;
+  },
+
+  async deleteBlogPost(postId: string): Promise<ApiResponse<boolean>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.delete<boolean>(`/api/v1/admin/blog-posts/${encodeURIComponent(postId)}`);
   },
 
   async getConfig(): Promise<ApiResponse<AppConfigDto>> {
