@@ -9,12 +9,17 @@ interface EventPostmarkProps {
   className?: string;
   onClick?: () => void;
   showEventName?: boolean;
-  /** When set, shows only this image on a light semi-transparent backing (no decorative frame). */
+  /** When set, shows this image only — no extra chrome (transparency preserved when served as PNG). */
   badgeImageUrl?: string;
 }
 
-const frameClass =
-  'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black/40 ring-1 ring-white/20 transition-opacity group-hover:opacity-95';
+/** Plain year chip when there is no uploaded badge */
+const fallbackFrameClass =
+  'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black/35 ring-1 ring-white/20 transition-opacity group-hover:opacity-95';
+
+/** Uploaded badge: no fill behind the image so transparent PNGs look correct on the page */
+const badgeFrameClass =
+  'relative h-16 w-16 shrink-0 overflow-hidden rounded-md transition-opacity group-hover:opacity-95';
 
 const EventPostmark: React.FC<EventPostmarkProps> = ({
   location,
@@ -39,11 +44,11 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({
             onClick={onClick}
           >
             {badgeSrc ? (
-              <div className={frameClass}>
-                <img src={badgeSrc} alt="" className="h-full w-full object-cover" />
+              <div className={badgeFrameClass}>
+                <img src={badgeSrc} alt="" className="h-full w-full object-contain" />
               </div>
             ) : (
-              <div className={`${frameClass} flex items-center justify-center`}>
+              <div className={`${fallbackFrameClass} flex items-center justify-center`}>
                 <span className="text-sm font-semibold tabular-nums text-white/95">{year}</span>
               </div>
             )}
