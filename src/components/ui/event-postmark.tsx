@@ -9,17 +9,17 @@ interface EventPostmarkProps {
   className?: string;
   onClick?: () => void;
   showEventName?: boolean;
-  /** When set, shows this image only — no extra chrome (transparency preserved when served as PNG). */
+  /** When set, shows this image on a frosted white backing (transparency still visible over bg-white/50). */
   badgeImageUrl?: string;
 }
 
-/** Plain year chip when there is no uploaded badge */
+/** Year chip when there is no uploaded badge — same frosted backing as badge images */
 const fallbackFrameClass =
-  'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black/35 ring-1 ring-white/20 transition-opacity group-hover:opacity-95';
+  'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white/50 ring-1 ring-black/10 transition-opacity group-hover:opacity-95';
 
-/** Uploaded badge: no fill behind the image so transparent PNGs look correct on the page */
+/** Uploaded badge image on a light semi-transparent white backing */
 const badgeFrameClass =
-  'relative h-16 w-16 shrink-0 overflow-hidden rounded-md transition-opacity group-hover:opacity-95';
+  'relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-white/50 ring-1 ring-black/10 transition-opacity group-hover:opacity-95';
 
 const EventPostmark: React.FC<EventPostmarkProps> = ({
   location,
@@ -49,7 +49,7 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({
               </div>
             ) : (
               <div className={`${fallbackFrameClass} flex items-center justify-center`}>
-                <span className="text-sm font-semibold tabular-nums text-white/95">{year}</span>
+                <span className="text-sm font-semibold tabular-nums text-foreground/90">{year}</span>
               </div>
             )}
           </div>
