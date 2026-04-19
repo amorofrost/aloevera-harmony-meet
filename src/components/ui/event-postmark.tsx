@@ -9,9 +9,20 @@ interface EventPostmarkProps {
   className?: string;
   onClick?: () => void;
   showEventName?: boolean;
+  /** When set, shows this image inside the postmark frame instead of the generated illustration. */
+  badgeImageUrl?: string;
 }
 
-const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, category, className = '', onClick, showEventName = false }) => {
+const EventPostmark: React.FC<EventPostmarkProps> = ({
+  location,
+  date,
+  title,
+  category,
+  className = '',
+  onClick,
+  showEventName = false,
+  badgeImageUrl,
+}) => {
   const year = date.getFullYear();
   const city = location.split(',')[1]?.trim() || location.split(',')[0].trim();
   
@@ -291,7 +302,8 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, ca
   };
 
   const design = getEventDesign(title, category);
-  
+  const badgeSrc = badgeImageUrl?.trim();
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -313,9 +325,13 @@ const EventPostmark: React.FC<EventPostmarkProps> = ({ location, date, title, ca
               <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-white rounded-full border border-gray-300 shadow-sm"></div>
               */}
               
-              {/* Artistic illustration */}
-              <div className="absolute inset-2 flex items-center justify-center">
-                {design.illustration}
+              {/* Generated art or admin-uploaded badge image */}
+              <div className="absolute inset-2 flex items-center justify-center overflow-hidden rounded-sm">
+                {badgeSrc ? (
+                  <img src={badgeSrc} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  design.illustration
+                )}
               </div>
               
               {/* Year display */}
