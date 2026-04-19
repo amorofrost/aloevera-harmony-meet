@@ -29,8 +29,10 @@ export interface AdminEventDto {
   capacity?: number | null;
   attendees: string[];
   category: AdminEventCategory;
-  price?: number | null;
+  price: string;
   organizer: string;
+  /** Official event / ticketing URL. */
+  externalUrl: string;
   isSecret: boolean;
   visibility: AdminEventVisibility;
   forumTopicId?: string | null;
@@ -47,8 +49,9 @@ export interface AdminEventWritePayload {
   location: string;
   capacity?: number | null;
   category: AdminEventCategory;
-  price?: number | null;
+  price: string;
   organizer: string;
+  externalUrl: string;
   visibility: AdminEventVisibility;
   archived: boolean;
 }
@@ -57,6 +60,8 @@ export interface EventAttendeeAdminDto {
   userId: string;
   displayName: string;
 }
+
+export type EventTopicVisibilityApi = 'public' | 'attendeesOnly' | 'specificUsers';
 
 export interface ForumTopicAdminDto {
   id: string;
@@ -73,6 +78,39 @@ export interface ForumTopicAdminDto {
   updatedAt: string;
   noviceVisible: boolean;
   noviceCanReply: boolean;
+  eventTopicVisibility: EventTopicVisibilityApi;
+  allowedUserIds: string[];
+}
+
+function parseEventTopicVisibility(v: unknown): EventTopicVisibilityApi {
+  const s = String(v ?? 'public');
+  if (s === 'attendeesOnly' || s === 'specificUsers') return s;
+  return 'public';
+}
+
+function mapForumTopicRow(x: unknown): ForumTopicAdminDto {
+  const o = x as Record<string, unknown>;
+  const allowed = Array.isArray(o.allowedUserIds)
+    ? (o.allowedUserIds as string[]).map((id) => String(id).trim()).filter(Boolean)
+    : [];
+  return {
+    id: String(o.id ?? ''),
+    sectionId: String(o.sectionId ?? ''),
+    eventId: o.eventId != null && o.eventId !== '' ? String(o.eventId) : null,
+    title: String(o.title ?? ''),
+    content: String(o.content ?? ''),
+    authorId: String(o.authorId ?? ''),
+    authorName: String(o.authorName ?? ''),
+    isPinned: Boolean(o.isPinned),
+    isLocked: Boolean(o.isLocked),
+    replyCount: Number(o.replyCount ?? 0),
+    createdAt: String(o.createdAt ?? ''),
+    updatedAt: String(o.updatedAt ?? ''),
+    noviceVisible: o.noviceVisible !== false,
+    noviceCanReply: o.noviceCanReply !== false,
+    eventTopicVisibility: parseEventTopicVisibility(o.eventTopicVisibility),
+    allowedUserIds: allowed,
+  };
 }
 
 export interface EventInviteAdminDto {
@@ -116,8 +154,9 @@ function mapEvent(d: Record<string, unknown>): AdminEventDto {
     category: (['concert', 'meetup', 'party', 'festival', 'yachting', 'other'].includes(cat)
       ? cat
       : 'other') as AdminEventCategory,
-    price: d.price != null ? Number(d.price) : null,
+    price: String(d.price ?? ''),
     organizer: String(d.organizer ?? ''),
+    externalUrl: String(d.externalUrl ?? ''),
     isSecret: Boolean(d.isSecret),
     visibility: (['public', 'secretHidden', 'secretTeaser'].includes(vis)
       ? vis
@@ -334,15 +373,26 @@ export const adminApi = {
         timestamp: new Date().toISOString(),
       };
     }
-    const res = await apiClient.get<ForumTopicAdminDto[]>(
-      `/api/v1/admin/events/${eventId}/forum-topics`,
-    );
-    return res;
+    const res = await apiClient.get<unknown[]>(`/api/v1/admin/events/${eventId}/forum-topics`);
+    if (res.success && Array.isArray(res.data)) {
+      return {
+        ...res,
+        data: res.data.map(mapForumTopicRow),
+      } as ApiResponse<ForumTopicAdminDto[]>;
+    }
+    return res as ApiResponse<ForumTopicAdminDto[]>;
   },
 
   async createForumTopic(
     eventId: string,
-    body: { title: string; content: string; noviceVisible?: boolean; noviceCanReply?: boolean },
+    body: {
+      title: string;
+      content: string;
+      noviceVisible?: boolean;
+      noviceCanReply?: boolean;
+      eventTopicVisibility?: EventTopicVisibilityApi;
+      allowedUserIds?: string[];
+    },
   ): Promise<ApiResponse<ForumTopicAdminDto | null>> {
     if (!isApiMode()) {
       return {
@@ -363,6 +413,8 @@ export const adminApi = {
       noviceCanReply?: boolean;
       isPinned?: boolean;
       isLocked?: boolean;
+      eventTopicVisibility?: EventTopicVisibilityApi;
+      allowedUserIds?: string[];
     },
   ): Promise<ApiResponse<ForumTopicAdminDto | null>> {
     if (!isApiMode()) {

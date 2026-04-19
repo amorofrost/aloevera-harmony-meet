@@ -72,8 +72,11 @@ export interface Event {
   /** Users who marked "interested" (not yet confirmed attendees). */
   interestedUserIds?: string[];
   category: 'concert' | 'meetup' | 'party' | 'festival' | 'yachting' | 'other';
-  price?: number;
+  /** Free-text price / currency as entered (e.g. "2500 ₽", "from $100"). */
+  price?: string;
   organizer: string;
+  /** Official site or ticket purchase URL. */
+  externalUrl?: string;
   isSecret?: boolean;
   /** Backend: public | secretHidden | secretTeaser */
   visibility?: 'public' | 'secretHidden' | 'secretTeaser';

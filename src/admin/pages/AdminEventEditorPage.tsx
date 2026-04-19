@@ -5,6 +5,7 @@ import {
   type AdminEventWritePayload,
   type EventAttendeeAdminDto,
   type EventInviteAdminDto,
+  type EventTopicVisibilityApi,
   type ForumTopicAdminDto,
 } from "@/services/api/adminApi";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,24 @@ function defaultStart(): string {
   return d.toISOString();
 }
 
+function parseUserIdsFromText(text: string): string[] {
+  return text
+    .split(/[\s,]+/u)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function visibilityLabel(v: EventTopicVisibilityApi): string {
+  switch (v) {
+    case "attendeesOnly":
+      return "Attendees only";
+    case "specificUsers":
+      return "Specific users";
+    default:
+      return "Public";
+  }
+}
+
 export default function AdminEventEditorPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
@@ -90,6 +109,7 @@ export default function AdminEventEditorPage() {
   const [category, setCategory] = useState<AdminEventWritePayload["category"]>("concert");
   const [price, setPrice] = useState("");
   const [organizer, setOrganizer] = useState("");
+  const [externalUrl, setExternalUrl] = useState("");
   const [visibility, setVisibility] = useState<AdminEventWritePayload["visibility"]>("public");
   const [archived, setArchived] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -105,13 +125,16 @@ export default function AdminEventEditorPage() {
 
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicContent, setNewTopicContent] = useState("");
+  const [newTopicVisibility, setNewTopicVisibility] = useState<EventTopicVisibilityApi>("public");
+  const [newTopicAllowedIdsText, setNewTopicAllowedIdsText] = useState("");
   const [editTopic, setEditTopic] = useState<ForumTopicAdminDto | null>(null);
   const [editTopicTitle, setEditTopicTitle] = useState("");
   const [editTopicContent, setEditTopicContent] = useState("");
+  const [editTopicVisibility, setEditTopicVisibility] = useState<EventTopicVisibilityApi>("public");
+  const [editTopicAllowedIdsText, setEditTopicAllowedIdsText] = useState("");
 
   const payload = useMemo((): AdminEventWritePayload => {
     const cap = capacity.trim() === "" ? null : parseInt(capacity, 10);
-    const pr = price.trim() === "" ? null : parseFloat(price);
     return {
       title: title.trim(),
       description,
@@ -122,8 +145,9 @@ export default function AdminEventEditorPage() {
       location,
       capacity: cap != null && !Number.isNaN(cap) ? cap : null,
       category,
-      price: pr != null && !Number.isNaN(pr) ? pr : null,
+      price: price.trim(),
       organizer,
+      externalUrl: externalUrl.trim(),
       visibility,
       archived,
     };
@@ -139,6 +163,7 @@ export default function AdminEventEditorPage() {
     category,
     price,
     organizer,
+    externalUrl,
     visibility,
     archived,
   ]);
@@ -180,8 +205,9 @@ export default function AdminEventEditorPage() {
       setLocation(e.location);
       setCapacity(e.capacity != null ? String(e.capacity) : "");
       setCategory(e.category);
-      setPrice(e.price != null ? String(e.price) : "");
+      setPrice(e.price ?? "");
       setOrganizer(e.organizer);
+      setExternalUrl(e.externalUrl ?? "");
       setVisibility(e.visibility);
       setArchived(e.archived);
       await loadExtras(e.id);
@@ -310,14 +336,23 @@ export default function AdminEventEditorPage() {
       toast.error("Topic title (≥5) and body (≥10) are required");
       return;
     }
+    const newSpecificIds = parseUserIdsFromText(newTopicAllowedIdsText);
+    if (newTopicVisibility === "specificUsers" && newSpecificIds.length === 0) {
+      toast.error("Add at least one user id for “Specific users” visibility");
+      return;
+    }
     const res = await adminApi.createForumTopic(eventId, {
       title: newTopicTitle.trim(),
       content: newTopicContent.trim(),
+      eventTopicVisibility: newTopicVisibility,
+      ...(newTopicVisibility === "specificUsers" ? { allowedUserIds: newSpecificIds } : {}),
     });
     if (res.success) {
       toast.success("Topic created");
       setNewTopicTitle("");
       setNewTopicContent("");
+      setNewTopicVisibility("public");
+      setNewTopicAllowedIdsText("");
       await loadExtras(eventId);
     } else {
       toast.error(res.error?.message ?? "Failed to create topic");
@@ -338,6 +373,8 @@ export default function AdminEventEditorPage() {
     setEditTopic(t);
     setEditTopicTitle(t.title);
     setEditTopicContent(t.content);
+    setEditTopicVisibility(t.eventTopicVisibility ?? "public");
+    setEditTopicAllowedIdsText((t.allowedUserIds ?? []).join("\n"));
   }
 
   async function onSaveEditTopic() {
@@ -346,9 +383,16 @@ export default function AdminEventEditorPage() {
       toast.error("Title (≥5) and body (≥10) are required");
       return;
     }
+    const specificIds = parseUserIdsFromText(editTopicAllowedIdsText);
+    if (editTopicVisibility === "specificUsers" && specificIds.length === 0) {
+      toast.error("Add at least one user id for “Specific users” visibility");
+      return;
+    }
     const res = await adminApi.updateForumTopic(editTopic.id, {
       title: editTopicTitle.trim(),
       content: editTopicContent.trim(),
+      eventTopicVisibility: editTopicVisibility,
+      allowedUserIds: editTopicVisibility === "specificUsers" ? specificIds : [],
     });
     if (res.success) {
       toast.success("Topic updated");
@@ -571,11 +615,33 @@ export default function AdminEventEditorPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="price">Price</Label>
-            <Input id="price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <Input
+              id="price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="e.g. 2500 ₽, from $100, 10–20 EUR"
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground">Shown exactly as entered (any currency or wording).</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="org">Organizer</Label>
             <Input id="org" value={organizer} onChange={(e) => setOrganizer(e.target.value)} />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="external-url">Event / ticket link</Label>
+            <Input
+              id="external-url"
+              type="url"
+              inputMode="url"
+              value={externalUrl}
+              onChange={(e) => setExternalUrl(e.target.value)}
+              placeholder="https://…"
+              autoComplete="off"
+            />
+            <p className="text-xs text-muted-foreground">
+              Official event page or where to buy tickets (optional).
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Visibility</Label>
@@ -743,6 +809,11 @@ export default function AdminEventEditorPage() {
                       <div>
                         <p className="font-medium">{t.title}</p>
                         <p className="text-xs text-muted-foreground">
+                          {visibilityLabel(t.eventTopicVisibility ?? "public")}
+                          {t.eventTopicVisibility === "specificUsers" && (t.allowedUserIds?.length ?? 0) > 0
+                            ? ` · ${t.allowedUserIds!.length} user(s)`
+                            : ""}
+                          {" · "}
                           {t.replyCount} replies · updated {new Date(t.updatedAt).toLocaleString()}
                         </p>
                         <p className="mt-1 text-sm line-clamp-2">{t.content}</p>
@@ -799,6 +870,34 @@ export default function AdminEventEditorPage() {
                         onChange={(e) => setEditTopicContent(e.target.value)}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Topic visibility</Label>
+                      <Select
+                        value={editTopicVisibility}
+                        onValueChange={(v) => setEditTopicVisibility(v as EventTopicVisibilityApi)}
+                      >
+                        <SelectTrigger id="et-vis">
+                          <SelectValue placeholder="Visibility" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="public">Public (anyone who can see the event)</SelectItem>
+                          <SelectItem value="attendeesOnly">Attendees only</SelectItem>
+                          <SelectItem value="specificUsers">Specific users</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {editTopicVisibility === "specificUsers" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="et-allow">User IDs (one per line or comma-separated)</Label>
+                        <Textarea
+                          id="et-allow"
+                          rows={4}
+                          placeholder="user-id-1&#10;user-id-2"
+                          value={editTopicAllowedIdsText}
+                          onChange={(e) => setEditTopicAllowedIdsText(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
                   <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setEditTopic(null)}>
@@ -824,6 +923,33 @@ export default function AdminEventEditorPage() {
                   value={newTopicContent}
                   onChange={(e) => setNewTopicContent(e.target.value)}
                 />
+                <div className="space-y-2">
+                  <Label>Topic visibility</Label>
+                  <Select
+                    value={newTopicVisibility}
+                    onValueChange={(v) => setNewTopicVisibility(v as EventTopicVisibilityApi)}
+                  >
+                    <SelectTrigger id="new-topic-vis">
+                      <SelectValue placeholder="Visibility" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="public">Public (anyone who can see the event)</SelectItem>
+                      <SelectItem value="attendeesOnly">Attendees only</SelectItem>
+                      <SelectItem value="specificUsers">Specific users</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {newTopicVisibility === "specificUsers" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="new-topic-allow">User IDs (one per line or comma-separated)</Label>
+                    <Textarea
+                      id="new-topic-allow"
+                      rows={3}
+                      value={newTopicAllowedIdsText}
+                      onChange={(e) => setNewTopicAllowedIdsText(e.target.value)}
+                    />
+                  </div>
+                )}
                 <Button type="button" variant="secondary" onClick={() => void onAddTopic()}>
                   Add topic
                 </Button>

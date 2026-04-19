@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -238,9 +238,9 @@ const EventDetails = () => {
                   <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">Секретный</Badge>
                 )}
               </div>
-              {event.price && (
+              {event.price?.trim() && (
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
-                  <span className="text-sm font-semibold">{event.price}₽</span>
+                  <span className="text-sm font-semibold">{event.price}</span>
                 </div>
               )}
               <div className="absolute bottom-4 right-4">
@@ -260,7 +260,7 @@ const EventDetails = () => {
             <CardContent className="p-6 space-y-4">
               <div>
                 <h2 className="text-2xl font-bold mb-2">{event.title}</h2>
-                <p className="text-muted-foreground leading-relaxed">{event.description}</p>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{event.description}</p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-sm">
@@ -287,8 +287,19 @@ const EventDetails = () => {
                   </span>
                 </div>
               </div>
-              <div className="pt-2 border-t">
+              <div className="pt-2 border-t space-y-2">
                 <p className="text-xs text-muted-foreground">Организатор: {event.organizer}</p>
+                {event.externalUrl?.trim() ? (
+                  <a
+                    href={event.externalUrl.trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0" />
+                    {t('events.externalLink')}
+                  </a>
+                ) : null}
               </div>
             </CardContent>
           );

@@ -113,9 +113,9 @@ const AloeVera = () => {
                       <Badge className={getCategoryColor(event.category)}>{getCategoryLabel(event.category)}</Badge>
                       {event.isSecret && <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">Секретный</Badge>}
                     </div>
-                    {event.price && (
+                    {event.price?.trim() && (
                       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
-                        <span className="text-sm font-semibold">{event.price}₽</span>
+                        <span className="text-sm font-semibold">{event.price}</span>
                       </div>
                     )}
                     <div className="absolute bottom-4 right-4">
@@ -131,7 +131,7 @@ const AloeVera = () => {
                   <CardContent className="p-6 space-y-4">
                     <div>
                       <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                      <p className="text-muted-foreground text-sm">{event.description}</p>
+                      <p className="text-muted-foreground text-sm whitespace-pre-line">{event.description}</p>
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 text-sm"><Calendar className="w-4 h-4 text-primary" /><span>{formatDate(event.date)}</span></div>

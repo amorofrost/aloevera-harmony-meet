@@ -26,8 +26,12 @@ export function mapEventFromApi(dto: any): Event {
     attendees: dto.attendees ?? [],
     interestedUserIds: dto.interestedUserIds ?? [],
     category: mapCategory(dto.category),
-    price: dto.price ?? undefined,
+    price:
+      dto.price != null && String(dto.price).trim() !== ''
+        ? String(dto.price).trim()
+        : undefined,
     organizer: dto.organizer,
+    externalUrl: dto.externalUrl?.trim() || undefined,
     isSecret: dto.isSecret ?? false,
     visibility: dto.visibility,
     forumTopicId: dto.forumTopicId,

@@ -23,7 +23,7 @@ const mockEvents: Event[] = [
     capacity: 500,
     attendees: ['1', '2', '3'],
     category: 'concert',
-    price: 2500,
+    price: '2500 ₽',
     organizer: 'AloeVera Official'
   },
   {
@@ -49,7 +49,7 @@ const mockEvents: Event[] = [
     capacity: 50000,
     attendees: ['8', '9', '10', '11', '12'],
     category: 'festival',
-    price: 5000,
+    price: '5000 ₽',
     organizer: 'AloeVera Official'
   },
   {
@@ -63,7 +63,7 @@ const mockEvents: Event[] = [
     capacity: 50,
     attendees: ['1', '13', '14', '15'],
     category: 'yachting',
-    price: 25000,
+    price: 'from $100',
     organizer: 'Veter Veter',
     isSecret: true
   }
@@ -82,7 +82,7 @@ const pastEvents: Event[] = [
     capacity: 15000,
     attendees: ['1', '5', '6', '7', '8'],
     category: 'concert',
-    price: 3000,
+    price: '3000 ₽',
     organizer: 'AloeVera Official'
   },
   {
@@ -96,7 +96,7 @@ const pastEvents: Event[] = [
     capacity: 200,
     attendees: ['1', '2', '3'],
     category: 'concert',
-    price: 1500,
+    price: '1500 ₽',
     organizer: 'AloeVera Official'
   },
   {
@@ -110,7 +110,7 @@ const pastEvents: Event[] = [
     capacity: 800,
     attendees: ['1', '2', '3', '4'],
     category: 'party',
-    price: 2000,
+    price: '2000 ₽',
     organizer: 'Фан-клуб AloeVera'
   },
   {
@@ -124,7 +124,7 @@ const pastEvents: Event[] = [
     capacity: 25000,
     attendees: ['1', '4', '5', '6', '7'],
     category: 'festival',
-    price: 4000,
+    price: '4000 ₽',
     organizer: 'AloeVera Official'
   },
   {
@@ -138,7 +138,7 @@ const pastEvents: Event[] = [
     capacity: 300,
     attendees: ['1', '2', '3'],
     category: 'party',
-    price: 1800,
+    price: '1800 ₽',
     organizer: 'Фан-клуб AloeVera'
   },
   {
@@ -152,7 +152,7 @@ const pastEvents: Event[] = [
     capacity: 40,
     attendees: ['1', '2', '3', '4', '5'],
     category: 'yachting',
-    price: 22000,
+    price: '22 000 ₽',
     organizer: 'Mediterranean Sailing'
   }
 ];
@@ -254,9 +254,9 @@ const Events = () => {
                     </Badge>
                   )}
                 </div>
-                {event.price && (
+                {event.price?.trim() && (
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
-                    <span className="text-sm font-semibold">{event.price}₽</span>
+                    <span className="text-sm font-semibold">{event.price}</span>
                   </div>
                 )}
                 <div className="absolute bottom-4 right-4">
@@ -274,7 +274,7 @@ const Events = () => {
                 {/* Event Info */}
                 <div>
                   <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
                     {event.description}
                   </p>
                 </div>
@@ -359,9 +359,9 @@ const Events = () => {
                     </Badge>
                   )}
                 </div>
-                {event.price && (
+                {event.price?.trim() && (
                   <div className="absolute top-4 right-4 bg-white/60 group-hover:bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 transition-all duration-300">
-                    <span className="text-sm font-semibold">{event.price}₽</span>
+                    <span className="text-sm font-semibold">{event.price}</span>
                   </div>
                 )}
                 <div className="absolute bottom-4 right-4 transition-all duration-300 group-hover:grayscale-0 grayscale">
@@ -381,7 +381,7 @@ const Events = () => {
                   <h3 className="text-xl font-bold mb-2 text-muted-foreground group-hover:text-foreground transition-colors duration-300">
                     {event.title}
                   </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed opacity-75 group-hover:opacity-100 transition-opacity duration-300">
+                  <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line opacity-75 group-hover:opacity-100 transition-opacity duration-300">
                     {event.description}
                   </p>
                 </div>

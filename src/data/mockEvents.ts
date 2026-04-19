@@ -13,8 +13,9 @@ export const mockEvents: Event[] = [
     capacity: 500,
     attendees: ['1', '2', '3'],
     category: 'concert',
-    price: 2500,
+    price: '2500 ₽',
     organizer: 'AloeVera Official',
+    externalUrl: 'https://example.com/tickets/aloevera-new-horizons',
     forumTopicId: 't1',
   },
   {
@@ -41,7 +42,7 @@ export const mockEvents: Event[] = [
     capacity: 50000,
     attendees: ['8', '9', '10', '11', '12'],
     category: 'festival',
-    price: 5000,
+    price: '5000 ₽',
     organizer: 'AloeVera Official',
     forumTopicId: 't3',
   },
@@ -56,7 +57,7 @@ export const mockEvents: Event[] = [
     capacity: 15000,
     attendees: ['1', '5', '6', '7', '8'],
     category: 'concert',
-    price: 3000,
+    price: '3000 ₽',
     organizer: 'AloeVera Official',
   },
   {
@@ -70,7 +71,7 @@ export const mockEvents: Event[] = [
     capacity: 200,
     attendees: ['1', '2', '3'],
     category: 'concert',
-    price: 1500,
+    price: '1500 ₽',
     organizer: 'AloeVera Official',
   },
   {
@@ -84,7 +85,7 @@ export const mockEvents: Event[] = [
     capacity: 800,
     attendees: ['1', '2', '3', '4'],
     category: 'party',
-    price: 2000,
+    price: '2000 ₽',
     organizer: 'Фан-клуб AloeVera',
   },
   {
@@ -98,7 +99,7 @@ export const mockEvents: Event[] = [
     capacity: 25000,
     attendees: ['1', '4', '5', '6', '7'],
     category: 'festival',
-    price: 4000,
+    price: '4000 ₽',
     organizer: 'AloeVera Official',
   },
   {
@@ -112,7 +113,7 @@ export const mockEvents: Event[] = [
     capacity: 300,
     attendees: ['1', '2', '3'],
     category: 'party',
-    price: 1800,
+    price: '1800 ₽',
     organizer: 'Фан-клуб AloeVera',
   },
   {
@@ -126,7 +127,7 @@ export const mockEvents: Event[] = [
     capacity: 50,
     attendees: ['1', '13', '14', '15'],
     category: 'yachting',
-    price: 25000,
+    price: 'from $100',
     organizer: 'Veter Veter',
     isSecret: true,
     visibility: 'secretHidden',
@@ -142,7 +143,7 @@ export const mockEvents: Event[] = [
     capacity: 40,
     attendees: ['1', '2', '3', '4', '5'],
     category: 'yachting',
-    price: 22000,
+    price: '22 000 ₽',
     organizer: 'Mediterranean Sailing',
   },
 ];

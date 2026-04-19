@@ -75,6 +75,7 @@ const translations = {
     'events.inviteCodePlaceholder': 'Введите код с приглашения или из ссылки',
     'events.inviteDevHint': 'Локальный mock-бэкенд: код вида MOCK-ATTEND-{id события}',
     'events.applyCode': 'Показать детали по коду',
+    'events.externalLink': 'Сайт и билеты',
     'events.leaveEvent': 'Покинуть событие',
 
     // Likes
@@ -224,6 +225,7 @@ const translations = {
     'events.inviteCodePlaceholder': 'Enter the code from your invite or link',
     'events.inviteDevHint': 'Local mock API: use MOCK-ATTEND-{event id}',
     'events.applyCode': 'Apply code',
+    'events.externalLink': 'Website & tickets',
     'events.leaveEvent': 'Leave event',
 
     // Likes
