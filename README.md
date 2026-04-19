@@ -27,7 +27,7 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Protected routes (`ProtectedRoute`) | ✅ All content routes guarded; proactive refresh on near-expiry |
 | Friends / matching pages | ✅ Wired to `matchingApi` / `chatsApi` |
 | Events / Store / Blog pages | ✅ Wired to `eventsApi` / `storeApi` / `blogApi` |
-| Talks / Forum pages | ✅ Wired (sections, topic list, topic detail, reply posting) |
+| Talks / Forum pages | ✅ Wired (sections, topic list, topic detail, reply posting; **event discussions** via `event-discussions/*`) |
 | Forum topic detail view | ✅ `TopicDetail` component with author navigation |
 | Mock data centralized | ✅ All in `src/data/` |
 | Backend data persistence | ✅ Azure Table Storage integrated (`USE_AZURE_STORAGE=true`) |
@@ -37,7 +37,7 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Form validation | ✅ react-hook-form + Zod on all auth, profile, and reply forms (`src/lib/validators.ts`) |
 | User-visible error handling | ✅ sonner toasts via `showApiError` (`src/lib/apiError.ts`); success toasts on auth/save/reply |
 
-See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues and [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide.
+See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues, [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide, and [/docs/EVENTS.md](/docs/EVENTS.md) for **events** (visibility, invites, forum topic access, admin).
 
 ## 🚀 Quick Start
 

@@ -260,6 +260,16 @@ In mock mode (`VITE_API_MODE=mock`), returns `https://placehold.co/600x400` afte
 
 ---
 
+## Events & event forum (API mode)
+
+- **`eventsApi`** — list/detail events, register/unregister with invite code, interest (`POST`/`DELETE .../interest`), etc.
+- **`forumsApi`** — `GET /api/v1/forum/event-discussions/summary`, `.../event-discussions/{eventId}/topics`, plus standard topic/reply routes for threads the user can access.
+- **Admin** (`adminApi` in API mode) — event editor: forum topics with **visibility** (`public` / `attendeesOnly` / `specificUsers`) and optional **allowed user IDs**.
+
+Product rules (visibility, invites, multiline descriptions, free-text price, forum topic access) are documented in **[EVENTS.md](./EVENTS.md)**.
+
+---
+
 ## 🔜 Next Steps
 
 1. **Chat / Songs backend endpoints** — implement in `Lovecraft.Backend` and wire frontend services

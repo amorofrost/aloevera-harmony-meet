@@ -58,6 +58,16 @@ Welcome to the AloeVera Harmony Meet documentation.
 
 ---
 
+### [EVENTS.md](./EVENTS.md)
+**Events & event forum (product + frontend)**
+- Visibility, invites, interest vs attendance, free-text price, multiline descriptions, external URLs
+- Talks **event discussions** and per-topic visibility; admin forum-topic controls
+- Code map (`eventsApi`, `forumsApi`, `AdminEventEditorPage`)
+
+**Read this when** working on events, invites, or event-linked forum behavior.
+
+---
+
 ### [FEATURES.md](./FEATURES.md)
 **Detailed feature specifications**
 - Complete feature breakdown for all pages:
@@ -134,7 +144,7 @@ Welcome to the AloeVera Harmony Meet documentation.
 | **Database** | ❌ None | All data is mock |
 | **API** | ❌ None | No API layer |
 | **Testing** | ❌ None | No tests |
-| **Documentation** | ✅ Complete | This documentation set |
+| **Documentation** | ✅ Maintained | See [EVENTS.md](./EVENTS.md) for events; [FEATURES.md](./FEATURES.md) for broader UI specs |
 
 ---
 
@@ -170,6 +180,7 @@ Welcome to the AloeVera Harmony Meet documentation.
 - **ARCHITECTURE.md**: Architecture changes, new layers/systems
 - **ISSUES.md**: New issues discovered, issues resolved
 - **FEATURES.md**: New features, feature changes
+- **EVENTS.md**: Event visibility, invites, forum rules, admin event/topic behavior
 - **BACKEND_PLAN.md**: Backend architecture changes, timeline updates
 
 ### Documentation Standards
@@ -212,7 +223,8 @@ When contributing to this project:
 | AGENTS.md | 2026-02-17 | 1.0 |
 | ARCHITECTURE.md | 2026-02-17 | 1.0 |
 | ISSUES.md | 2026-02-17 | 1.0 |
-| FEATURES.md | 2026-02-17 | 1.0 |
+| FEATURES.md | 2026-04-18 | 1.1 |
+| EVENTS.md | 2026-04-18 | 1.0 |
 | BACKEND_PLAN.md | 2026-02-17 | 1.0 |
 | docs/README.md | 2026-02-17 | 1.0 |
 

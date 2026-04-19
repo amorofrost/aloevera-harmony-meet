@@ -34,7 +34,7 @@ aloevera-harmony-meet/
 │   │   │   ├── apiClient.ts    # Base HTTP client (auth headers, 401 handling, localStorage token)
 │   │   │   ├── authApi.ts      # Auth endpoints (login/register/logout/refresh)
 │   │   │   ├── usersApi.ts     # User endpoints (getCurrentUser, getUsers, updateUser)
-│   │   │   ├── eventsApi.ts    # Events (list, detail, register/unregister)
+│   │   │   ├── eventsApi.ts    # Events (list, detail, register, interest, invites) — see docs/EVENTS.md
 │   │   │   ├── storeApi.ts     # Store items (list, detail)
 │   │   │   ├── blogApi.ts      # Blog posts (list, detail)
 │   │   │   ├── forumsApi.ts    # Forum sections, topics, topic detail, and replies

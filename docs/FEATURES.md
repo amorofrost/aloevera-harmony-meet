@@ -2,7 +2,9 @@
 
 **AloeVera Harmony Meet** - Detailed Feature Documentation
 
-**Last Updated**: February 17, 2026
+**Last Updated**: April 18, 2026
+
+**Events:** See **[EVENTS.md](./EVENTS.md)** (visibility, invites, forum topic access, admin).
 
 ---
 
@@ -194,75 +196,17 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 
 **Route**: `/talks`  
 **Component**: `src/pages/Talks.tsx`  
-**Status**: Mock UI with forum and group chats
+**Status**: Forum + **event discussions** use the API in API mode (`forumsApi`)
 
 ### 3.1 Forum Tab
 
-#### Features
-- **Forum sections**:
-  1. **Общий** (General) - General band discussion
-  2. **Музыка** (Music) - Song discussions, reviews
-  3. **Города** (Cities) - City-specific fan groups
-  4. **Офтопик** (Offtopic) - Non-band topics
-- **Topic list** per section:
-  - Topic title
-  - Author name and avatar
-  - Reply count
-  - Last activity timestamp
-  - Pinned indicator
-- **Topic detail view**:
-  - Original post
-  - Replies thread
-  - Reply button
-  - Upvote/downvote (not implemented)
+- **Sections** (General, Music, Cities, Offtopic): topics from `/api/v1/forum/sections/{id}/topics` (not the reserved `events` section).
+- **Topic detail / replies:** rank gating; `noviceVisible` / `noviceCanReply` per topic.
 
-**Mock Data**:
-- 4 sections
-- 2-3 topics per section
-- Sample replies
+### 3.2 Event discussions (same page)
 
-**Future Implementation**:
-- Create new topics
-- Post replies
-- Edit/delete own posts
-- Moderation (pin, lock, delete)
-- Search topics
-- Subscribe to topics
-- Notifications for replies
-- Rich text editor
-- Attach images/links
-- User reputation/badges
-
----
-
-### 3.2 Event Chats Tab
-
-#### Features
-- **Event-based group chats**:
-  - Chat rooms for each event
-  - Attendees can join automatically
-  - Event info in chat header
-- **Chat list**:
-  - Event name
-  - Last message
-  - Participant count
-  - Event date/location
-- **Group chat view**:
-  - Multiple participants
-  - System messages (user joined, etc.)
-  - Message sending
-  - Event details link
-
-**Mock Data**: 1 group chat for "AloeVera Fest 2024"
-
-**Future Implementation**:
-- Auto-join when registering for event
-- Leave chat
-- Mute notifications
-- See participant list
-- Event organizer badge
-- Share event in chat
-- Polls for meetup locations
+- **Per-event forum threads** from `GET /api/v1/forum/event-discussions/summary` and `.../event-discussions/{eventId}/topics` (not the older mock “event group chat” concept).
+- Threads are **filtered server-side** (public vs attendees-only vs specific user IDs). See **[EVENTS.md](./EVENTS.md)**.
 
 ---
 
@@ -270,50 +214,17 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 
 **Route**: `/aloevera`  
 **Component**: `src/pages/AloeVera.tsx`  
-**Status**: Full mock UI with tabs
+**Status**: Tabs wired to API in API mode (`eventsApi`, etc.); mock data when `VITE_API_MODE=mock`
 
 ### 4.1 Events Tab
 
-#### Features
-- **Event cards** with:
-  - Hero image (full width, 12rem height)
-  - Event title and description
-  - Event category badge (Concert, Meetup, Festival, Party, Yachting)
-  - Price (if applicable)
-  - Date and time
-  - Location
-  - Attendee count / capacity
-  - Artistic postmark badge
-  - Join/Joined button
-- **Event categories**:
-  - 🎤 **Concert** (Концерт) - Official band concerts
-  - 🤝 **Meetup** (Встреча) - Fan meetups
-  - 🎉 **Festival** (Фестиваль) - Multi-day festivals
-  - 🎊 **Party** (Вечеринка) - Dance parties
-  - ⛵ **Yachting** (Яхтинг) - Exclusive luxury events
-- **Secret events**: Only visible to certain users (e.g., VIP members)
+#### Features (API mode)
+- **Event cards** with image, title, **multiline description** (line breaks preserved), category, **free-text price** (no auto currency suffix), date/location, capacity, **Interested** count, **secret** badges when applicable.
+- **Navigate** to event detail; **interest** toggle is separate from **attendance** (invite-based registration on the backend).
 
-**Mock Events**:
-1. "Концерт AloeVera: Новые горизонты" - Dec 15, Moscow, 500 capacity, 2500₽
-2. "Фан-встреча: Поэзия и музыка" - Nov 8, Moscow, meetup
-3. "AloeVera Fest 2024" - Jun 20-21, Luzhniki, 50k capacity, 5000₽
-4. **SECRET**: "Яхтинг в Австралии 2026" - April 15-22, Australia, 50 capacity, 25000₽
+**Visibility:** Public / teaser / hidden secret events follow backend rules (see **[EVENTS.md](./EVENTS.md)**).
 
-**Interaction**:
-- Click card → navigate to event details page
-- Click Join/Joined → toggle attendance
-- Joined events tracked locally
-
-**Future Implementation**:
-- Event filtering (date, location, category)
-- Event search
-- Calendar view
-- Add to Google Calendar
-- Ticket purchasing integration
-- Waitlist for sold-out events
-- Friend attendance visibility
-- Event reminders
-- QR code tickets
+**Mock mode:** Uses `src/data/mockEvents.ts` with the same shape (string `price`, etc.).
 
 ---
 
@@ -323,20 +234,12 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 **Component**: `src/pages/EventDetails.tsx`
 
 #### Features
-- Full event information
-- Attendee list with avatars
-- Event description (expanded)
-- Organizer information
-- Map/directions (placeholder)
-- Share event button
-- Back navigation
+- Full event information; **external URL** (tickets/official site) when provided.
+- **Invite code** field / deep link `?code=` support for unlocking secret events per API.
+- **Interested** vs **attend** (registration with invite code) per product rules.
+- Description rendered with **multiline** support.
 
-**Future**:
-- RSVP with +1
-- Invite friends
-- Event updates/announcements
-- Photo gallery from past events
-- Similar events suggestions
+**See [EVENTS.md](./EVENTS.md)** for the full matrix.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **AloeVera Harmony Meet** - Complete Documentation Index
 
-**Last Updated**: February 17, 2026
+**Last Updated**: April 18, 2026
 
 ---
 
@@ -110,6 +110,10 @@ GitHub Organization: @aloevera-harmony-meet/
 - Future feature ideas
 - UX guidelines
 
+**[docs/EVENTS.md](./EVENTS.md)**
+- Events: visibility, invites, interest vs attendance, price/description, external URL
+- Event forum (Talks) and per-topic visibility; admin controls
+
 **[docs/ISSUES.md](./ISSUES.md)** (14KB)
 - 25 identified issues
 - Categorized by severity
@@ -158,6 +162,13 @@ GitHub Organization: @aloevera-harmony-meet/
 - Query patterns and performance
 - Cost estimates
 - Development tools
+
+**[docs/EVENTS.md](../../lovecraft/Lovecraft/docs/EVENTS.md)**
+- Event DTOs, visibility, registration vs interest, invite integration
+- Event-linked forum topics and `EventTopicVisibility` (public / attendees only / specific users)
+
+**[docs/INVITES.md](../../lovecraft/Lovecraft/docs/INVITES.md)**
+- Per-event and campaign invite codes (storage, admin, counters)
 
 **[docs/API.md](../../lovecraft/Lovecraft/docs/API.md)** _(To be created)_
 - Complete API specification
