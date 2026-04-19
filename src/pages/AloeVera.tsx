@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, MapPin, Users, Music, Check } from 'lucide-react';
+import { Calendar, MapPin, Users, Music, Check, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -168,13 +168,34 @@ const AloeVera = () => {
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {storeItems.map((item) => (
-                  <Card key={item.id} className="profile-card overflow-hidden cursor-pointer"
-                    onClick={() => navigate(`/aloevera/store/${item.id}`)}>
-                    <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                  <Card
+                    key={item.id}
+                    className="profile-card overflow-hidden cursor-pointer"
+                    onClick={() => navigate(`/aloevera/store/${item.id}`)}
+                  >
+                    <div
+                      className="h-40 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${item.imageUrl})` }}
+                    />
                     <CardContent className="p-3">
-                      <Badge variant="secondary" className="mb-2 text-xs">{item.category}</Badge>
+                      <Badge variant="secondary" className="mb-2 text-xs">
+                        {item.category}
+                      </Badge>
                       <h4 className="font-semibold text-sm line-clamp-2">{item.title}</h4>
                       <p className="text-primary font-bold mt-2">{item.price}₽</p>
+                      {item.externalPurchaseUrl ? (
+                        <button
+                          type="button"
+                          className="mt-2 text-xs text-primary flex items-center gap-1 hover:underline w-full text-left"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(item.externalPurchaseUrl, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          {t('store.listOfficialLink')}
+                        </button>
+                      ) : null}
                     </CardContent>
                   </Card>
                 ))}

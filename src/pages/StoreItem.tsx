@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import BottomNavigation from '@/components/ui/bottom-navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { storeApi } from '@/services/api';
 import type { StoreItem } from '@/data/mockStoreItems';
 
 const StoreItemPage = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [item, setItem] = useState<StoreItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -66,14 +68,23 @@ const StoreItemPage = () => {
         <h2 className="text-2xl font-bold">{item.title}</h2>
         <p className="text-2xl font-bold text-primary">{item.price}₽</p>
         <p className="text-foreground leading-relaxed">{item.description}</p>
-        <Button
-          className="w-full"
-          size="lg"
-          onClick={() => item.externalPurchaseUrl && window.open(item.externalPurchaseUrl, '_blank')}
-        >
-          <ShoppingBag className="w-5 h-5 mr-2" />
-          Добавить в корзину
-        </Button>
+        <div className="space-y-2">
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={!item.externalPurchaseUrl}
+            onClick={() =>
+              item.externalPurchaseUrl &&
+              window.open(item.externalPurchaseUrl, '_blank', 'noopener,noreferrer')
+            }
+          >
+            <ExternalLink className="w-5 h-5 mr-2" />
+            {item.externalPurchaseUrl ? t('store.officialPurchase') : t('store.noPurchaseLink')}
+          </Button>
+          {item.externalPurchaseUrl ? (
+            <p className="text-xs text-muted-foreground text-center">{t('store.officialPurchaseHint')}</p>
+          ) : null}
+        </div>
       </div>
 
       <BottomNavigation />

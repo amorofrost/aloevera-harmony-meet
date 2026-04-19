@@ -223,6 +223,30 @@ function mapStandardForumTopicRow(x: unknown): AdminStandardForumTopicDto {
   };
 }
 
+export interface AdminStoreItemDto {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category: string;
+  /** Product page on the official band store site. */
+  externalPurchaseUrl: string;
+}
+
+function mapStoreItemRow(x: unknown): AdminStoreItemDto {
+  const o = x as Record<string, unknown>;
+  return {
+    id: String(o.id ?? ''),
+    title: String(o.title ?? ''),
+    description: String(o.description ?? ''),
+    price: Number(o.price ?? 0),
+    imageUrl: String(o.imageUrl ?? ''),
+    category: String(o.category ?? ''),
+    externalPurchaseUrl: String(o.externalPurchaseUrl ?? ''),
+  };
+}
+
 export const adminApi = {
   async listForumSections(): Promise<ApiResponse<AdminForumSectionDto[]>> {
     if (!isApiMode()) {
@@ -335,6 +359,98 @@ export const adminApi = {
       return { ...res, data: mapStandardForumTopicRow(res.data) };
     }
     return res as ApiResponse<AdminStandardForumTopicDto | null>;
+  },
+
+  async listStoreItems(): Promise<ApiResponse<AdminStoreItemDto[]>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<unknown[]>('/api/v1/admin/store-items');
+    if (res.success && Array.isArray(res.data)) {
+      return { ...res, data: res.data.map(mapStoreItemRow) };
+    }
+    return res as ApiResponse<AdminStoreItemDto[]>;
+  },
+
+  async getStoreItem(itemId: string): Promise<ApiResponse<AdminStoreItemDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.get<unknown>(`/api/v1/admin/store-items/${encodeURIComponent(itemId)}`);
+    if (res.success && res.data) {
+      return { ...res, data: mapStoreItemRow(res.data) };
+    }
+    return res as ApiResponse<AdminStoreItemDto | null>;
+  },
+
+  async createStoreItem(body: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    imageUrl: string;
+    category: string;
+    externalPurchaseUrl: string;
+  }): Promise<ApiResponse<AdminStoreItemDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.post<unknown>('/api/v1/admin/store-items', body);
+    if (res.success && res.data) {
+      return { ...res, data: mapStoreItemRow(res.data) };
+    }
+    return res as ApiResponse<AdminStoreItemDto | null>;
+  },
+
+  async updateStoreItem(
+    itemId: string,
+    body: {
+      title: string;
+      description: string;
+      price: number;
+      imageUrl: string;
+      category: string;
+      externalPurchaseUrl: string;
+    },
+  ): Promise<ApiResponse<AdminStoreItemDto | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    const res = await apiClient.put<unknown>(
+      `/api/v1/admin/store-items/${encodeURIComponent(itemId)}`,
+      body,
+    );
+    if (res.success && res.data) {
+      return { ...res, data: mapStoreItemRow(res.data) };
+    }
+    return res as ApiResponse<AdminStoreItemDto | null>;
+  },
+
+  async deleteStoreItem(itemId: string): Promise<ApiResponse<boolean>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.delete<boolean>(`/api/v1/admin/store-items/${encodeURIComponent(itemId)}`);
   },
 
   async getConfig(): Promise<ApiResponse<AppConfigDto>> {

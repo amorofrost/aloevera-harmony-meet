@@ -78,6 +78,12 @@ const translations = {
     'events.externalLink': 'Сайт и билеты',
     'events.leaveEvent': 'Покинуть событие',
 
+    // Store (merch)
+    'store.officialPurchase': 'Купить на официальном сайте',
+    'store.officialPurchaseHint': 'Откроется страница товара в официальном магазине',
+    'store.noPurchaseLink': 'Ссылка на магазин пока не указана',
+    'store.listOfficialLink': 'Официальный магазин',
+
     // Likes
     'likes.matches': 'Взаимности',
     'likes.sent': 'Отправленные',
@@ -227,6 +233,12 @@ const translations = {
     'events.applyCode': 'Apply code',
     'events.externalLink': 'Website & tickets',
     'events.leaveEvent': 'Leave event',
+
+    // Store (merch)
+    'store.officialPurchase': 'Buy on official store',
+    'store.officialPurchaseHint': 'Opens the product page on the band’s official shop',
+    'store.noPurchaseLink': 'Store link not set yet',
+    'store.listOfficialLink': 'Official store',
 
     // Likes
     'likes.matches': 'Matches',

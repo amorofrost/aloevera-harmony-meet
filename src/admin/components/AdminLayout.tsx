@@ -28,6 +28,9 @@ export default function AdminLayout() {
             <Link to="/forum" className="hover:text-foreground">
               Forum
             </Link>
+            <Link to="/store" className="hover:text-foreground">
+              Store
+            </Link>
             <Link to="/config" className="hover:text-foreground">
               App config
             </Link>
