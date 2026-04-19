@@ -281,6 +281,8 @@ export interface AdminContainerInfrastructureDto {
   name: string;
   startedAtUtc: string;
   uptimeSeconds: number;
+  appStartedAtUtc: string;
+  appUptimeSeconds: number;
   cpuPercent: number;
   memoryUsageBytes: number;
   memoryLimitBytes: number;

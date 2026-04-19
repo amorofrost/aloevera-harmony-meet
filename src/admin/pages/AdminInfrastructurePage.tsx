@@ -125,6 +125,10 @@ export default function AdminInfrastructurePage() {
                         <span className="font-medium">{formatUptime(c.uptimeSeconds)}</span>
                       </div>
                       <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">App uptime</span>
+                        <span className="font-medium">{formatUptime(c.appUptimeSeconds)}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">CPU</span>
                         <span className="font-medium">{Number(c.cpuPercent ?? 0).toFixed(1)}%</span>
                       </div>

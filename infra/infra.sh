@@ -3,6 +3,7 @@ set -eu
 
 OUT="/usr/share/nginx/html/__infra.json"
 STATE="/tmp/infra_cpu_state"
+APP_STATE="/tmp/infra_app_started_at_utc"
 
 now_ms() {
   # Busybox date supports %s. Millis best-effort.
@@ -122,12 +123,40 @@ started_at_utc() {
   date -u -d "@$start_s" +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
+app_started_at_utc() {
+  if [ -r "$APP_STATE" ]; then
+    cat "$APP_STATE"
+    return
+  fi
+  v="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  echo "$v" > "$APP_STATE"
+  echo "$v"
+}
+
+app_uptime_seconds() {
+  if [ ! -r "$APP_STATE" ]; then
+    app_started_at_utc >/dev/null
+  fi
+  # Best-effort: compare epoch seconds (no milliseconds).
+  now_s="$(date -u +%s)"
+  # Busybox date -d may not exist everywhere; try parse via awk fallback.
+  started_iso="$(cat "$APP_STATE")"
+  started_s="$(date -u -d "$started_iso" +%s 2>/dev/null || echo "")"
+  if [ -z "$started_s" ]; then
+    echo "0"
+    return
+  fi
+  awk -v n="$now_s" -v s="$started_s" 'BEGIN{d=n-s; if(d<0)d=0; print d}'
+}
+
 gen_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 up="$(uptime_seconds)"
 cpu="$(cpu_percent)"
 mem_u="$(memory_current)"
 mem_l="$(memory_max)"
 start="$(started_at_utc)"
+app_start="$(app_started_at_utc)"
+app_up="$(app_uptime_seconds)"
 
 cat > "$OUT" <<EOF
 {
@@ -135,6 +164,8 @@ cat > "$OUT" <<EOF
   "name": "aloevera-frontend",
   "startedAtUtc": "$start",
   "uptimeSeconds": $up,
+  "appStartedAtUtc": "$app_start",
+  "appUptimeSeconds": $app_up,
   "cpuPercent": $cpu,
   "memoryUsageBytes": $mem_u,
   "memoryLimitBytes": $mem_l
