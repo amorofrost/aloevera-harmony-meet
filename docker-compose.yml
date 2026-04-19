@@ -25,9 +25,7 @@ services:
       retries: 3
     networks:
       - aloevera-network
-    volumes:
-      # Allow backend to query Docker for container stats (read-only).
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # Note: infrastructure metrics are collected inside each container without Docker APIs.
 
   # Frontend (React + nginx)
   frontend:

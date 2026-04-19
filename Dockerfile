@@ -35,6 +35,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Lightweight container-side infrastructure metrics (no Docker APIs).
+COPY infra/infra.sh /usr/local/bin/infra.sh
+RUN chmod +x /usr/local/bin/infra.sh
+
 # Expose HTTP and HTTPS ports
 EXPOSE 80
 EXPOSE 443
@@ -43,5 +47,5 @@ EXPOSE 443
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start infra writer loop + nginx
+CMD ["/bin/sh", "-c", "(/usr/local/bin/infra.sh; while true; do sleep 5; /usr/local/bin/infra.sh; done) & nginx -g 'daemon off;'"]

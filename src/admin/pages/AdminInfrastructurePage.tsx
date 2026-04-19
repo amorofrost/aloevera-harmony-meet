@@ -39,17 +39,22 @@ function byName(a: AdminContainerInfrastructureDto, b: AdminContainerInfrastruct
 export default function AdminInfrastructurePage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AdminInfrastructureStatusDto | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await adminApi.getInfrastructure();
       if (!res.success || !res.data) {
-        toast.error(res.error?.message ?? "Failed to load infrastructure");
+        const msg = res.error?.message ?? "Failed to load infrastructure";
+        setError(msg);
+        toast.error(msg);
         return;
       }
       setData(res.data);
     } catch (err) {
+      setError("Failed to load infrastructure");
       showApiError(err, "Failed to load infrastructure");
     } finally {
       setLoading(false);
@@ -97,6 +102,8 @@ export default function AdminInfrastructurePage() {
         <CardContent>
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : error ? (
+            <p className="text-sm text-destructive">{error}</p>
           ) : containers.length === 0 ? (
             <p className="text-sm text-muted-foreground">No container data returned.</p>
           ) : (
