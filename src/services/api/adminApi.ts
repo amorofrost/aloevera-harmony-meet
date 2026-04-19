@@ -277,6 +277,20 @@ function mapBlogPostRow(x: unknown): AdminBlogPostDto {
   };
 }
 
+export interface AdminContainerInfrastructureDto {
+  name: string;
+  startedAtUtc: string;
+  uptimeSeconds: number;
+  cpuPercent: number;
+  memoryUsageBytes: number;
+  memoryLimitBytes: number;
+}
+
+export interface AdminInfrastructureStatusDto {
+  generatedAtUtc: string;
+  containers: AdminContainerInfrastructureDto[];
+}
+
 export const adminApi = {
   async listForumSections(): Promise<ApiResponse<AdminForumSectionDto[]>> {
     if (!isApiMode()) {
@@ -575,6 +589,17 @@ export const adminApi = {
       };
     }
     return apiClient.delete<boolean>(`/api/v1/admin/blog-posts/${encodeURIComponent(postId)}`);
+  },
+
+  async getInfrastructure(): Promise<ApiResponse<AdminInfrastructureStatusDto>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.get<AdminInfrastructureStatusDto>('/api/v1/admin/infrastructure');
   },
 
   async getConfig(): Promise<ApiResponse<AppConfigDto>> {
