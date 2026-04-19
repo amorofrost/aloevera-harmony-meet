@@ -37,7 +37,7 @@ export function AttendedEventBadges({
         {imageUrls.slice(0, 3).map((url, i) => (
           <span
             key={`${url}-${i}`}
-            className="inline-flex h-6 w-6 shrink-0 overflow-hidden rounded bg-white/50 ring-1 ring-black/10"
+            className="inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-sm bg-white/20 ring-1 ring-black/10"
           >
             <img src={url} alt="" className="h-full w-full object-cover" />
           </span>

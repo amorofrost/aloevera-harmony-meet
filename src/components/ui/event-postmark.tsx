@@ -9,17 +9,17 @@ interface EventPostmarkProps {
   className?: string;
   onClick?: () => void;
   showEventName?: boolean;
-  /** When set, shows this image on a frosted white backing (transparency still visible over bg-white/50). */
+  /** When set, shows this image on a light frosted backing (bg-white/20 ≈ 80% transparent). */
   badgeImageUrl?: string;
 }
 
-/** Year chip when there is no uploaded badge — same frosted backing as badge images */
+/** Year chip when there is no uploaded badge — same backing as badge images */
 const fallbackFrameClass =
-  'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white/50 ring-1 ring-black/10 transition-opacity group-hover:opacity-95';
+  'relative h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-white/20 ring-1 ring-black/10 transition-opacity group-hover:opacity-95';
 
 /** Uploaded badge image on a light semi-transparent white backing */
 const badgeFrameClass =
-  'relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-white/50 ring-1 ring-black/10 transition-opacity group-hover:opacity-95';
+  'relative h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-white/20 ring-1 ring-black/10 transition-opacity group-hover:opacity-95';
 
 const EventPostmark: React.FC<EventPostmarkProps> = ({
   location,
