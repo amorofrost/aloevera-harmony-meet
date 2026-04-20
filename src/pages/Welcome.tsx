@@ -16,6 +16,7 @@ import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
+import { TelegramLoginWidget } from '@/components/TelegramLoginWidget';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -214,6 +215,10 @@ const Welcome = () => {
                     className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
                   <Button onClick={() => handleOAuthLogin('vk')} variant="outline"
                     className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <p className="text-white/60 text-sm text-center">{t('auth.telegram')}</p>
+                  <TelegramLoginWidget disabled={isLoading} />
                 </div>
               </div>
 

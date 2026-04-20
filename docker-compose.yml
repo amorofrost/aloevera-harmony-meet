@@ -18,6 +18,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
+      - Telegram__BotUsername=${TELEGRAM_BOT_USERNAME:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -26,6 +28,20 @@ services:
     networks:
       - aloevera-network
     # Note: infrastructure metrics are collected inside each container without Docker APIs.
+
+  # Telegram bot (long polling — no inbound port)
+  telegram-bot:
+    build:
+      context: ../lovecraft/Lovecraft
+      dockerfile: Dockerfile.telegram-bot
+    container_name: aloevera-telegram-bot
+    env_file:
+      - ../lovecraft/Lovecraft/.env
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+    networks:
+      - aloevera-network
+    restart: unless-stopped
 
   # Frontend (React + nginx)
   frontend:

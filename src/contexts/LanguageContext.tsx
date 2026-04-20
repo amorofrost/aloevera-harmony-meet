@@ -132,6 +132,7 @@ const translations = {
     'register.inviteCodeHint': 'Если у вас есть код приглашения на событие, введите его здесь.',
     // Forgot password modal
     'auth.forgotPassword': 'Забыли пароль?',
+    'auth.telegram': 'Войти через Telegram',
     'forgotPassword.title': 'Восстановление пароля',
     'forgotPassword.emailLabel': 'Email',
     'forgotPassword.submitButton': 'Отправить ссылку',
@@ -288,6 +289,7 @@ const translations = {
     'register.inviteCodeHint': 'If you have an event invite code, enter it here.',
     // Forgot password modal
     'auth.forgotPassword': 'Forgot password?',
+    'auth.telegram': 'Telegram',
     'forgotPassword.title': 'Reset Password',
     'forgotPassword.emailLabel': 'Email',
     'forgotPassword.submitButton': 'Send Reset Link',

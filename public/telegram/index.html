@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AloeVera Harmony Meet</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+      color: #eee;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .card {
+      max-width: 420px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+    p { font-size: 0.9rem; opacity: 0.85; line-height: 1.5; }
+    a.btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.65rem 1.2rem;
+      border-radius: 0.75rem;
+      background: linear-gradient(90deg, #f97316, #ea580c);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="title">AloeVera Harmony Meet</h1>
+    <p id="subtitle">Mini App shell — full features will mirror the web app here.</p>
+    <p id="user"></p>
+    <a class="btn" id="openSite" href="/" target="_blank" rel="noopener">Open full site</a>
+  </div>
+  <script>
+    (function () {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (tg) {
+        tg.ready();
+        tg.expand();
+        var u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+        if (u) {
+          document.getElementById('user').textContent =
+            'Signed in as ' + (u.first_name || '') + ' ' + (u.last_name || '') +
+            (u.username ? ' (@' + u.username + ')' : '');
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

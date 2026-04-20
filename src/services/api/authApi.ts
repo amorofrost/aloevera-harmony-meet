@@ -31,6 +31,17 @@ export interface AuthResponse {
   expiresAt: string;
 }
 
+/** Telegram Login Widget user payload (snake_case from Telegram). */
+export interface TelegramWidgetUserPayload {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 export const authApi = {
   // Login
   async login(data: LoginRequest) {
@@ -185,6 +196,30 @@ export const authApi = {
 
     await new Promise(resolve => setTimeout(resolve, 500));
     return { success: true, timestamp: new Date().toISOString() };
+  },
+
+  async getTelegramLoginConfig() {
+    if (isApiMode()) {
+      return apiClient.get<{ botUsername: string }>('/api/v1/auth/telegram-login-config');
+    }
+    return {
+      success: true,
+      data: { botUsername: (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string) || '' },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /** Telegram Login Widget — backend verifies hash and returns JWT. */
+  async telegramLogin(data: TelegramWidgetUserPayload) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-login', data);
+    }
+    await new Promise((r) => setTimeout(r, 300));
+    return {
+      success: false,
+      error: { code: 'MOCK', message: 'Telegram login requires VITE_API_MODE=api' },
+      timestamp: new Date().toISOString(),
+    };
   },
 
   // Registration config — whether appconfig requires an event invite to register
