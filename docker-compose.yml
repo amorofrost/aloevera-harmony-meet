@@ -18,8 +18,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
-      - Telegram__BotUsername=${TELEGRAM_BOT_USERNAME:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
