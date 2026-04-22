@@ -8,6 +8,7 @@ import { isMockMode } from "@/config/api.config";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
 import Welcome from "./pages/Welcome";
+import WelcomeTelegram from "./pages/WelcomeTelegram";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
 import AloeVera from "./pages/AloeVera";
@@ -37,6 +38,7 @@ const App = () => (
             <Routes>
               {/* Public — authentication page (redirects to /friends if already logged in) */}
               <Route path="/" element={<GuestRoute><Welcome /></GuestRoute>} />
+              <Route path="/welcome/telegram" element={<WelcomeTelegram />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 

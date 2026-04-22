@@ -42,6 +42,39 @@ export interface TelegramWidgetUserPayload {
   hash: string;
 }
 
+/** Verified Telegram identity carried across the pending-ticket flow. */
+export interface TelegramUserInfo {
+  id: number;
+  firstName: string;
+  lastName?: string | null;
+  username?: string | null;
+  photoUrl?: string | null;
+}
+
+/** Either an immediate signed-in JWT pair, or a pending ticket for an unknown Telegram id. */
+export interface TelegramLoginResult {
+  status: 'signedIn' | 'pending';
+  auth?: AuthResponse;
+  ticket?: string;
+  telegram?: TelegramUserInfo;
+}
+
+export interface TelegramRegisterRequest {
+  ticket: string;
+  name: string;
+  age: number;
+  location: string;
+  gender: string;
+  bio?: string;
+  inviteCode?: string;
+}
+
+export interface TelegramLinkLoginRequest {
+  email: string;
+  password: string;
+  ticket: string;
+}
+
 export const authApi = {
   // Login
   async login(data: LoginRequest) {
@@ -209,10 +242,14 @@ export const authApi = {
     };
   },
 
-  /** Telegram Login Widget — backend verifies hash and returns JWT. */
+  /**
+   * Telegram Login Widget — backend verifies hash. Returns either <c>signedIn</c> with a JWT pair
+   * for a known Telegram id, or <c>pending</c> with a short-lived ticket for a new identity that
+   * must be redeemed via telegramRegister / telegramLinkLogin.
+   */
   async telegramLogin(data: TelegramWidgetUserPayload) {
     if (isApiMode()) {
-      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-login', data);
+      return apiClient.post<TelegramLoginResult>('/api/v1/auth/telegram-login', data);
     }
     await new Promise((r) => setTimeout(r, 300));
     return {
@@ -220,6 +257,38 @@ export const authApi = {
       error: { code: 'MOCK', message: 'Telegram login requires VITE_API_MODE=api' },
       timestamp: new Date().toISOString(),
     };
+  },
+
+  /** Create a new account from a verified Telegram pending ticket + profile fields. */
+  async telegramRegister(data: TelegramRegisterRequest) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-register', data);
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  /** Link a verified Telegram pending ticket to an existing email+password account in one call. */
+  async telegramLinkLogin(data: TelegramLinkLoginRequest) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-link-login', data);
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  /** Authenticated: link a verified Telegram ticket to the current account. */
+  async telegramLink(ticket: string) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-link', { ticket });
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  /** Authenticated (Telegram-only): request attaching an email+password. Verification email sent. */
+  async attachEmail(email: string, password: string) {
+    if (isApiMode()) {
+      return apiClient.post<boolean>('/api/v1/auth/attach-email', { email, password });
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
   },
 
   // Registration config — whether appconfig requires an event invite to register

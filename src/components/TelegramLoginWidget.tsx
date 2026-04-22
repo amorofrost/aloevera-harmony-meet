@@ -24,13 +24,19 @@ declare global {
 interface TelegramLoginWidgetProps {
   disabled?: boolean;
   onSuccess?: () => void;
+  /**
+   * Override what happens on a pending (unknown Telegram id) response. Defaults to navigating
+   * to <c>/welcome/telegram</c> with the ticket. Used by <c>/settings</c> → "Link Telegram" to
+   * redeem the ticket against the current account instead of starting a signup flow.
+   */
+  onPending?: (result: { ticket: string; telegram: { id: number; firstName: string; lastName?: string | null; username?: string | null; photoUrl?: string | null; } }) => void;
 }
 
 /**
  * Renders the official Telegram Login button (script from telegram.org).
  * Bot username comes from GET /api/v1/auth/telegram-login-config or VITE_TELEGRAM_BOT_USERNAME.
  */
-export function TelegramLoginWidget({ disabled, onSuccess }: TelegramLoginWidgetProps) {
+export function TelegramLoginWidget({ disabled, onSuccess, onPending }: TelegramLoginWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [botUsername, setBotUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,9 +55,32 @@ export function TelegramLoginWidget({ disabled, onSuccess }: TelegramLoginWidget
           toast.error(msg);
           return;
         }
-        apiClient.setAccessToken(result.data.accessToken);
-        if (result.data.refreshToken) {
-          apiClient.setRefreshToken(result.data.refreshToken);
+
+        const payload = result.data;
+        if (payload.status === 'pending') {
+          if (!payload.ticket || !payload.telegram) {
+            toast.error('Telegram sign-in failed');
+            return;
+          }
+          if (onPending) {
+            onPending({ ticket: payload.ticket, telegram: payload.telegram });
+            return;
+          }
+          // Default: route to /welcome/telegram so the user can either link an existing
+          // account or create a new one.
+          navigate('/welcome/telegram', {
+            state: { ticket: payload.ticket, telegram: payload.telegram },
+          });
+          return;
+        }
+
+        if (!payload.auth) {
+          toast.error('Telegram sign-in failed');
+          return;
+        }
+        apiClient.setAccessToken(payload.auth.accessToken);
+        if (payload.auth.refreshToken) {
+          apiClient.setRefreshToken(payload.auth.refreshToken);
         }
         toast.success('Signed in with Telegram');
         onSuccess?.();
@@ -60,7 +89,7 @@ export function TelegramLoginWidget({ disabled, onSuccess }: TelegramLoginWidget
         showApiError(err, 'Telegram sign-in failed');
       }
     },
-    [navigate, onSuccess]
+    [navigate, onSuccess, onPending]
   );
 
   useEffect(() => {

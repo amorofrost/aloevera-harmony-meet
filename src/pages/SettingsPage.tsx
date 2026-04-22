@@ -21,6 +21,7 @@ import { toast } from '@/components/ui/sonner';
 import { profileEditSchema, type ProfileEditSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import { UserBadges } from '@/components/ui/user-badges';
+import LinkedAccountsCard from '@/components/settings/LinkedAccountsCard';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -302,6 +303,8 @@ const SettingsPage = () => {
                 </form>
               </CardContent>
             </Card>
+
+            <LinkedAccountsCard />
 
             {/* Favorite AloeVera song — hidden for now, will be reimplemented later */}
 
