@@ -75,6 +75,29 @@ export interface TelegramLinkLoginRequest {
   ticket: string;
 }
 
+/** Result of <c>/telegram-miniapp-login</c>: <c>signedIn</c> with JWT or <c>needsRegistration</c> with verified identity. */
+export interface TelegramMiniAppLoginResult {
+  status: 'signedIn' | 'needsRegistration';
+  auth?: AuthResponse;
+  telegram?: TelegramUserInfo;
+}
+
+export interface TelegramMiniAppRegisterRequest {
+  initData: string;
+  name: string;
+  age: number;
+  location: string;
+  gender: string;
+  bio?: string;
+  inviteCode?: string;
+}
+
+export interface TelegramMiniAppLinkLoginRequest {
+  initData: string;
+  email: string;
+  password: string;
+}
+
 export const authApi = {
   // Login
   async login(data: LoginRequest) {
@@ -287,6 +310,34 @@ export const authApi = {
   async attachEmail(email: string, password: string) {
     if (isApiMode()) {
       return apiClient.post<boolean>('/api/v1/auth/attach-email', { email, password });
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  /**
+   * Mini App: verify <c>initData</c> from <c>window.Telegram.WebApp</c>. Signs in a known
+   * Telegram id, or returns <c>needsRegistration</c> with the verified identity so the Mini App
+   * can render an inline onboarding wizard without leaving Telegram.
+   */
+  async miniAppLogin(initData: string) {
+    if (isApiMode()) {
+      return apiClient.post<TelegramMiniAppLoginResult>('/api/v1/auth/telegram-miniapp-login', { initData });
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  /** Mini App: create a new account from verified initData + profile fields + optional invite. */
+  async miniAppRegister(data: TelegramMiniAppRegisterRequest) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-miniapp-register', data);
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  /** Mini App: link verified initData to an existing email+password account in one call. */
+  async miniAppLinkLogin(data: TelegramMiniAppLinkLoginRequest) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/telegram-miniapp-link-login', data);
     }
     return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
   },

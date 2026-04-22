@@ -5,10 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { isMockMode } from "@/config/api.config";
+import { isTelegramMiniApp } from "@/lib/telegramWebApp";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
 import Welcome from "./pages/Welcome";
 import WelcomeTelegram from "./pages/WelcomeTelegram";
+import MiniAppEntry from "./pages/MiniAppEntry";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
 import AloeVera from "./pages/AloeVera";
@@ -22,23 +24,29 @@ import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  // Hide the dev-mode banner when rendered inside a Telegram Mini App — the embedded
+  // WebView has limited vertical space and the banner would push real content off-screen.
+  const inMiniApp = isTelegramMiniApp();
+  const showMockBanner = isMockMode() && !inMiniApp;
+  return (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner position="bottom-center" richColors offset="6rem" mobileOffset="6rem" duration={2000} />
-        {isMockMode() && (
+        {showMockBanner && (
           <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-500/90 backdrop-blur-sm text-black px-4 py-2 text-center text-sm font-medium shadow-lg">
             🔧 DEBUG MODE: Running with mock data (no backend connection)
           </div>
         )}
         <BrowserRouter>
-          <div className={isMockMode() ? "pt-10" : ""}>
+          <div className={showMockBanner ? "pt-10" : ""}>
             <Routes>
               {/* Public — authentication page (redirects to /friends if already logged in) */}
               <Route path="/" element={<GuestRoute><Welcome /></GuestRoute>} />
               <Route path="/welcome/telegram" element={<WelcomeTelegram />} />
+              <Route path="/tg" element={<MiniAppEntry />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -66,6 +74,7 @@ const App = () => (
       </TooltipProvider>
     </LanguageProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
