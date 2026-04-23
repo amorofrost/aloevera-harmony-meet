@@ -17,6 +17,7 @@ import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema
 import { showApiError } from '@/lib/apiError';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { TelegramLoginWidget } from '@/components/TelegramLoginWidget';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -115,12 +116,6 @@ const Welcome = () => {
     }
   });
 
-  const handleOAuthLogin = (provider: 'google' | 'facebook' | 'vk') => {
-    // TODO: Redirect to OAuth endpoint when integrated
-    // window.location.href = `${API_CONFIG.baseURL}/api/v1/auth/oauth/${provider}/login`;
-    toast.error(`${provider} login will be available soon`);
-  };
-
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Hero Background */}
@@ -208,13 +203,14 @@ const Welcome = () => {
 
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm">Or continue with</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <Button onClick={() => handleOAuthLogin('google')} variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Google</Button>
-                  <Button onClick={() => handleOAuthLogin('facebook')} variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
-                  <Button onClick={() => handleOAuthLogin('vk')} variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
+                <div className="space-y-3">
+                  <GoogleSignInButton disabled={isLoading} useCase="signin" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button onClick={() => toast.error('Facebook login will be available soon')} variant="outline"
+                      className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
+                    <Button onClick={() => toast.error('VK login will be available soon')} variant="outline"
+                      className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
+                  </div>
                 </div>
                 <div className="space-y-2 pt-2">
                   <p className="text-white/60 text-sm text-center">{t('auth.telegram')}</p>
@@ -440,13 +436,14 @@ const Welcome = () => {
 
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm">Or sign up with</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <Button onClick={() => handleOAuthLogin('google')} variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Google</Button>
-                  <Button onClick={() => handleOAuthLogin('facebook')} variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
-                  <Button onClick={() => handleOAuthLogin('vk')} variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
+                <div className="space-y-3">
+                  <GoogleSignInButton disabled={isLoading} useCase="signup" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button onClick={() => toast.error('Facebook sign up will be available soon')} variant="outline"
+                      className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>Facebook</Button>
+                    <Button onClick={() => toast.error('VK sign up will be available soon')} variant="outline"
+                      className="bg-white/10 hover:bg-white/20 border-white/30 text-white" disabled={isLoading}>VK</Button>
+                  </div>
                 </div>
               </div>
 
