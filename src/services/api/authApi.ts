@@ -27,6 +27,7 @@ export interface AuthResponse {
     name: string;
     emailVerified: boolean;
     authMethods: string[];
+    profileImage: string;
   };
   expiresAt: string;
 }
@@ -150,6 +151,7 @@ export const authApi = {
             name: mockUser.name,
             emailVerified: true,
             authMethods: ['local'],
+            profileImage: mockUser.profileImage || '',
           },
           expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         },
@@ -188,6 +190,7 @@ export const authApi = {
           name: data.name,
           emailVerified: false,
           authMethods: ['local'],
+          profileImage: '',
         },
         expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       },
@@ -230,6 +233,7 @@ export const authApi = {
           name: 'Mock User',
           emailVerified: true,
           authMethods: ['local'],
+          profileImage: '/placeholder.svg',
         },
         expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
       },
@@ -256,6 +260,7 @@ export const authApi = {
         name: mockUser.name,
         emailVerified: true,
         authMethods: ['local'],
+        profileImage: mockUser.profileImage || '',
       },
       timestamp: new Date().toISOString(),
     };
