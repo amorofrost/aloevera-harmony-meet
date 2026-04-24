@@ -98,6 +98,33 @@ export interface TelegramMiniAppLinkLoginRequest {
   password: string;
 }
 
+/** Result of POST /api/v1/auth/google-login */
+export interface GoogleUserInfo {
+  sub: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  pictureUrl?: string | null;
+}
+
+export interface GoogleLoginResult {
+  status: 'signedIn' | 'pending' | 'emailConflict';
+  auth?: AuthResponse;
+  ticket?: string;
+  google?: GoogleUserInfo;
+  message?: string;
+}
+
+export interface GoogleRegisterRequest {
+  ticket: string;
+  name: string;
+  age: number;
+  location: string;
+  gender: string;
+  bio?: string;
+  inviteCode?: string;
+}
+
 export const authApi = {
   // Login
   async login(data: LoginRequest) {
@@ -338,6 +365,41 @@ export const authApi = {
   async miniAppLinkLogin(data: TelegramMiniAppLinkLoginRequest) {
     if (isApiMode()) {
       return apiClient.post<AuthResponse>('/api/v1/auth/telegram-miniapp-link-login', data);
+    }
+    return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
+  },
+
+  async getGoogleConfig() {
+    if (isApiMode()) {
+      return apiClient.get<{ clientId: string }>('/api/v1/auth/google-config');
+    }
+    const env = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || '';
+    return {
+      success: true,
+      data: { clientId: env },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /**
+   * Google Identity: send the JWT `credential` from GoogleLogin / One Tap.
+   * Returns signed in, pending (navigate to /welcome/google), or emailConflict.
+   */
+  async googleLogin(idToken: string) {
+    if (isApiMode()) {
+      return apiClient.post<GoogleLoginResult>('/api/v1/auth/google-login', { idToken });
+    }
+    await new Promise((r) => setTimeout(r, 200));
+    return {
+      success: false,
+      error: { code: 'MOCK', message: 'Google sign-in requires VITE_API_MODE=api' },
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  async googleRegister(data: GoogleRegisterRequest) {
+    if (isApiMode()) {
+      return apiClient.post<AuthResponse>('/api/v1/auth/google-register', data);
     }
     return { success: false, error: { code: 'MOCK', message: 'Requires VITE_API_MODE=api' }, timestamp: new Date().toISOString() };
   },

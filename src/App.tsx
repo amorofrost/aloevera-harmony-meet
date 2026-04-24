@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import GuestRoute from "@/components/GuestRoute";
 import Welcome from "./pages/Welcome";
 import WelcomeTelegram from "./pages/WelcomeTelegram";
+import WelcomeGoogle from "./pages/WelcomeGoogle";
 import MiniAppEntry from "./pages/MiniAppEntry";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
@@ -46,6 +47,7 @@ const App = () => {
               {/* Public — authentication page (redirects to /friends if already logged in) */}
               <Route path="/" element={<GuestRoute><Welcome /></GuestRoute>} />
               <Route path="/welcome/telegram" element={<WelcomeTelegram />} />
+              <Route path="/welcome/google" element={<WelcomeGoogle />} />
               <Route path="/tg" element={<MiniAppEntry />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
