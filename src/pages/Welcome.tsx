@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
+import { navigateAfterAuth } from '@/lib/authNavigation';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { TelegramLoginWidget } from '@/components/TelegramLoginWidget';
 
@@ -71,7 +72,7 @@ const Welcome = () => {
           apiClient.setRefreshToken(response.data.refreshToken);
         }
         toast.success('Welcome back!');
-        navigate('/friends');
+        navigateAfterAuth(navigate, response.data.user);
       }
     } catch (err) {
       showApiError(err, 'Login failed');

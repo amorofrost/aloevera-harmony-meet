@@ -15,6 +15,7 @@ import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
+import { navigateAfterAuth } from '@/lib/authNavigation';
 import {
   googleRegisterSchema,
   googleRegisterSchemaWithInvite,
@@ -98,7 +99,7 @@ const WelcomeGoogle: React.FC = () => {
       apiClient.setAccessToken(res.data.accessToken);
       if (res.data.refreshToken) apiClient.setRefreshToken(res.data.refreshToken);
       toast.success('Account created!');
-      navigate('/friends');
+      navigateAfterAuth(navigate, res.data.user);
     } catch (err) {
       showApiError(err, 'Could not create account');
     } finally {

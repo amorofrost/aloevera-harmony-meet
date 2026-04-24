@@ -13,6 +13,7 @@ import { authApi, apiClient } from '@/services/api';
 import appIcon from '@/assets/app-icon.jpg';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
+import { navigateAfterAuth } from '@/lib/authNavigation';
 import {
   telegramRegisterSchema,
   telegramRegisterSchemaWithInvite,
@@ -98,7 +99,7 @@ const MiniAppEntry: React.FC = () => {
         if (res.data.status === 'signedIn' && res.data.auth) {
           apiClient.setAccessToken(res.data.auth.accessToken);
           if (res.data.auth.refreshToken) apiClient.setRefreshToken(res.data.auth.refreshToken);
-          navigate('/friends', { replace: true });
+          navigateAfterAuth(navigate, res.data.auth.user);
           return;
         }
         // needsRegistration
@@ -151,7 +152,7 @@ const MiniAppEntry: React.FC = () => {
       apiClient.setAccessToken(res.data.accessToken);
       if (res.data.refreshToken) apiClient.setRefreshToken(res.data.refreshToken);
       toast.success('Telegram linked to your account');
-      navigate('/friends', { replace: true });
+      navigateAfterAuth(navigate, res.data.user);
     } catch (err) {
       showApiError(err, 'Could not link Telegram');
     } finally {
@@ -187,7 +188,7 @@ const MiniAppEntry: React.FC = () => {
       apiClient.setAccessToken(res.data.accessToken);
       if (res.data.refreshToken) apiClient.setRefreshToken(res.data.refreshToken);
       toast.success('Account created!');
-      navigate('/friends', { replace: true });
+      navigateAfterAuth(navigate, res.data.user);
     } catch (err) {
       showApiError(err, 'Mini app registration failed');
     } finally {
