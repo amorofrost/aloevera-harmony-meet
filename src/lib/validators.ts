@@ -96,6 +96,10 @@ export const telegramRegisterSchemaWithInvite = telegramRegisterSchema.extend({
   inviteCode: z.string().min(1, 'Invite code is required'),
 });
 
+/** Registration via Google pending ticket — same fields as Telegram flow. */
+export const googleRegisterSchema = telegramRegisterSchema;
+export const googleRegisterSchemaWithInvite = telegramRegisterSchemaWithInvite;
+
 export const telegramLinkLoginSchema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
@@ -117,6 +121,8 @@ export type RegisterSchema = z.infer<typeof registerSchema>;
 export type RegisterSchemaWithInvite = z.infer<typeof registerSchemaWithInvite>;
 export type TelegramRegisterSchema = z.infer<typeof telegramRegisterSchema>;
 export type TelegramRegisterSchemaWithInvite = z.infer<typeof telegramRegisterSchemaWithInvite>;
+export type GoogleRegisterSchema = z.infer<typeof googleRegisterSchema>;
+export type GoogleRegisterSchemaWithInvite = z.infer<typeof googleRegisterSchemaWithInvite>;
 export type TelegramLinkLoginSchema = z.infer<typeof telegramLinkLoginSchema>;
 export type AttachEmailSchema = z.infer<typeof attachEmailSchema>;
 export type ProfileEditSchema = z.infer<typeof profileEditSchema>;

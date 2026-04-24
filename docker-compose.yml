@@ -57,6 +57,8 @@ services:
       - /etc/ssl/aloeve:/etc/ssl/aloeve:ro
     depends_on:
       - backend
+    env_file:
+      - .env
     healthcheck:
       # Must match a URL that returns 200 on port 80 (default_server serves /health; / is 404).
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]

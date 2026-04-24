@@ -16,9 +16,9 @@ import appIcon from '@/assets/app-icon.jpg';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
 import {
-  telegramRegisterSchema,
-  telegramRegisterSchemaWithInvite,
-  type TelegramRegisterSchema,
+  googleRegisterSchema,
+  googleRegisterSchemaWithInvite,
+  type GoogleRegisterSchema,
 } from '@/lib/validators';
 
 type NavState = { ticket: string; google: GoogleUserInfo };
@@ -28,22 +28,20 @@ const WelcomeGoogle: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const state = location.state as NavState | null;
-  if (!state?.ticket || !state?.google) {
-    return <Navigate to="/" replace />;
-  }
-  const { ticket, google } = state;
+
+  // All hooks must run unconditionally — the guard below renders null after hooks.
   const [isLoading, setIsLoading] = useState(false);
   const requireInviteRef = useRef(false);
   const [requireInvite, setRequireInvite] = useState(false);
   const [configLoading, setConfigLoading] = useState(true);
 
-  const registerForm = useForm<TelegramRegisterSchema>({
+  const registerForm = useForm<GoogleRegisterSchema>({
     resolver: async (values, ctx, opts) => {
-      const schema = requireInviteRef.current ? telegramRegisterSchemaWithInvite : telegramRegisterSchema;
+      const schema = requireInviteRef.current ? googleRegisterSchemaWithInvite : googleRegisterSchema;
       return zodResolver(schema)(values, ctx, opts);
     },
     defaultValues: {
-      name: google.name || '',
+      name: state?.google?.name || '',
       bio: '',
       location: '',
       gender: '',
@@ -52,6 +50,7 @@ const WelcomeGoogle: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!state?.ticket) return;
     setConfigLoading(true);
     authApi
       .getRegistrationConfig()
@@ -63,7 +62,13 @@ const WelcomeGoogle: React.FC = () => {
       })
       .catch(() => console.error('Failed to fetch registration config'))
       .finally(() => setConfigLoading(false));
-  }, []);
+  }, [state?.ticket]);
+
+  if (!state?.ticket || !state?.google) {
+    return <Navigate to="/" replace />;
+  }
+
+  const { ticket, google } = state;
 
   const handleCreate = registerForm.handleSubmit(async (data) => {
     setIsLoading(true);
