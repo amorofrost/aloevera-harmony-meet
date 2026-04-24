@@ -11,6 +11,7 @@ import GuestRoute from "@/components/GuestRoute";
 import Welcome from "./pages/Welcome";
 import WelcomeTelegram from "./pages/WelcomeTelegram";
 import WelcomeGoogle from "./pages/WelcomeGoogle";
+import WelcomePhoto from "./pages/WelcomePhoto";
 import MiniAppEntry from "./pages/MiniAppEntry";
 import Talks from "./pages/Talks";
 import Friends from "./pages/Friends";
@@ -48,6 +49,7 @@ const App = () => {
               <Route path="/" element={<GuestRoute><Welcome /></GuestRoute>} />
               <Route path="/welcome/telegram" element={<WelcomeTelegram />} />
               <Route path="/welcome/google" element={<WelcomeGoogle />} />
+              <Route path="/welcome/photo" element={<WelcomePhoto />} />
               <Route path="/tg" element={<MiniAppEntry />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
