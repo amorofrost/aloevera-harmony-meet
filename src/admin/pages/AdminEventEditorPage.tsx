@@ -50,6 +50,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { uploadImage } from "@/services/api/imagesApi";
+import InviteLinkDialog from '../components/InviteLinkDialog';
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -122,6 +123,7 @@ export default function AdminEventEditorPage() {
     toLocalInput(new Date(Date.now() + 7 * 86400000).toISOString()),
   );
   const [invitePlainOverride, setInvitePlainOverride] = useState("");
+  const [linkDialogInvite, setLinkDialogInvite] = useState<EventInviteAdminDto | null>(null);
 
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicContent, setNewTopicContent] = useState("");
@@ -716,6 +718,7 @@ export default function AdminEventEditorPage() {
                       <TableHead>Registrations</TableHead>
                       <TableHead>Attendance by code</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -740,6 +743,18 @@ export default function AdminEventEditorPage() {
                         <TableCell>{inv.eventAttendanceClaimCount}</TableCell>
                         <TableCell>
                           {inv.revoked ? <Badge variant="secondary">Revoked</Badge> : <Badge>Active</Badge>}
+                        </TableCell>
+                        <TableCell>
+                          {!inv.revoked && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setLinkDialogInvite(inv)}
+                            >
+                              Link / QR
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -957,6 +972,14 @@ export default function AdminEventEditorPage() {
             </CardContent>
           </Card>
         </>
+      )}
+      {linkDialogInvite && eventId && (
+        <InviteLinkDialog
+          open
+          onOpenChange={(open) => { if (!open) setLinkDialogInvite(null); }}
+          eventId={eventId}
+          plainCode={linkDialogInvite.plainCode}
+        />
       )}
     </div>
   );
