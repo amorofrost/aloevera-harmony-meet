@@ -168,7 +168,7 @@ describe('Welcome — login form', () => {
   it('navigates away from / on successful login', async () => {
     (vi.mocked(authApi.login) as any).mockResolvedValueOnce({
       success: true,
-      data: { accessToken: 'at', refreshToken: 'rt', user: { id: '1', name: 'Test', email: 'user@example.com' } as any },
+      data: { accessToken: 'at', refreshToken: 'rt', user: { id: '1', name: 'Test', email: 'user@example.com', profileImage: 'https://example.com/photo.jpg' } as any },
     });
     const user = userEvent.setup();
     renderWithProviders(<Welcome />);
@@ -176,7 +176,7 @@ describe('Welcome — login form', () => {
     await user.type(screen.getByLabelText(/password/i), 'secret');
     await user.click(screen.getByRole('button', { name: /auth\.signIn/i }));
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/friends');
+      expect(mockNavigate).toHaveBeenCalledWith('/friends', { replace: true });
     });
   });
 });

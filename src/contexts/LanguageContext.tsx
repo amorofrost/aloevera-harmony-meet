@@ -130,6 +130,7 @@ const translations = {
     'register.inviteCodePlaceholder': 'Введите инвайт-код',
     'register.inviteCodeOptional': 'необязательно',
     'register.inviteCodeHint': 'Если у вас есть код приглашения на событие, введите его здесь.',
+    'invite.banner': 'У вас есть инвайт-код. Войдите или создайте аккаунт, чтобы воспользоваться им.',
     // Forgot password modal
     'auth.forgotPassword': 'Забыли пароль?',
     'auth.telegram': 'Войти через Telegram',
@@ -287,6 +288,7 @@ const translations = {
     'register.inviteCodePlaceholder': 'Enter invite code',
     'register.inviteCodeOptional': 'optional',
     'register.inviteCodeHint': 'If you have an event invite code, enter it here.',
+    'invite.banner': 'You have an invite code. Sign in or create an account to use it.',
     // Forgot password modal
     'auth.forgotPassword': 'Forgot password?',
     'auth.telegram': 'Telegram',

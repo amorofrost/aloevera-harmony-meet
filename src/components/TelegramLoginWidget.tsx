@@ -24,6 +24,7 @@ declare global {
 interface TelegramLoginWidgetProps {
   disabled?: boolean;
   onSuccess?: () => void;
+  redirectTo?: string;
   /**
    * Override what happens on a pending (unknown Telegram id) response. Defaults to navigating
    * to <c>/welcome/telegram</c> with the ticket. Used by <c>/settings</c> → "Link Telegram" to
@@ -36,7 +37,7 @@ interface TelegramLoginWidgetProps {
  * Renders the official Telegram Login button (script from telegram.org).
  * Bot username comes from GET /api/v1/auth/telegram-login-config or VITE_TELEGRAM_BOT_USERNAME.
  */
-export function TelegramLoginWidget({ disabled, onSuccess, onPending }: TelegramLoginWidgetProps) {
+export function TelegramLoginWidget({ disabled, onSuccess, onPending, redirectTo }: TelegramLoginWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [botUsername, setBotUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,12 +85,12 @@ export function TelegramLoginWidget({ disabled, onSuccess, onPending }: Telegram
         }
         toast.success('Signed in with Telegram');
         onSuccess?.();
-        navigate('/friends');
+        navigate(redirectTo ?? '/friends');
       } catch (err) {
         showApiError(err, 'Telegram sign-in failed');
       }
     },
-    [navigate, onSuccess, onPending]
+    [navigate, onSuccess, onPending, redirectTo]
   );
 
   useEffect(() => {

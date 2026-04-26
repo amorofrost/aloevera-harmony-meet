@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import InviteLinkDialog from '../components/InviteLinkDialog';
 
 function isCampaign(eventId: string) {
   return eventId.startsWith("-") && /^-[0-9]+$/.test(eventId);
@@ -23,6 +24,7 @@ function isCampaign(eventId: string) {
 export default function AdminInvitesPage() {
   const [invites, setInvites] = useState<EventInviteAdminDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [linkDialogInvite, setLinkDialogInvite] = useState<EventInviteAdminDto | null>(null);
 
   const [campaignId, setCampaignId] = useState("-1");
   const [campaignLabel, setCampaignLabel] = useState("");
@@ -164,6 +166,7 @@ export default function AdminInvitesPage() {
                   <TableHead>Reg.</TableHead>
                   <TableHead>Attend.</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -194,6 +197,18 @@ export default function AdminInvitesPage() {
                     <TableCell>
                       {inv.revoked ? <Badge variant="secondary">Revoked</Badge> : <Badge>Active</Badge>}
                     </TableCell>
+                    <TableCell>
+                      {!inv.revoked && !isCampaign(inv.eventId) && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setLinkDialogInvite(inv)}
+                        >
+                          Link / QR
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -201,6 +216,14 @@ export default function AdminInvitesPage() {
           )}
         </CardContent>
       </Card>
+      {linkDialogInvite && !isCampaign(linkDialogInvite.eventId) && (
+        <InviteLinkDialog
+          open
+          onOpenChange={(open) => { if (!open) setLinkDialogInvite(null); }}
+          eventId={linkDialogInvite.eventId}
+          plainCode={linkDialogInvite.plainCode}
+        />
+      )}
     </div>
   );
 }
