@@ -2,7 +2,7 @@
 
 **AloeVera Harmony Meet** - Detailed Feature Documentation
 
-**Last Updated**: April 18, 2026
+**Last Updated**: April 26, 2026
 
 **Events:** See **[EVENTS.md](./EVENTS.md)** (visibility, invites, forum topic access, admin).
 
@@ -41,8 +41,8 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 - **Current**: Form doesn't actually authenticate
 
 #### 1.3 Registration Form
-- Email, password, age, gender, location, bio fields
-- Gender options: Male, Female, Other
+- Email, password, age (optional), gender, location, bio fields
+- Gender options: Male, Female, Non-binary, Prefer not to say
 - Create Account button
 - Link to login
 - **Current**: Form doesn't create account
@@ -73,17 +73,16 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 
 #### Features
 - **Swipeable profile cards** with Tinder-like UX
-- Current user profile display:
+- Profile card always shows full content:
   - Name, age, location
   - Profile image (large)
   - Bio text
-  - Events attended (with postmark badges)
-  - Favorite AloeVera song
+  - Instagram handle link (if set)
+  - Events attended (scrollable postmark badge row)
   - Online status indicator
 - **Action buttons**:
   - Like (heart icon, pink gradient)
   - Pass (X icon, gray gradient)
-  - Info (details view toggle)
 - **Swipe gestures** (via `SwipeCard` component)
 - Navigation between profiles
 
@@ -355,9 +354,10 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 
 #### 5.1 Profile Section
 - **View mode**:
-  - Profile image
+  - Profile image (with upload/replace button)
   - Name, age, location
   - Bio
+  - Instagram handle (clickable link to instagram.com profile, if set)
   - Events attended badges
   - Favorite song
   - Edit button
@@ -366,6 +366,7 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
   - Age input
   - Location input
   - Bio textarea
+  - Instagram handle input (optional; username without @)
   - Save/Cancel buttons
 
 #### 5.2 Preferences Section

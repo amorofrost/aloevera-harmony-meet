@@ -286,8 +286,45 @@ Per-route metadata (via `react-helmet-async`) remains a future enhancement.
 
 ---
 
+## ~~April 26 — External profile photo download~~ ✅ RESOLVED
+**Resolved**: April 26, 2026
+
+When a user registers or links their account via Telegram or Google, the backend now downloads the provider's CDN profile photo and stores it in Azure Blob Storage (`profile-images` container) instead of keeping the external URL.
+
+**What was implemented**:
+- `IImageService.DownloadAndUploadExternalImageAsync(userId, externalUrl)` — downloads, resizes (max 800px, JPEG Q85), uploads, returns blob URL; returns `string.Empty` on any failure (best-effort)
+- `AzureAuthService` calls this helper in `TelegramRegisterAsync`, `GoogleRegisterAsync`, `AttachGoogleToUserAsync`, and `AttachTelegramToUserAsync` — the `Attach*` methods only set the photo if the user's existing profile image is empty
+- `MockAuthService` passes the external URL through unchanged
+
+---
+
+## ~~April 26 — Instagram handle on user profiles~~ ✅ RESOLVED
+**Resolved**: April 26, 2026
+
+Users can now add an optional Instagram account name to their profile. The handle is stored in the `Users` table and shown as a clickable link everywhere a profile is displayed.
+
+**What was implemented**:
+- **Backend**: `UserEntity.InstagramHandle` (string, default `""`); `UserDto.InstagramHandle` (nullable string); `AzureUserService.UpdateUserAsync` persists the handle; `ToDto` returns `null` for empty strings
+- **Frontend**: `User.instagramHandle?: string` type; `profileEditSchema` Zod validation (max 30 chars, `[a-zA-Z0-9_.]` only); Instagram field in `SettingsPage.tsx` (edit: text input; view: clickable `@handle` link to `instagram.com`); Instagram link shown on swipe cards in `Friends.tsx`
+- **Translations**: `profile.instagram` / `profile.instagramPlaceholder` added in Russian and English
+
+---
+
+## ~~April 26 — Unified swipe card profile view~~ ✅ RESOLVED
+**Resolved**: April 26, 2026
+
+The swipe card on the Friends/Search page previously showed minimal info with a tap-to-expand detail overlay. It now always shows the same rich content as the direct-link profile view.
+
+**What was changed**:
+- Removed `showDetails` toggle state and the `onTap` prop from `SwipeCard`
+- Removed the dark detail overlay; replaced with always-visible bio, Instagram link (if set), and event attendance badges — matching the `viewingUser` panel
+- Age field made optional in the registration form (`registerSchema` Zod update; backend accepts `null` age; UI labels the field as optional)
+
+---
+
 ## 📝 Changelog
 
+- **April 26, 2026** — External profile photo download (Telegram/Google → Azure Blob), Instagram handle field, unified swipe card profile view, optional age at registration.
 - **April 18, 2026** — PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), UX.10 (SEO metadata) resolved and moved here.
 - **March 20, 2026** — PB.2 (HTTPS) resolved and added to this archive.
 - **March 16, 2026** — MCF.2 (forum topic creation) resolved and added to this archive.
