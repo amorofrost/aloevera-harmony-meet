@@ -220,7 +220,7 @@ const Welcome = () => {
 
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm text-center">{t('auth.telegram')}</p>
-                <TelegramLoginWidget disabled={isLoading} />
+                <TelegramLoginWidget disabled={isLoading} redirectTo={safeRedirect || undefined} />
               </div>
 
               <div className="text-center space-y-2">
