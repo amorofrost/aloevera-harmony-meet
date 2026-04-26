@@ -80,7 +80,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (authState === 'unauthenticated') {
-    return <Navigate to="/" replace state={{ from: location }} />;
+    return <Navigate to={`/?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
 
   return <>{children}</>;
