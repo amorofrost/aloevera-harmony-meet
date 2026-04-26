@@ -330,7 +330,7 @@ const Welcome = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="age" className="text-white font-medium">
-                      {t('auth.age')}
+                      {t('auth.age')} <span className="font-normal opacity-70">({t('register.inviteCodeOptional')})</span>
                     </Label>
                     <Input
                       id="age"

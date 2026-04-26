@@ -15,11 +15,10 @@ export const registerSchema = z.object({
     .regex(/[0-9]/, 'One number')
     .regex(/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/, 'One special character'),
   name: z.string().min(1, 'Name is required'),
-  age: z
-    .number({ invalid_type_error: 'Age is required' })
-    .int()
-    .min(18, 'Must be at least 18')
-    .max(99, 'Must be 99 or under'),
+  age: z.preprocess(
+    (val) => (Number.isNaN(val) ? undefined : val),
+    z.number().int().min(18, 'Must be at least 18').max(99, 'Must be 99 or under').optional()
+  ),
   location: z.string().min(1, 'Location is required'),
   gender: z.string().min(1, 'Gender is required'),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
@@ -81,11 +80,10 @@ export const registerSchemaWithInvite = registerSchema.extend({
 /** Registration via Telegram pending ticket — no email/password fields (those come later via attach). */
 export const telegramRegisterSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  age: z
-    .number({ invalid_type_error: 'Age is required' })
-    .int()
-    .min(18, 'Must be at least 18')
-    .max(99, 'Must be 99 or under'),
+  age: z.preprocess(
+    (val) => (Number.isNaN(val) ? undefined : val),
+    z.number().int().min(18, 'Must be at least 18').max(99, 'Must be 99 or under').optional()
+  ),
   location: z.string().min(1, 'Location is required'),
   gender: z.string().min(1, 'Gender is required'),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
