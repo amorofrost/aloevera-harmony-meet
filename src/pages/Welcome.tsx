@@ -16,6 +16,7 @@ import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import { navigateAfterAuth } from '@/lib/authNavigation';
+import { safeRedirectFrom, inviteCodeFrom } from '@/lib/inviteRedirect';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { TelegramLoginWidget } from '@/components/TelegramLoginWidget';
 
@@ -27,20 +28,10 @@ const Welcome = () => {
 
   // Decode and validate the redirect URL set by ProtectedRoute.
   // Only accept internal paths (starts with /, no protocol) to prevent open redirect.
-  const safeRedirect = (() => {
-    const r = searchParams.get('redirect') ?? '';
-    return r.startsWith('/') && !r.includes('://') ? r : '';
-  })();
+  const safeRedirect = safeRedirectFrom(searchParams.get('redirect') ?? '');
 
   // Extract the invite code from the redirect path to pre-fill the register form.
-  const pendingInviteCode = (() => {
-    if (!safeRedirect) return '';
-    try {
-      return new URL(safeRedirect, window.location.origin).searchParams.get('code') ?? '';
-    } catch {
-      return '';
-    }
-  })();
+  const pendingInviteCode = inviteCodeFrom(safeRedirect);
 
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
