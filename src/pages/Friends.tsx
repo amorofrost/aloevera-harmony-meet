@@ -27,7 +27,6 @@ import heroBg from '@/assets/hero-bg.jpg';
 
 const Friends = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
-  const [showDetails, setShowDetails] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [messageError, setMessageError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -155,7 +154,7 @@ const Friends = () => {
     nextUser();
   };
   const handlePass = () => nextUser();
-  const nextUser = () => { setShowDetails(false); setCurrentUserIndex(prev => prev + 1); };
+  const nextUser = () => { setCurrentUserIndex(prev => prev + 1); };
 
   const formatDateShort = (date: Date) =>
     new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
@@ -444,7 +443,7 @@ const Friends = () => {
               </div>
             ) : currentUser ? (
               <div>
-                <SwipeCard onSwipeLeft={handlePass} onSwipeRight={handleLike} onTap={() => setShowDetails(!showDetails)} className="w-full max-w-sm mx-auto">
+                <SwipeCard onSwipeLeft={handlePass} onSwipeRight={handleLike} className="w-full max-w-sm mx-auto">
                   <Card className="profile-card aspect-[3/4] relative overflow-hidden">
                     <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${currentUser.profileImage})` }}>
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
@@ -456,19 +455,34 @@ const Friends = () => {
                         <h2 className="text-2xl font-bold mb-1">{currentUser.name}, {currentUser.age}</h2>
                         <UserBadges rank={currentUser.rank} staffRole={currentUser.staffRole} />
                         <p className="text-sm opacity-90 mb-2">{currentUser.location}</p>
-                        {!showDetails && <p className="text-sm opacity-75 line-clamp-2">{currentUser.bio}</p>}
-                      </div>
-                      {showDetails && (
-                        <div className="absolute inset-0 bg-black/80 p-6 flex flex-col justify-end">
-                          <div className="text-white space-y-4">
-                            <div><h3 className="font-semibold mb-2">О себе</h3><p className="text-sm">{currentUser.bio}</p></div>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div><span className="opacity-75">Возраст:</span><div>{currentUser.age}</div></div>
-                              <div><span className="opacity-75">Пол:</span><div>{currentUser.gender === 'male' ? 'Мужской' : 'Женский'}</div></div>
-                            </div>
+                        <p className="text-sm opacity-75 line-clamp-2">{currentUser.bio}</p>
+                        {currentUser.instagramHandle && (
+                          <a
+                            href={`https://www.instagram.com/${currentUser.instagramHandle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-flex items-center gap-1 text-xs opacity-90 hover:opacity-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            @{currentUser.instagramHandle}
+                          </a>
+                        )}
+                        {currentUser.eventsAttended && currentUser.eventsAttended.length > 0 && (
+                          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                            {currentUser.eventsAttended.map((ev) => (
+                              <div key={ev.id} className="flex-shrink-0">
+                                <EventAttendanceMark
+                                  event={ev}
+                                  size="sm"
+                                  showEventName
+                                  onClick={() => navigate(`/aloevera/events/${ev.id}`)}
+                                />
+                              </div>
+                            ))}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </Card>
                 </SwipeCard>
