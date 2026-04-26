@@ -360,7 +360,7 @@ const Welcome = () => {
                           <SelectContent>
                             <SelectItem value="male">{t('auth.male')}</SelectItem>
                             <SelectItem value="female">{t('auth.female')}</SelectItem>
-                            <SelectItem value="other">{t('auth.other')}</SelectItem>
+                            <SelectItem value="preferNotToSay">{t('auth.other')}</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
