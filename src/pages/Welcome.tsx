@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +22,26 @@ import { TelegramLoginWidget } from '@/components/TelegramLoginWidget';
 const Welcome = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const [searchParams] = useSearchParams();
+
+  // Decode and validate the redirect URL set by ProtectedRoute.
+  // Only accept internal paths (starts with /, no protocol) to prevent open redirect.
+  const safeRedirect = (() => {
+    const r = searchParams.get('redirect') ?? '';
+    return r.startsWith('/') && !r.includes('://') ? r : '';
+  })();
+
+  // Extract the invite code from the redirect path to pre-fill the register form.
+  const pendingInviteCode = (() => {
+    if (!safeRedirect) return '';
+    try {
+      return new URL(safeRedirect, window.location.origin).searchParams.get('code') ?? '';
+    } catch {
+      return '';
+    }
+  })();
+
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
   });
@@ -33,6 +53,7 @@ const Welcome = () => {
       return zodResolver(schema)(values, context, options);
     },
     mode: 'onBlur',
+    defaultValues: { inviteCode: pendingInviteCode },
   });
   const [showRegister, setShowRegister] = useState(false);
   const [requireEventInvite, setRequireEventInvite] = useState(false);
@@ -72,7 +93,7 @@ const Welcome = () => {
           apiClient.setRefreshToken(response.data.refreshToken);
         }
         toast.success('Welcome back!');
-        navigateAfterAuth(navigate, response.data.user);
+        navigateAfterAuth(navigate, response.data.user, safeRedirect || undefined);
       }
     } catch (err) {
       showApiError(err, 'Login failed');
@@ -154,6 +175,11 @@ const Welcome = () => {
 
         {/* Login/Register Forms */}
         <div className="mt-12 w-full max-w-md">
+          {pendingInviteCode && (
+            <div className="mb-4 rounded-xl border border-white/30 bg-white/15 px-4 py-3 text-sm text-white backdrop-blur-sm">
+              {t('invite.banner')}
+            </div>
+          )}
           {!showRegister ? (
             // Login Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
