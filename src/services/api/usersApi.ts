@@ -38,6 +38,7 @@ function mapUserFromApi(dto: any): User {
     rank: (dto.rank ?? 'novice') as UserRank,
     staffRole: (dto.staffRole ?? 'none') as StaffRole,
     registrationSourceEventId: dto.registrationSourceEventId,
+    instagramHandle: dto.instagramHandle ?? undefined,
     eventsAttended: Array.isArray(dto.attendedEvents)
       ? (dto.attendedEvents as unknown[]).map((ev) => mapEventFromApi(ev))
       : undefined,
@@ -70,6 +71,7 @@ function mapUserToApi(u: Partial<User>): Record<string, unknown> {
     } : undefined,
     settings: u.settings,
     favoriteSong: u.favoriteSong,
+    instagramHandle: u.instagramHandle ?? '',
     // eventsAttended is omitted — backend populates it from event registrations,
     // and the frontend stores full Event objects which can't be sent as List<string>.
   };

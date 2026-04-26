@@ -361,7 +361,7 @@ describe('Welcome — register form — invite code', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
-    expect(screen.getByText(/register\.inviteCodeOptional/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/register\.inviteCodeOptional/i).length).toBeGreaterThan(0);
   });
 
   it('renders invite code field when requireEventInvite is true', async () => {

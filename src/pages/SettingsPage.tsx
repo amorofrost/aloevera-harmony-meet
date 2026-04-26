@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, LogOut, Globe, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { Edit3, LogOut, Globe, ChevronLeft, ChevronRight, Pencil, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,6 +55,7 @@ const SettingsPage = () => {
           age: userRes.data.age,
           location: userRes.data.location,
           bio: userRes.data.bio ?? '',
+          instagramHandle: userRes.data.instagramHandle ?? '',
         });
       }
       if (songsRes.success && songsRes.data) setSongs(songsRes.data);
@@ -78,12 +79,12 @@ const SettingsPage = () => {
   const handleSave = profileForm.handleSubmit(async (data) => {
     if (!user) return;
     try {
-      const response = await usersApi.updateUser(user.id, { ...user, ...data });
+      const response = await usersApi.updateUser(user.id, { ...user, ...data, instagramHandle: data.instagramHandle || undefined });
       if (!response.success) {
         showApiError(response, 'Failed to update profile');
         return;
       }
-      setUser({ ...user, ...data });
+      setUser({ ...user, ...data, instagramHandle: data.instagramHandle || undefined });
       setIsEditing(false);
       toast.success('Profile updated');
     } catch (err) {
@@ -281,6 +282,36 @@ const SettingsPage = () => {
                     />
                     {isEditing && profileForm.formState.errors.bio && (
                       <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.bio.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="flex items-center gap-1.5">
+                      <Instagram className="w-4 h-4" />
+                      {t('profile.instagram')}
+                    </Label>
+                    {isEditing ? (
+                      <>
+                        <Input
+                          {...profileForm.register('instagramHandle')}
+                          placeholder={t('profile.instagramPlaceholder')}
+                          className="mt-1"
+                        />
+                        {profileForm.formState.errors.instagramHandle && (
+                          <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.instagramHandle.message}</p>
+                        )}
+                      </>
+                    ) : user.instagramHandle ? (
+                      <a
+                        href={`https://www.instagram.com/${user.instagramHandle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 flex items-center gap-1.5 text-sm text-primary hover:underline"
+                      >
+                        <Instagram className="w-3.5 h-3.5" />
+                        @{user.instagramHandle}
+                      </a>
+                    ) : (
+                      <p className="mt-1 text-sm text-muted-foreground">—</p>
                     )}
                   </div>
                   {isEditing && (

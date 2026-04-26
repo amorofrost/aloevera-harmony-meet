@@ -55,6 +55,8 @@ const translations = {
     'profile.photoUpdated': 'Фото обновлено',
     'profile.photoUploadFailed': 'Не удалось загрузить фото',
     'profile.photoTooLarge': 'Файл слишком большой. Максимальный размер — 20 МБ',
+    'profile.instagram': 'Instagram',
+    'profile.instagramPlaceholder': 'username (без @)',
 
     // Search
     'search.title': 'Найди тех самых',
@@ -213,6 +215,8 @@ const translations = {
     'profile.photoUpdated': 'Photo updated',
     'profile.photoUploadFailed': 'Failed to upload photo',
     'profile.photoTooLarge': 'File too large. Maximum size is 20 MB',
+    'profile.instagram': 'Instagram',
+    'profile.instagramPlaceholder': 'username (without @)',
 
     // Search
     'search.title': 'Find Love',

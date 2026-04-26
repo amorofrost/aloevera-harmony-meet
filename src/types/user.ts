@@ -40,6 +40,7 @@ export interface User {
   rank: UserRank;
   staffRole: StaffRole;
   registrationSourceEventId?: string;
+  instagramHandle?: string;
 }
 
 export interface Match {

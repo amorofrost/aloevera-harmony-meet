@@ -35,6 +35,11 @@ export const profileEditSchema = z.object({
     .max(99, 'Must be 99 or under'),
   location: z.string().min(1, 'Location is required'),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+  instagramHandle: z
+    .string()
+    .max(30, 'Max 30 characters')
+    .regex(/^[a-zA-Z0-9_.]*$/, 'Only letters, numbers, . and _')
+    .optional(),
 });
 
 export const messageSchema = z.object({
