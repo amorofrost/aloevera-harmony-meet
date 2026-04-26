@@ -44,6 +44,37 @@ function mapUserFromApi(dto: any): User {
   };
 }
 
+// Reverse of mapGender — converts frontend hyphenated values back to backend camelCase enum strings.
+const genderToApi: Record<string, string> = {
+  male: 'male', female: 'female',
+  'non-binary': 'nonBinary', 'prefer-not-to-say': 'preferNotToSay',
+};
+
+// Converts a frontend User (partial) into the shape the backend UserDto expects.
+function mapUserToApi(u: Partial<User>): Record<string, unknown> {
+  return {
+    id: u.id,
+    name: u.name,
+    age: u.age,
+    bio: u.bio,
+    location: u.location,
+    gender: u.gender ? (genderToApi[u.gender] ?? u.gender) : undefined,
+    profileImage: u.profileImage,
+    images: u.images,
+    isOnline: u.isOnline,
+    preferences: u.preferences ? {
+      ageRangeMin: u.preferences.ageRange?.[0],
+      ageRangeMax: u.preferences.ageRange?.[1],
+      maxDistance: u.preferences.maxDistance,
+      showMe: u.preferences.showMe,
+    } : undefined,
+    settings: u.settings,
+    favoriteSong: u.favoriteSong,
+    // eventsAttended is omitted — backend populates it from event registrations,
+    // and the frontend stores full Event objects which can't be sent as List<string>.
+  };
+}
+
 function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
 }
@@ -114,7 +145,7 @@ export const usersApi = {
 
   async updateUser(id: string, updates: Partial<User>): Promise<ApiResponse<User | null>> {
     if (isApiMode()) {
-      const res = await apiClient.put<any>(`/api/v1/users/${id}`, updates);
+      const res = await apiClient.put<any>(`/api/v1/users/${id}`, mapUserToApi(updates));
       if (res.success && res.data) {
         return { ...res, data: mapUserFromApi(res.data) };
       }
