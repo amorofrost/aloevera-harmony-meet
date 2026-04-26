@@ -68,11 +68,13 @@ export const matchingApi = {
     if (isApiMode()) {
       const res = await apiClient.get<any[]>('/api/v1/users');
       if (res.success && res.data) {
-        return { ...res, data: res.data.map(mapUserFromApi) };
+        const myId = getCurrentUserIdFromToken();
+        return { ...res, data: res.data.filter((u: any) => u.id !== myId).map(mapUserFromApi) };
       }
       return res as ApiResponse<User[]>;
     }
-    return mockSuccess(mockSearchProfiles);
+    const myId = getCurrentUserIdFromToken();
+    return mockSuccess(mockSearchProfiles.filter(u => u.id !== myId));
   },
 
   async sendLike(toUserId: string): Promise<ApiResponse<{ isMatch: boolean }>> {
