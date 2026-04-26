@@ -1,5 +1,5 @@
 export function safeRedirectFrom(redirect: string): string {
-  return redirect.startsWith('/') && !redirect.includes('://') ? redirect : '';
+  return redirect.startsWith('/') && !redirect.startsWith('//') && !redirect.includes('://') ? redirect : '';
 }
 
 export function inviteCodeFrom(safeRedirect: string): string {
