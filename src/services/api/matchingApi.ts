@@ -5,7 +5,7 @@ import {
   mockMatches, mockSentLikes, mockReceivedLikes,
   type MatchWithUser, type SentLikeWithUser, type ReceivedLikeWithUser,
 } from '@/data/mockProfiles';
-import { usersApi } from './usersApi';
+import { usersApi, mapUserFromApi } from './usersApi';
 
 // Decode the stored JWT to get the current user's ID without an extra API call.
 // .NET serialises ClaimTypes.NameIdentifier as "nameid" in the JWT payload.
@@ -25,42 +25,6 @@ export function getCurrentUserIdFromToken(): string {
 
 function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
-}
-
-function mapGender(g: string): User['gender'] {
-  const map: Record<string, User['gender']> = {
-    male: 'male', female: 'female',
-    nonBinary: 'non-binary', preferNotToSay: 'prefer-not-to-say',
-  };
-  return map[g] ?? 'prefer-not-to-say';
-}
-
-function mapUserFromApi(dto: any): User {
-  return {
-    id: dto.id,
-    name: dto.name,
-    age: dto.age,
-    bio: dto.bio ?? '',
-    location: dto.location ?? '',
-    gender: mapGender(dto.gender),
-    profileImage: dto.profileImage ?? '',
-    images: dto.images ?? [],
-    lastSeen: new Date(dto.lastSeen),
-    isOnline: dto.isOnline ?? false,
-    preferences: {
-      ageRange: [dto.preferences?.ageRangeMin ?? 18, dto.preferences?.ageRangeMax ?? 65],
-      maxDistance: dto.preferences?.maxDistance ?? 50,
-      showMe: dto.preferences?.showMe ?? 'everyone',
-    },
-    settings: {
-      profileVisibility: dto.settings?.profileVisibility ?? 'public',
-      anonymousLikes: dto.settings?.anonymousLikes ?? false,
-      language: dto.settings?.language ?? 'ru',
-      notifications: dto.settings?.notifications ?? true,
-    },
-    rank: (dto.rank ?? 'novice') as User['rank'],
-    staffRole: (dto.staffRole ?? 'none') as User['staffRole'],
-  };
 }
 
 export const matchingApi = {

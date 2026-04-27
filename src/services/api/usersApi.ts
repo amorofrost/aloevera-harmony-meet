@@ -12,7 +12,7 @@ function mapGender(g: string): User['gender'] {
   return map[g] ?? 'prefer-not-to-say';
 }
 
-function mapUserFromApi(dto: any): User {
+export function mapUserFromApi(dto: any): User {
   return {
     id: dto.id,
     name: dto.name,
