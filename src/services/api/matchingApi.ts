@@ -27,10 +27,34 @@ function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
 }
 
+// Module-level promise cache — getMatches/getSentLikes/getReceivedLikes are called
+// concurrently on page load so they all share one network request.
+let _allUsersFetch: Promise<User[]> | null = null;
+let _allUsersFetchAt = 0;
+const ALL_USERS_TTL = 30_000;
+
+async function getAllUsers(): Promise<User[]> {
+  const now = Date.now();
+  if (_allUsersFetch && now - _allUsersFetchAt < ALL_USERS_TTL) return _allUsersFetch;
+  _allUsersFetchAt = now;
+  _allUsersFetch = usersApi.getUsers(0, 500).then(res =>
+    res.success && res.data ? res.data : []
+  );
+  return _allUsersFetch;
+}
+
+const UNKNOWN_USER_STUB = (id: string): User => ({
+  id, name: 'Пользователь', age: 0, bio: '', location: '', gender: 'prefer-not-to-say' as const,
+  profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
+  preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
+  settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
+  rank: 'novice' as const, staffRole: 'none' as const,
+});
+
 export const matchingApi = {
   async getSearchProfiles(): Promise<ApiResponse<User[]>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>('/api/v1/users');
+      const res = await apiClient.get<any[]>('/api/v1/users?skip=0&take=50');
       if (res.success && res.data) {
         const myId = getCurrentUserIdFromToken();
         return { ...res, data: res.data.filter((u: any) => u.id !== myId).map(mapUserFromApi) };
@@ -53,19 +77,12 @@ export const matchingApi = {
       const res = await apiClient.get<any[]>('/api/v1/matching/matches');
       if (!res.success || !res.data) return res as ApiResponse<MatchWithUser[]>;
 
-      const allUsersRes = await usersApi.getUsers(0, 500);
-      const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
+      const allUsers = await getAllUsers();
       const myId = getCurrentUserIdFromToken();
 
       const enriched: MatchWithUser[] = res.data.map((dto: any): MatchWithUser => {
         const otherUserId = (dto.users as string[]).find(id => id !== myId) ?? '';
-        const otherUser = allUsers.find(u => u.id === otherUserId) ?? {
-          id: otherUserId, name: 'Пользователь', age: 0, bio: '', location: '', gender: 'prefer-not-to-say' as const,
-          profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
-          preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
-          settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
-          rank: 'novice' as const, staffRole: 'none' as const,
-        };
+        const otherUser = allUsers.find(u => u.id === otherUserId) ?? UNKNOWN_USER_STUB(otherUserId);
         const match: Match = {
           id: dto.id,
           users: dto.users as [string, string],
@@ -84,17 +101,10 @@ export const matchingApi = {
       const res = await apiClient.get<any[]>('/api/v1/matching/likes/sent');
       if (!res.success || !res.data) return res as ApiResponse<SentLikeWithUser[]>;
 
-      const allUsersRes = await usersApi.getUsers(0, 500);
-      const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
+      const allUsers = await getAllUsers();
 
       const enriched: SentLikeWithUser[] = res.data.map((dto: any): SentLikeWithUser => {
-        const toUser = allUsers.find(u => u.id === dto.toUserId) ?? {
-          id: dto.toUserId, name: 'Пользователь', age: 0, bio: '', location: '', gender: 'prefer-not-to-say' as const,
-          profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
-          preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
-          settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
-          rank: 'novice' as const, staffRole: 'none' as const,
-        };
+        const toUser = allUsers.find(u => u.id === dto.toUserId) ?? UNKNOWN_USER_STUB(dto.toUserId);
         const like: Like = {
           id: dto.id, fromUserId: dto.fromUserId, toUserId: dto.toUserId,
           createdAt: new Date(dto.createdAt), isMatch: dto.isMatch,
@@ -112,17 +122,10 @@ export const matchingApi = {
       const res = await apiClient.get<any[]>('/api/v1/matching/likes/received');
       if (!res.success || !res.data) return res as ApiResponse<ReceivedLikeWithUser[]>;
 
-      const allUsersRes = await usersApi.getUsers(0, 500);
-      const allUsers: User[] = (allUsersRes.success && allUsersRes.data) ? allUsersRes.data : [];
+      const allUsers = await getAllUsers();
 
       const enriched: ReceivedLikeWithUser[] = res.data.map((dto: any): ReceivedLikeWithUser => {
-        const fromUser = allUsers.find(u => u.id === dto.fromUserId) ?? {
-          id: dto.fromUserId, name: 'Пользователь', age: 0, bio: '', location: '', gender: 'prefer-not-to-say' as const,
-          profileImage: '', images: [], lastSeen: new Date(), isOnline: false,
-          preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
-          settings: { profileVisibility: 'public' as const, anonymousLikes: false, language: 'ru' as const, notifications: true },
-          rank: 'novice' as const, staffRole: 'none' as const,
-        };
+        const fromUser = allUsers.find(u => u.id === dto.fromUserId) ?? UNKNOWN_USER_STUB(dto.fromUserId);
         const like: Like = {
           id: dto.id, fromUserId: dto.fromUserId, toUserId: dto.toUserId,
           createdAt: new Date(dto.createdAt), isMatch: dto.isMatch,
