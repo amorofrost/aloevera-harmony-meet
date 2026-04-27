@@ -322,8 +322,46 @@ The swipe card on the Friends/Search page previously showed minimal info with a 
 
 ---
 
+## ~~April 27 — Event badges and Instagram missing on Search/swipe page~~ ✅ RESOLVED
+**Resolved**: April 27, 2026
+
+When viewing a profile via `/friends?userId=…` or a forum reply link, the full profile (Instagram handle + event attendance badges) was shown correctly. The Search tab swipe deck showed neither.
+
+**Root cause (two-part)**:
+1. `matchingApi.ts` had a stale local copy of `mapUserFromApi` that was missing the `instagramHandle` and `eventsAttended` fields.
+2. `GET /api/v1/users` (list) never called `GetEventsAttendedByUserAsync`, so `AttendedEvents` was always `null` in list responses. Only `GET /api/v1/users/{id}` enriched attendance.
+
+**What was changed**:
+- `matchingApi.ts`: removed ~35-line duplicate mapper; now imports `mapUserFromApi` from `usersApi.ts`
+- `UsersController.GetUsers`: added `Task.WhenAll` enrichment loop matching what `GetUser(id)` already did
+
+---
+
+## ~~April 27 — 3 redundant GET /api/v1/users calls on Friends page load~~ ✅ RESOLVED
+**Resolved**: April 27, 2026
+
+`matchingApi.getMatches()`, `getSentLikes()`, and `getReceivedLikes()` each independently called `usersApi.getUsers(0, 500)` to fetch all users for client-side enrichment. All three fired concurrently on Friends page load, producing three identical network requests.
+
+**What was changed**:
+- Added a module-level promise cache (`_allUsersFetch`) with a 30-second TTL in `matchingApi.ts`
+- The first caller sets the promise; the other two `await` the same promise without making additional requests
+- Also extracted `UNKNOWN_USER_STUB` helper to remove three copies of the same inline fallback object
+
+---
+
+## ~~April 27 — Search swipe deck silently capped at 10 users~~ ✅ RESOLVED
+**Resolved**: April 27, 2026
+
+`matchingApi.getSearchProfiles()` called `GET /api/v1/users` with no query parameters, relying on the backend default of `take=10`. The swipe deck therefore never showed more than 10 accounts.
+
+**What was changed**:
+- `matchingApi.getSearchProfiles()` now explicitly passes `?skip=0&take=50`
+
+---
+
 ## 📝 Changelog
 
+- **April 27, 2026** — Event badges/Instagram missing on search page, redundant user fetches, and search take=10 cap resolved.
 - **April 26, 2026** — External profile photo download (Telegram/Google → Azure Blob), Instagram handle field, unified swipe card profile view, optional age at registration.
 - **April 18, 2026** — PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), UX.10 (SEO metadata) resolved and moved here.
 - **March 20, 2026** — PB.2 (HTTPS) resolved and added to this archive.
