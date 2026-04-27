@@ -25,6 +25,7 @@ services:
       retries: 3
     networks:
       - aloevera-network
+    restart: unless-stopped
     # Note: infrastructure metrics are collected inside each container without Docker APIs.
 
   # Telegram bot (long polling — no inbound port)
@@ -67,6 +68,7 @@ services:
       retries: 3
     networks:
       - aloevera-network
+    restart: unless-stopped
 
 networks:
   aloevera-network:
