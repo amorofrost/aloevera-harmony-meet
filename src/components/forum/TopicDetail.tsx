@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pin, Send, ThumbsUp, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { forumsApi } from '@/services/api';
-import type { ForumTopicDetail as TopicDetailType } from '@/data/mockForumData';
+import type { ForumTopicDetail as TopicDetailType, ForumReply } from '@/data/mockForumData';
 import { BbcodeRenderer } from '@/components/ui/bbcode-renderer';
 import { BbcodeToolbar } from '@/components/ui/bbcode-toolbar';
 import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
@@ -22,6 +22,7 @@ import { UserBadges } from '@/components/ui/user-badges';
 import { AttendedEventBadges } from '@/components/ui/attended-event-badges';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 interface TopicDetailProps {
   topicId: string;
@@ -32,6 +33,14 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [topic, setTopic] = useState<TopicDetailType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [replies, setReplies]               = useState<ForumReply[]>([]);
+  const [replyCursor, setReplyCursor]       = useState<string | null>(null);
+  const [repliesHasMore, setRepliesHasMore] = useState(false);
+  const [repliesTotal, setRepliesTotal]     = useState<number | null>(null);
+  const [isLoadingMore, setIsLoadingMore]   = useState(false);
+  const [pendingReplies, setPendingReplies] = useState(0);
+  const pendingItems                        = useRef<ForumReply[]>([]);
+  const isAtLiveEdge                        = useRef(true);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const replyForm = useForm<ReplySchema>({
@@ -45,12 +54,41 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const res = await forumsApi.getTopic(topicId);
-      if (res.success && res.data) setTopic(res.data);
+      const [topicRes, repliesRes] = await Promise.all([
+        forumsApi.getTopic(topicId),
+        forumsApi.getReplies(topicId),
+      ]);
+      if (topicRes.success && topicRes.data) {
+        setTopic(topicRes.data as unknown as TopicDetailType);
+      }
+      if (repliesRes.success && repliesRes.data) {
+        setReplies(repliesRes.data.items);
+        setReplyCursor(repliesRes.data.nextCursor ?? null);
+        setRepliesHasMore(repliesRes.data.hasMore);
+        setRepliesTotal(repliesRes.data.total ?? null);
+      }
       setIsLoading(false);
     };
     load();
   }, [topicId]);
+
+  const loadMoreReplies = useCallback(async () => {
+    if (!repliesHasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    const res = await forumsApi.getReplies(topicId, replyCursor ?? undefined);
+    if (res.success && res.data) {
+      setReplies(prev => [...prev, ...res.data!.items]);
+      setReplyCursor(res.data.nextCursor ?? null);
+      setRepliesHasMore(res.data.hasMore);
+    }
+    setIsLoadingMore(false);
+  }, [topicId, replyCursor, repliesHasMore, isLoadingMore]);
+
+  const { sentinelRef: loadMoreSentinelRef } = useInfiniteScroll({
+    hasMore: repliesHasMore,
+    isLoadingMore,
+    onLoadMore: loadMoreReplies,
+  });
 
   const handleSendReply = replyForm.handleSubmit(async (data) => {
     if (isSending) return;
@@ -66,12 +104,9 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
         showApiError(res, 'Failed to post reply');
         return;
       }
-      if (res.data && topic) {
-        setTopic({
-          ...topic,
-          replies: [...topic.replies, res.data],
-          replyCount: topic.replyCount + 1,
-        });
+      if (res.data) {
+        setReplies(prev => [res.data!, ...prev]);
+        setTopic(prev => prev ? { ...prev, replyCount: prev.replyCount + 1 } : prev);
       }
       replyForm.reset();
       setImageFiles([]);
@@ -180,7 +215,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
 
       {/* Replies */}
       <div className="space-y-3">
-        {topic.replies.map((reply) => (
+        {replies.map((reply) => (
           <Card key={reply.id} className="profile-card">
             <CardContent className="p-4">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
@@ -204,6 +239,16 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
             </CardContent>
           </Card>
         ))}
+        {repliesHasMore && (
+          <div ref={loadMoreSentinelRef} className="py-3 text-center">
+            {isLoadingMore && <div className="text-xs text-muted-foreground">Загрузка...</div>}
+          </div>
+        )}
+        {repliesTotal !== null && (
+          <p className="text-xs text-muted-foreground text-center py-1">
+            Показано {replies.length} из {repliesTotal} ответов
+          </p>
+        )}
       </div>
 
       {/* Reply input */}
