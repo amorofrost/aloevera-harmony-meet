@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import type { MessageDto } from '@/types/chat';
 import { matchingApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
 import { chatsApi } from '@/services/api/chatsApi';
 import { useChatSignalR } from '@/hooks/useChatSignalR';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
 import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -51,9 +52,14 @@ const Friends = () => {
 
   // Chat message state
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<MessageDto[]>([]);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [messagePage, setMessagePage] = useState(1);
+  const [messages, setMessages]                   = useState<MessageDto[]>([]);
+  const [messageCursor, setMessageCursor]         = useState<string | null>(null);
+  const [messagesHasMore, setMessagesHasMore]     = useState(false);
+  const [messagesLoading, setMessagesLoading]     = useState(false);
+  const [isLoadingMoreMessages, setIsLoadingMore] = useState(false);
+  const [pendingMessages, setPendingMessages]     = useState(0);
+  const isAtLiveEdge                              = useRef(true);
+  const pendingItems                              = useRef<MessageDto[]>([]);
 
   // SignalR live updates
   const { sendMessage: signalRSend, isConnected, onEvent } = useChatSignalR(
@@ -64,9 +70,14 @@ const Friends = () => {
     if (!activeChatId) return;
     return onEvent('MessageReceived', (msg: unknown) => {
       const incoming = msg as MessageDto;
-      setMessages(prev =>
-        prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]
-      );
+      if (isAtLiveEdge.current) {
+        setMessages(prev => prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]);
+      } else {
+        if (!pendingItems.current.some(m => m.id === incoming.id)) {
+          pendingItems.current.push(incoming);
+          setPendingMessages(prev => prev + 1);
+        }
+      }
     });
   }, [activeChatId, onEvent]);
 
@@ -120,18 +131,41 @@ const Friends = () => {
     if (!selectedChat) {
       setActiveChatId(null);
       setMessages([]);
+      setMessageCursor(null);
+      setMessagesHasMore(false);
       return;
     }
     setActiveChatId(selectedChat);
     setMessagesLoading(true);
-    chatsApi.getMessages(selectedChat, 1).then(msgsResult => {
+    chatsApi.getMessages(selectedChat).then(msgsResult => {
       if (msgsResult.success && msgsResult.data) {
-        setMessages(msgsResult.data);
-        setMessagePage(1);
+        // Backend returns newest-first; reverse for oldest-at-top display
+        setMessages([...msgsResult.data.items].reverse());
+        setMessageCursor(msgsResult.data.nextCursor ?? null);
+        setMessagesHasMore(msgsResult.data.hasMore);
       }
       setMessagesLoading(false);
     });
   }, [selectedChat]);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (!activeChatId || !messagesHasMore || isLoadingMoreMessages) return;
+    setIsLoadingMore(true);
+    const res = await chatsApi.getMessages(activeChatId, messageCursor ?? undefined);
+    if (res.success && res.data) {
+      // Newer items are already in `messages`; prepend the older fetched items
+      setMessages(prev => [...[...res.data!.items].reverse(), ...prev]);
+      setMessageCursor(res.data.nextCursor ?? null);
+      setMessagesHasMore(res.data.hasMore);
+    }
+    setIsLoadingMore(false);
+  }, [activeChatId, messageCursor, messagesHasMore, isLoadingMoreMessages]);
+
+  const { sentinelRef: loadOlderSentinelRef } = useInfiniteScroll({
+    hasMore: messagesHasMore,
+    isLoadingMore: isLoadingMoreMessages,
+    onLoadMore: loadOlderMessages,
+  });
 
   // Load specific user profile when userId param is present
   useEffect(() => {
@@ -239,20 +273,13 @@ const Friends = () => {
         <div className="flex-1 overflow-y-auto relative z-10">
           <div className="p-4 space-y-4 max-w-3xl mx-auto w-full">
           <div className="text-center"><p className="text-sm text-muted-foreground">Начало переписки с {chat.otherUser.name}</p></div>
-          {activeChatId && messagePage > 0 && (
-            <button
-              className="text-xs text-muted-foreground underline py-2"
-              onClick={async () => {
-                const next = messagePage + 1;
-                const r = await chatsApi.getMessages(activeChatId!, next);
-                if (r.success && r.data && r.data.length > 0) {
-                  setMessages(prev => [...r.data!, ...prev]);
-                  setMessagePage(next);
-                }
-              }}
-            >
-              Load older messages
-            </button>
+          {/* Load-older sentinel — triggers when scrolled to top */}
+          {messagesHasMore && (
+            <div ref={loadOlderSentinelRef} className="py-2 text-center">
+              {isLoadingMoreMessages && (
+                <div className="text-xs text-muted-foreground">Загрузка...</div>
+              )}
+            </div>
           )}
           {messagesLoading ? (
             <div className="text-center py-4 text-muted-foreground text-sm">Загрузка сообщений...</div>
@@ -276,6 +303,40 @@ const Friends = () => {
                 </div>
               </div>
             )
+          )}
+          {/* Live-edge sentinel — detect if user is at bottom */}
+          <div
+            ref={(el) => {
+              if (el) {
+                const liveObserver = new IntersectionObserver(
+                  ([entry]) => { isAtLiveEdge.current = entry.isIntersecting; },
+                  { threshold: 0.1 }
+                );
+                liveObserver.observe(el);
+              }
+            }}
+          />
+          {/* New-message badge */}
+          {pendingMessages > 0 && (
+            <div className="sticky bottom-2 flex justify-center">
+              <button
+                className="bg-primary text-primary-foreground text-xs rounded-full px-3 py-1 shadow"
+                onClick={() => {
+                  setMessages(prev => {
+                    const combined = [...prev];
+                    for (const m of pendingItems.current) {
+                      if (!combined.some(x => x.id === m.id)) combined.push(m);
+                    }
+                    return combined;
+                  });
+                  pendingItems.current = [];
+                  setPendingMessages(0);
+                  isAtLiveEdge.current = true;
+                }}
+              >
+                ↓ {pendingMessages} новых
+              </button>
+            </div>
           )}
           </div>
         </div>
