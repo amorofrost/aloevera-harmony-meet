@@ -1,6 +1,7 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import { mockForumSections, mockTopicDetails, type ForumSection, type ForumTopic, type ForumTopicDetail, type ForumReply } from '@/data/mockForumData';
 import type { EventDiscussionSection, ForumMinRank } from '@/types/forum';
+import type { PagedResult } from '@/types';
 import { eventsApi } from './eventsApi';
 import { getCurrentUserIdFromToken } from './matchingApi';
 import type { UserRank, StaffRole } from '@/types/user';
@@ -138,15 +139,38 @@ export const forumsApi = {
     return { success: true, data, timestamp: new Date().toISOString() };
   },
 
-  async getEventDiscussionTopics(eventId: string): Promise<ApiResponse<ForumTopic[]>> {
+  async getEventDiscussionTopics(eventId: string, page = 1): Promise<ApiResponse<PagedResult<ForumTopic>>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>(`/api/v1/forum/event-discussions/${encodeURIComponent(eventId)}/topics`);
+      const res = await apiClient.get<any>(`/api/v1/forum/event-discussions/${encodeURIComponent(eventId)}/topics?page=${page}`);
       if (res.success && res.data) {
-        return { ...res, data: res.data.map(mapTopicFromApi) };
+        return {
+          ...res,
+          data: {
+            items:      (res.data.items ?? []).map(mapTopicFromApi),
+            pageSize:   res.data.pageSize ?? 25,
+            hasMore:    res.data.hasMore ?? false,
+            nextCursor: res.data.nextCursor ?? null,
+            total:      res.data.total ?? null,
+          },
+        };
       }
-      return res as ApiResponse<ForumTopic[]>;
+      return res as ApiResponse<PagedResult<ForumTopic>>;
     }
-    return { success: true, data: [], timestamp: new Date().toISOString() };
+    const topics: ForumTopic[] = [];
+    const PAGE = page === 1 ? 25 : 15;
+    const all = [...topics].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.lastActivity.getTime() - a.lastActivity.getTime();
+    });
+    const offset = page === 1 ? 0 : 25 + (page - 2) * 15;
+    const batch = all.slice(offset, offset + PAGE + 1);
+    return mockSuccess<PagedResult<ForumTopic>>({
+      items:    batch.slice(0, PAGE),
+      pageSize: PAGE,
+      hasMore:  batch.length > PAGE,
+      total:    all.length,
+    });
   },
 
   async getSections(): Promise<ApiResponse<ForumSection[]>> {
@@ -173,27 +197,45 @@ export const forumsApi = {
     return mockSuccess(mockForumSections);
   },
 
-  async getTopics(sectionId: string): Promise<ApiResponse<ForumTopic[]>> {
+  async getTopics(sectionId: string, page = 1): Promise<ApiResponse<PagedResult<ForumTopic>>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>(`/api/v1/forum/sections/${sectionId}/topics`);
+      const res = await apiClient.get<any>(`/api/v1/forum/sections/${sectionId}/topics?page=${page}`);
       if (res.success && res.data) {
-        return { ...res, data: res.data.map(mapTopicFromApi) };
+        return {
+          ...res,
+          data: {
+            items:      (res.data.items ?? []).map(mapTopicFromApi),
+            pageSize:   res.data.pageSize ?? 25,
+            hasMore:    res.data.hasMore ?? false,
+            nextCursor: res.data.nextCursor ?? null,
+            total:      res.data.total ?? null,
+          },
+        };
       }
-      return res as ApiResponse<ForumTopic[]>;
+      return res as ApiResponse<PagedResult<ForumTopic>>;
     }
     const section = mockForumSections.find(s => s.id === sectionId);
-    return mockSuccess(section?.topics ?? []);
+    const all = [...(section?.topics ?? [])].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.lastActivity.getTime() - a.lastActivity.getTime();
+    });
+    const PAGE = page === 1 ? 25 : 15;
+    const offset = page === 1 ? 0 : 25 + (page - 2) * 15;
+    const batch = all.slice(offset, offset + PAGE + 1);
+    return mockSuccess<PagedResult<ForumTopic>>({
+      items:    batch.slice(0, PAGE),
+      pageSize: PAGE,
+      hasMore:  batch.length > PAGE,
+      total:    all.length,
+    });
   },
 
   async getTopic(topicId: string): Promise<ApiResponse<ForumTopicDetail>> {
     if (isApiMode()) {
       const res = await apiClient.get<any>(`/api/v1/forum/topics/${topicId}`);
       if (res.success && res.data) {
-        const repliesRes = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies`);
-        const replies = repliesRes.success && repliesRes.data
-          ? repliesRes.data.map(mapReplyFromApi)
-          : [];
-        return { ...res, data: mapTopicDetailFromApi(res.data, replies) };
+        return { ...res, data: mapTopicDetailFromApi(res.data, []) };
       }
       return res as ApiResponse<ForumTopicDetail>;
     }
@@ -204,16 +246,40 @@ export const forumsApi = {
     return mockSuccess(detail);
   },
 
-  async getReplies(topicId: string): Promise<ApiResponse<ForumReply[]>> {
+  async getReplies(topicId: string, cursor?: string): Promise<ApiResponse<PagedResult<ForumReply>>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies`);
+      const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+      const res = await apiClient.get<any>(`/api/v1/forum/topics/${topicId}/replies${params}`);
       if (res.success && res.data) {
-        return { ...res, data: res.data.map(mapReplyFromApi) };
+        return {
+          ...res,
+          data: {
+            items:      (res.data.items ?? []).map(mapReplyFromApi),
+            pageSize:   res.data.pageSize ?? 20,
+            hasMore:    res.data.hasMore ?? false,
+            nextCursor: res.data.nextCursor ?? null,
+            total:      res.data.total ?? null,
+          },
+        };
       }
-      return res as ApiResponse<ForumReply[]>;
+      return res as ApiResponse<PagedResult<ForumReply>>;
     }
     const detail = mockTopicDetails[topicId];
-    return mockSuccess(detail ? detail.replies : []);
+    const allReplies = detail ? [...detail.replies].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    ) : [];
+    const PAGE = 20;
+    const startIndex = cursor
+      ? allReplies.findIndex(r => r.id === cursor) + 1
+      : 0;
+    const batch = allReplies.slice(startIndex, startIndex + PAGE + 1);
+    return mockSuccess<PagedResult<ForumReply>>({
+      items:      batch.slice(0, PAGE),
+      pageSize:   PAGE,
+      hasMore:    batch.length > PAGE,
+      nextCursor: batch.length > 0 ? batch[Math.min(PAGE, batch.length) - 1].id : null,
+      total:      allReplies.length,
+    });
   },
 
   async createTopic(
