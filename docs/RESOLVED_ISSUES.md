@@ -359,8 +359,40 @@ When viewing a profile via `/friends?userId=…` or a forum reply link, the full
 
 ---
 
+## ~~MCF.6. Pagination on List Views~~ ✅ RESOLVED
+**Resolved**: April 28, 2026
+
+**Impact**: Chat, forum replies, and forum topics loaded full datasets; would degrade at scale.
+
+**What was implemented**:
+
+### Backend (`lovecraft` repo, branch `feature/infinite-scroll-pagination`)
+- `PagedResult<T>` updated with `NextCursor?` (string) and nullable `Total`.
+- `PaginationConfig` added to `AppConfig` with 6 runtime-tunable values seeded in the `appconfig` Azure Table (`pagination` partition): `messages_initial`=30, `messages_batch`=20, `replies_initial`=20, `replies_batch`=15, `topics_initial`=25, `topics_batch`=15.
+- Chat messages and forum replies use `RowKey gt cursor` Azure Table filter (O(pageSize); no full-partition scan). Cursor value is the Azure RowKey.
+- Forum topics use in-memory offset pagination (pinned-first, then `UpdatedAt` desc), returning `Total`.
+- `CachingForumService` topics cache now keyed by `sectionId:page`.
+- `GET /api/v1/chats/{id}/messages` now accepts `?cursor=` and returns `PagedResult<MessageDto>`.
+- `GET /api/v1/forum/topics/{topicId}/replies` now accepts `?cursor=` and returns `PagedResult<ForumReplyDto>`.
+- `GET /api/v1/forum/sections/{sectionId}/topics` now accepts `?page=` and returns `PagedResult<ForumTopicDto>`.
+- `GET /api/v1/forum/event-discussions/{eventId}/topics` now accepts `?page=` and returns `PagedResult<ForumTopicDto>`.
+
+### Frontend (`aloevera-harmony-meet` repo, branch `feature/infinite-scroll-pagination`)
+- `PagedResult<T>` TypeScript interface added to `src/types/index.ts`.
+- `useInfiniteScroll` hook (`src/hooks/useInfiniteScroll.ts`): IntersectionObserver-based sentinel triggering `onLoadMore`; stable callback via `useRef`.
+- `chatsApi.getMessages` and `forumsApi.getReplies`/`getTopics`/`getEventDiscussionTopics` updated to cursor/page params and `PagedResult<T>` returns.
+- `forumsApi.getTopic` no longer fetches replies internally — `TopicDetail.tsx` loads them independently.
+- **`Friends.tsx`**: infinite scroll upward for older chat messages; live-edge badge ("↓ N новых") for real-time SignalR messages when scrolled away from bottom.
+- **`TopicDetail.tsx`**: separate `replies` state; downward infinite scroll; "Загрузка..." sentinel; "Показано N из M ответов" count.
+- **`Talks.tsx`**: separate `sectionTopics` / `eventTopics` pagination state; IntersectionObserver sentinels for both views; `handleTopicCreated` prepends to local state.
+
+**Scope note**: Events, blog, store, and user-search list views still fetch all items at once — those are lower-priority bounded sets. Only the three unbounded surfaces (messages, replies, topics) were paginated.
+
+---
+
 ## 📝 Changelog
 
+- **April 28, 2026** — MCF.6 (pagination/infinite scroll) resolved for chat messages, forum replies, and forum topics. See entry above.
 - **April 27, 2026** — Event badges/Instagram missing on search page, redundant user fetches, and search take=10 cap resolved.
 - **April 26, 2026** — External profile photo download (Telegram/Google → Azure Blob), Instagram handle field, unified swipe card profile view, optional age at registration.
 - **April 18, 2026** — PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), UX.10 (SEO metadata) resolved and moved here.

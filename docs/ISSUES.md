@@ -47,12 +47,9 @@ There are no notifications for: new match, received like, reply to a forum post 
 
 ---
 
-### MCF.6. Pagination on List Views
-**Impact**: All list views load full datasets; will degrade at scale
+### ~~MCF.6. Pagination on List Views~~ ✅ RESOLVED (April 28, 2026)
 
-Events, blog posts, forum topics, store items, and user search results all fetch everything at once. No `page`/`pageSize` parameters are used on the frontend.
-
-**Resolution**: Add `?page=&pageSize=` query parameters to all list API calls. Use the existing `PagedResult<T>` model already defined in `Lovecraft.Common`. Implement "Load more" buttons or infinite scroll on each list view.
+Resolved for the three high-traffic surfaces: chat messages (`Friends.tsx`), forum replies (`TopicDetail.tsx`), and forum topics (`Talks.tsx`). See [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md) for details.
 
 ---
 
