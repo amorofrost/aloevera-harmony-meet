@@ -3,6 +3,7 @@ import { apiClient } from './apiClient';
 import { mockPrivateChats, mockChatUsers } from '@/data/mockChats';
 import type { ChatDto, MessageDto, PrivateChatWithUser } from '@/types/chat';
 import type { User } from '@/types/user';
+import type { PagedResult } from '@/types';
 
 // Suppress unused import warning — mockChatUsers may be used in future mock helpers
 void (mockChatUsers as unknown as Record<string, User>);
@@ -19,11 +20,12 @@ export const chatsApi = {
     return apiClient.get<ChatDto[]>('/api/v1/chats');
   },
 
-  async getMessages(chatId: string, page = 1) {
+  async getMessages(chatId: string, cursor?: string) {
     if (!isApiMode()) {
-      return mockSuccess([] as MessageDto[]);
+      return mockSuccess<PagedResult<MessageDto>>({ items: [], pageSize: 30, hasMore: false });
     }
-    return apiClient.get<MessageDto[]>(`/api/v1/chats/${chatId}/messages?page=${page}`);
+    const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+    return apiClient.get<PagedResult<MessageDto>>(`/api/v1/chats/${chatId}/messages${params}`);
   },
 
   async getOrCreateChat(targetUserId: string) {
