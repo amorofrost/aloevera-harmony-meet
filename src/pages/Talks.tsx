@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MessageSquare, ArrowLeft, Calendar, ExternalLink, Pin, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { meetsLevel } from '@/lib/acl';
 import type { ForumSection, ForumTopic, ForumTopicDetail } from '@/data/mockForumData';
 import type { EventDiscussionSection } from '@/types/forum';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import TopicDetail from '@/components/forum/TopicDetail';
 import { CreateTopicModal } from '@/components/forum/CreateTopicModal';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -37,6 +38,20 @@ const Talks = () => {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
+  // Paginated section topics state
+  const [sectionTopics, setSectionTopics]         = useState<ForumTopic[]>([]);
+  const [sectionTopicPage, setSectionTopicPage]   = useState(1);
+  const [sectionTopicsHasMore, setSectionHasMore] = useState(false);
+  const [sectionTopicsTotal, setSectionTotal]     = useState<number | null>(null);
+  const [loadingTopics, setLoadingTopics]         = useState(false);
+  const [loadingMoreTopics, setLoadingMoreTopics] = useState(false);
+
+  // Paginated event topics state
+  const [eventTopicsPage, setEventTopicsPage]         = useState(1);
+  const [eventTopicsHasMore, setEventHasMore]         = useState(false);
+  const [eventTopicsTotal, setEventTotal]             = useState<number | null>(null);
+  const [loadingMoreEventTopics, setLoadingMoreEvent] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
@@ -61,17 +76,51 @@ const Talks = () => {
     };
   }, [activeTab]);
 
+  // Load page 1 of section topics when selectedSection changes
+  useEffect(() => {
+    if (!selectedSection) {
+      setSectionTopics([]);
+      setSectionTopicPage(1);
+      setSectionHasMore(false);
+      setSectionTotal(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingTopics(true);
+    forumsApi.getTopics(selectedSection, 1).then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data) {
+        setSectionTopics(res.data.items);
+        setSectionTopicPage(1);
+        setSectionHasMore(res.data.hasMore);
+        setSectionTotal(res.data.total ?? null);
+      }
+      setLoadingTopics(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedSection]);
+
+  // Load page 1 of event discussion topics when eventSection changes
   useEffect(() => {
     if (activeTab !== 'events' || !eventSection) {
       setEventTopics([]);
+      setEventTopicsPage(1);
+      setEventHasMore(false);
+      setEventTotal(null);
       return;
     }
     let cancelled = false;
     setLoadingEventTopics(true);
-    forumsApi.getEventDiscussionTopics(eventSection).then((res) => {
+    forumsApi.getEventDiscussionTopics(eventSection, 1).then((res) => {
       if (cancelled) return;
-      if (res.success && res.data) setEventTopics(res.data);
-      else setEventTopics([]);
+      if (res.success && res.data) {
+        setEventTopics(res.data.items);
+        setEventTopicsPage(1);
+        setEventHasMore(res.data.hasMore);
+        setEventTotal(res.data.total ?? null);
+      } else {
+        setEventTopics([]);
+      }
       setLoadingEventTopics(false);
     });
     return () => {
@@ -90,27 +139,72 @@ const Talks = () => {
     return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
   };
 
+  const loadMoreSectionTopics = useCallback(async () => {
+    if (!selectedSection || !sectionTopicsHasMore || loadingMoreTopics) return;
+    const nextPage = sectionTopicPage + 1;
+    setLoadingMoreTopics(true);
+    try {
+      const res = await forumsApi.getTopics(selectedSection, nextPage);
+      if (res.success && res.data) {
+        setSectionTopics((prev) => [...prev, ...res.data!.items]);
+        setSectionTopicPage(nextPage);
+        setSectionHasMore(res.data.hasMore);
+      }
+    } finally {
+      setLoadingMoreTopics(false);
+    }
+  }, [selectedSection, sectionTopicPage, sectionTopicsHasMore, loadingMoreTopics]);
+
+  const loadMoreEventTopics = useCallback(async () => {
+    if (!eventTopicsHasMore || loadingMoreEventTopics || !eventSection) return;
+    const nextPage = eventTopicsPage + 1;
+    setLoadingMoreEvent(true);
+    try {
+      const res = await forumsApi.getEventDiscussionTopics(eventSection, nextPage);
+      if (res.success && res.data) {
+        setEventTopics((prev) => [...prev, ...res.data!.items]);
+        setEventTopicsPage(nextPage);
+        setEventHasMore(res.data.hasMore);
+      }
+    } finally {
+      setLoadingMoreEvent(false);
+    }
+  }, [eventSection, eventTopicsPage, eventTopicsHasMore, loadingMoreEventTopics]);
+
+  const { sentinelRef: sectionTopicsSentinel } = useInfiniteScroll({
+    hasMore: sectionTopicsHasMore,
+    isLoadingMore: loadingMoreTopics,
+    onLoadMore: loadMoreSectionTopics,
+  });
+
+  const { sentinelRef: eventTopicsSentinel } = useInfiniteScroll({
+    hasMore: eventTopicsHasMore,
+    isLoadingMore: loadingMoreEventTopics,
+    onLoadMore: loadMoreEventTopics,
+  });
+
   const handleTopicCreated = (topic: ForumTopicDetail) => {
+    setSectionTopics((prev) => [
+      {
+        id:            topic.id,
+        sectionId:     selectedSection!,
+        title:         topic.title,
+        authorName:    topic.authorName ?? '',
+        replyCount:    0,
+        lastActivity:  topic.createdAt instanceof Date ? topic.createdAt : new Date(topic.createdAt ?? Date.now()),
+        isPinned:      false,
+        preview:       topic.content ? topic.content.substring(0, 100) : '',
+        noviceVisible: topic.noviceVisible ?? true,
+        noviceCanReply: topic.noviceCanReply ?? true,
+      },
+      ...prev,
+    ]);
+    setSectionTotal((prev) => (prev !== null ? prev + 1 : null));
+    // Also update the section topicCount in forumSections
     setForumSections((prev) =>
       prev.map((section) => {
         if (section.id !== selectedSection) return section;
-        return {
-          ...section,
-          topicCount: section.topicCount + 1,
-          topics: [
-            {
-              id: topic.id,
-              sectionId: selectedSection!,
-              title: topic.title,
-              authorName: topic.authorName,
-              replyCount: 0,
-              lastActivity: new Date(topic.createdAt),
-              isPinned: false,
-              preview: topic.content.substring(0, 100),
-            },
-            ...section.topics,
-          ],
-        };
+        return { ...section, topicCount: section.topicCount + 1 };
       })
     );
     setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id });
@@ -252,40 +346,50 @@ const Talks = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {currentSection?.topics
-                  .sort((a, b) => {
-                    if (a.isPinned && !b.isPinned) return -1;
-                    if (!a.isPinned && b.isPinned) return 1;
-                    return b.lastActivity.getTime() - a.lastActivity.getTime();
-                  })
-                  .map((topic) => (
-                    <Card
-                      key={topic.id}
-                      className="profile-card cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() =>
-                        setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id })
-                      }
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              {topic.isPinned && <Pin className="w-3 h-3 text-primary" />}
-                              <h4 className="font-semibold truncate">{topic.title}</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{topic.preview}</p>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                              <span>{topic.authorName}</span>
-                              <span>·</span>
-                              <span>{topic.replyCount} ответов</span>
-                              <span>·</span>
-                              <span>{formatDate(topic.lastActivity)}</span>
+                {loadingTopics ? (
+                  <div className="text-center py-12 text-muted-foreground">Загрузка тем...</div>
+                ) : (
+                  <>
+                    {sectionTopicsTotal !== null && (
+                      <p className="text-sm text-muted-foreground">{sectionTopicsTotal} тем</p>
+                    )}
+                    {sectionTopics.map((topic) => (
+                      <Card
+                        key={topic.id}
+                        className="profile-card cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() =>
+                          setSearchParams({ tab: 'forum', section: selectedSection!, topic: topic.id })
+                        }
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                {topic.isPinned && <Pin className="w-3 h-3 text-primary" />}
+                                <h4 className="font-semibold truncate">{topic.title}</h4>
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{topic.preview}</p>
+                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                <span>{topic.authorName}</span>
+                                <span>·</span>
+                                <span>{topic.replyCount} ответов</span>
+                                <span>·</span>
+                                <span>{formatDate(topic.lastActivity)}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {sectionTopicsHasMore && (
+                      <div ref={sectionTopicsSentinel} className="py-3 text-center">
+                        {loadingMoreTopics && (
+                          <div className="text-xs text-muted-foreground">Загрузка...</div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </TabsContent>
@@ -308,45 +412,49 @@ const Talks = () => {
                       Пока нет тем в этом обсуждении.
                     </p>
                   )}
-                  {eventTopics
-                    .sort((a, b) => {
-                      if (a.isPinned && !b.isPinned) return -1;
-                      if (!a.isPinned && b.isPinned) return 1;
-                      return b.lastActivity.getTime() - a.lastActivity.getTime();
-                    })
-                    .map((topic) => (
-                      <Card
-                        key={topic.id}
-                        className="profile-card cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() =>
-                          setSearchParams({
-                            tab: 'events',
-                            eventSection,
-                            topic: topic.id,
-                          })
-                        }
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <Calendar className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                {topic.isPinned && <Pin className="w-3 h-3 text-primary" />}
-                                <h4 className="font-semibold truncate">{topic.title}</h4>
-                              </div>
-                              <p className="text-sm text-muted-foreground line-clamp-1">{topic.preview}</p>
-                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                                <span>{topic.authorName}</span>
-                                <span>·</span>
-                                <span>{topic.replyCount} ответов</span>
-                                <span>·</span>
-                                <span>{formatDate(topic.lastActivity)}</span>
-                              </div>
+                  {eventTopicsTotal !== null && eventTopics.length > 0 && (
+                    <p className="text-sm text-muted-foreground">{eventTopicsTotal} тем</p>
+                  )}
+                  {eventTopics.map((topic) => (
+                    <Card
+                      key={topic.id}
+                      className="profile-card cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() =>
+                        setSearchParams({
+                          tab: 'events',
+                          eventSection: eventSection!,
+                          topic: topic.id,
+                        })
+                      }
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <Calendar className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {topic.isPinned && <Pin className="w-3 h-3 text-primary" />}
+                              <h4 className="font-semibold truncate">{topic.title}</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-1">{topic.preview}</p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                              <span>{topic.authorName}</span>
+                              <span>·</span>
+                              <span>{topic.replyCount} ответов</span>
+                              <span>·</span>
+                              <span>{formatDate(topic.lastActivity)}</span>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {eventTopicsHasMore && (
+                    <div ref={eventTopicsSentinel} className="py-3 text-center">
+                      {loadingMoreEventTopics && (
+                        <div className="text-xs text-muted-foreground">Загрузка...</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             ) : (
