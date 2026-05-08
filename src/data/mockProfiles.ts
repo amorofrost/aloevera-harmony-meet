@@ -1,4 +1,4 @@
-import type { User, Match, Like } from '@/types/user';
+import type { User, Match, Like, PromptAnswer } from '@/types/user';
 import { mockSongs } from './mockSongs';
 import { mockEvents } from './mockEvents';
 
@@ -8,22 +8,50 @@ export const mockSearchProfiles: User[] = [
     bio: 'Обожаю музыку AloeVera и концерты под открытым небом ❤️',
     location: 'Москва', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
-    images: [], lastSeen: new Date(), isOnline: true,
+    images: [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
+    ],
+    lastSeen: new Date(), isOnline: true,
     eventsAttended: [mockEvents[0]],
     favoriteSong: mockSongs[0],
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
     rank: 'novice', staffRole: 'none',
+    prompts: [
+      {
+        promptId: 'concert_memory',
+        answer: 'Лучший момент — это когда весь зал поёт припев «Давайте разговаривать»',
+      },
+      {
+        promptId: 'weekend',
+        answer: 'Идеально провести выходные на концерте или в компании единомышленников',
+      },
+    ] as PromptAnswer[],
   },
   {
     id: '2', name: 'Дмитрий', age: 28,
     bio: 'Музыкант, фанат AloeVera с первого альбома 🎸',
     location: 'Санкт-Петербург', gender: 'male',
     profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
-    images: [], lastSeen: new Date(), isOnline: false,
+    images: [
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
+    ],
+    lastSeen: new Date(), isOnline: false,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
     settings: { profileVisibility: 'public', anonymousLikes: false, language: 'ru', notifications: true },
     rank: 'novice', staffRole: 'none',
+    prompts: [
+      {
+        promptId: 'instrument',
+        answer: 'На гитаре, как и все остальные после первого альбома',
+      },
+      {
+        promptId: 'aloevera_first',
+        answer: 'Случайно услышал на радио и полюбил с первого слова',
+      },
+    ] as PromptAnswer[],
   },
   {
     id: '3', name: 'Елена', age: 22,

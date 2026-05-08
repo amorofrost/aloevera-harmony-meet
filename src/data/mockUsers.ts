@@ -1,4 +1,4 @@
-import type { User } from '@/types/user';
+import type { User, PromptAnswer } from '@/types/user';
 
 export const mockUsers: (User & { email: string; password: string })[] = [
   {
@@ -11,7 +11,11 @@ export const mockUsers: (User & { email: string; password: string })[] = [
     location: 'Москва',
     gender: 'female',
     profileImage: '/placeholder.svg',
-    images: ['/placeholder.svg'],
+    images: [
+      '/placeholder.svg',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
+    ],
     lastSeen: new Date(),
     isOnline: true,
     preferences: {
@@ -27,6 +31,16 @@ export const mockUsers: (User & { email: string; password: string })[] = [
     },
     rank: 'novice',
     staffRole: 'none',
+    prompts: [
+      {
+        promptId: 'aloevera_song',
+        answer: 'Hometown — её играют каждый раз бис на моих любимых концертах',
+      },
+      {
+        promptId: 'looking_for',
+        answer: 'Тех, кто поедет на следующий тур в другие города',
+      },
+    ] as PromptAnswer[],
   },
   {
     id: 'user-2',
@@ -38,7 +52,11 @@ export const mockUsers: (User & { email: string; password: string })[] = [
     location: 'Санкт-Петербург',
     gender: 'male',
     profileImage: '/placeholder.svg',
-    images: ['/placeholder.svg'],
+    images: [
+      '/placeholder.svg',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
+    ],
     lastSeen: new Date(),
     isOnline: false,
     preferences: {
@@ -54,5 +72,15 @@ export const mockUsers: (User & { email: string; password: string })[] = [
     },
     rank: 'novice',
     staffRole: 'none',
+    prompts: [
+      {
+        promptId: 'concert_memory',
+        answer: 'Когда с друзьями спели куплет «С тобой становится теплей» после концерта',
+      },
+      {
+        promptId: 'playlist',
+        answer: 'Много инди-рока и пост-панка, но Aloe Vera занимает первое место',
+      },
+    ] as PromptAnswer[],
   },
 ];
