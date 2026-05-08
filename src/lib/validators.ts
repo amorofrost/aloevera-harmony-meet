@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PROMPT_IDS } from '@/data/prompts';
 
 export const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -119,6 +120,22 @@ export const attachEmailSchema = z.object({
     .regex(/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/, 'One special character'),
 });
 
+const HTML_RE = /<[a-z!\/][\s\S]*?>/i;
+
+export const promptsSchema = z.array(
+  z.object({
+    promptId: z.string().refine(id => (PROMPT_IDS as readonly string[]).includes(id), {
+      message: 'Unknown prompt id',
+    }),
+    answer: z.string()
+      .max(200, 'Answer must be 200 characters or less')
+      .refine(s => !HTML_RE.test(s), 'HTML is not allowed'),
+  })
+).max(3, 'At most 3 prompts allowed').refine(
+  arr => new Set(arr.map(a => a.promptId)).size === arr.length,
+  'Duplicate prompt id',
+);
+
 export type LoginSchema = z.infer<typeof loginSchema>;
 export type RegisterSchema = z.infer<typeof registerSchema>;
 export type RegisterSchemaWithInvite = z.infer<typeof registerSchemaWithInvite>;
@@ -134,3 +151,4 @@ export type ReplySchema = z.infer<typeof replySchema>;
 export type CreateTopicFormData = z.infer<typeof createTopicSchema>;
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
+export type PromptsSchema = z.infer<typeof promptsSchema>;
