@@ -178,6 +178,33 @@ const translations = {
     'rank.aloeCrew': 'Команда AloeVera',
     'staffRole.moderator': 'Мод',
     'staffRole.admin': 'Админ',
+
+    // Common Ground
+    'commonGround.title': 'Общее',
+    'commonGround.sharedEventsMany': 'Вы оба были на {count} концертах AloeVera',
+    'commonGround.sharedEventOne': 'Вы оба были на {event}',
+    'commonGround.sharedUpcomingEvent': 'Оба идут на {event}',
+    'commonGround.sharedRank.aloeCrew': 'Оба — Aloe Crew',
+    'commonGround.sharedRank.friendOfAloe': 'Оба — Friend of Aloe',
+    'commonGround.sharedCity': 'Оба из {city}',
+
+    // Settings - Photos
+    'settings.photos.title': 'Фотографии',
+    'settings.photos.add': 'Добавить фото',
+    'settings.photos.delete': 'Удалить',
+    'settings.photos.dragHint': 'Перетащите, чтобы изменить порядок',
+    'settings.photos.save': 'Сохранить',
+    'settings.photos.saveSuccess': 'Фото сохранены',
+    'settings.photos.saveFailed': 'Не удалось сохранить фото',
+    'settings.photos.uploadFailed': 'Не удалось загрузить фото',
+
+    // Settings - Prompts
+    'settings.prompts.title': 'Подсказки',
+    'settings.prompts.placeholder': 'Выберите вопрос',
+    'settings.prompts.answerPlaceholder': 'Ваш ответ',
+    'settings.prompts.save': 'Сохранить',
+    'settings.prompts.saveSuccess': 'Подсказки сохранены',
+    'settings.prompts.saveFailed': 'Не удалось сохранить подсказки',
   },
   en: {
     // Navigation
@@ -338,6 +365,33 @@ const translations = {
     'rank.aloeCrew': 'Aloe Crew',
     'staffRole.moderator': 'Mod',
     'staffRole.admin': 'Admin',
+
+    // Common Ground
+    'commonGround.title': 'In common',
+    'commonGround.sharedEventsMany': "You've both been to {count} AloeVera shows",
+    'commonGround.sharedEventOne': "You've both been to {event}",
+    'commonGround.sharedUpcomingEvent': 'Both attending {event}',
+    'commonGround.sharedRank.aloeCrew': 'Both Aloe Crew',
+    'commonGround.sharedRank.friendOfAloe': 'Both Friend of Aloe',
+    'commonGround.sharedCity': 'Both from {city}',
+
+    // Settings - Photos
+    'settings.photos.title': 'Photos',
+    'settings.photos.add': 'Add photo',
+    'settings.photos.delete': 'Delete',
+    'settings.photos.dragHint': 'Drag to reorder',
+    'settings.photos.save': 'Save',
+    'settings.photos.saveSuccess': 'Photos saved',
+    'settings.photos.saveFailed': 'Could not save photos',
+    'settings.photos.uploadFailed': 'Could not upload photo',
+
+    // Settings - Prompts
+    'settings.prompts.title': 'Prompts',
+    'settings.prompts.placeholder': 'Pick a prompt',
+    'settings.prompts.answerPlaceholder': 'Your answer',
+    'settings.prompts.save': 'Save',
+    'settings.prompts.saveSuccess': 'Prompts saved',
+    'settings.prompts.saveFailed': 'Could not save prompts',
   },
 };
 
