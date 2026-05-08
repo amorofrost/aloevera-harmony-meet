@@ -12,8 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { User, AloeVeraSong } from '@/types/user';
+import type { User, AloeVeraSong, PromptAnswer } from '@/types/user';
 import { usersApi, songsApi, apiClient, authApi } from '@/services/api';
+import { PhotoGrid } from '@/components/settings/PhotoGrid';
+import { PromptsEditor } from '@/components/settings/PromptsEditor';
 import heroBg from '@/assets/hero-bg.jpg';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -337,6 +339,31 @@ const SettingsPage = () => {
 
             <LinkedAccountsCard />
 
+            {user && (
+              <section className="mt-6">
+                <h2 className="text-lg font-semibold mb-2">{t('settings.photos.title')}</h2>
+                <p className="text-xs text-muted-foreground mb-3">{t('settings.photos.dragHint')}</p>
+                <PhotoGridSettingsBlock user={user} />
+              </section>
+            )}
+
+            {user && (
+              <section className="mt-6">
+                <h2 className="text-lg font-semibold mb-3">{t('settings.prompts.title')}</h2>
+                <PromptsEditor
+                  initial={user.prompts ?? []}
+                  onSave={async (prompts) => {
+                    try {
+                      await usersApi.updateUser(user.id, { ...user, prompts });
+                      toast.success(t('settings.prompts.saveSuccess'));
+                    } catch (err) {
+                      showApiError(err, t('settings.prompts.saveFailed'));
+                    }
+                  }}
+                />
+              </section>
+            )}
+
             {/* Favorite AloeVera song — hidden for now, will be reimplemented later */}
 
             {user.eventsAttended && user.eventsAttended.length > 0 && (
@@ -439,5 +466,29 @@ const SettingsPage = () => {
     </div>
   );
 };
+
+function PhotoGridSettingsBlock({ user }: { user: User }) {
+  const { t } = useLanguage();
+  const [photos, setPhotos] = useState<string[]>(() => {
+    const seed = [user.profileImage, ...(user.images ?? [])].filter(Boolean) as string[];
+    return Array.from(new Set(seed)).slice(0, 6);
+  });
+
+  const save = async () => {
+    try {
+      await usersApi.updateUser(user.id, { ...user, profileImage: photos[0] ?? '', images: photos });
+      toast.success(t('settings.photos.saveSuccess'));
+    } catch (err) {
+      showApiError(err, t('settings.photos.saveFailed'));
+    }
+  };
+
+  return (
+    <>
+      <PhotoGrid images={photos} maxPhotos={6} onChange={setPhotos} />
+      <Button onClick={save} className="mt-3">{t('settings.photos.save')}</Button>
+    </>
+  );
+}
 
 export default SettingsPage;
