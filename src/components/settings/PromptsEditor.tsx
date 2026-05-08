@@ -1,11 +1,11 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PROMPT_CATALOG } from '@/data/prompts';
-import { promptsSchema, type PromptsSchema } from '@/lib/validators';
 import type { PromptAnswer } from '@/types/user';
 
 interface PromptsEditorProps {
@@ -13,10 +13,37 @@ interface PromptsEditorProps {
   onSave: (prompts: PromptAnswer[]) => Promise<void>;
 }
 
+const HTML_RE = /<[a-z!\/][\s\S]*?>/i;
+
+// Form schema: allows empty slots (promptId === '') so padded slots validate cleanly.
+// The submit handler filters them out before calling onSave.
+const slotSchema = z.union([
+  z.object({ promptId: z.literal(''), answer: z.string() }),
+  z.object({
+    promptId: z.string().min(1),
+    answer: z.string().max(200, 'Answer must be 200 characters or less').refine(
+      s => !HTML_RE.test(s),
+      'HTML is not allowed',
+    ),
+  }),
+]);
+
+const formSchema = z.object({
+  prompts: z.array(slotSchema).max(3).refine(
+    arr => {
+      const ids = arr.map(a => a.promptId).filter(Boolean);
+      return new Set(ids).size === ids.length;
+    },
+    { message: 'Duplicate prompt id' },
+  ),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
 export function PromptsEditor({ initial, onSave }: PromptsEditorProps) {
   const { language, t } = useLanguage();
-  const form = useForm<{ prompts: PromptsSchema }>({
-    resolver: zodResolver(promptsSchema.transform(p => ({ prompts: p })) as any) as any,
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       prompts: [
         ...initial,
@@ -28,7 +55,7 @@ export function PromptsEditor({ initial, onSave }: PromptsEditorProps) {
   const watched = form.watch('prompts');
 
   const submit = form.handleSubmit(async ({ prompts }) => {
-    const cleaned = prompts.filter(p => p.promptId && p.answer.trim().length > 0);
+    const cleaned = prompts.filter(p => p.promptId && p.answer.trim().length > 0) as PromptAnswer[];
     await onSave(cleaned);
   });
 
@@ -69,6 +96,11 @@ export function PromptsEditor({ initial, onSave }: PromptsEditorProps) {
           </div>
         );
       })}
+      {form.formState.errors.prompts?.root && (
+        <p className="text-xs text-destructive">
+          {form.formState.errors.prompts.root.message}
+        </p>
+      )}
       <Button type="submit" disabled={form.formState.isSubmitting}>
         {t('settings.prompts.save')}
       </Button>

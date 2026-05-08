@@ -343,7 +343,7 @@ const SettingsPage = () => {
               <section className="mt-6">
                 <h2 className="text-lg font-semibold mb-2">{t('settings.photos.title')}</h2>
                 <p className="text-xs text-muted-foreground mb-3">{t('settings.photos.dragHint')}</p>
-                <PhotoGridSettingsBlock user={user} />
+                <PhotoGridSettingsBlock user={user} onUserUpdate={setUser} />
               </section>
             )}
 
@@ -354,7 +354,12 @@ const SettingsPage = () => {
                   initial={user.prompts ?? []}
                   onSave={async (prompts) => {
                     try {
-                      await usersApi.updateUser(user.id, { ...user, prompts });
+                      const result = await usersApi.updateUser(user.id, { ...user, prompts });
+                      if (!result.success) {
+                        showApiError(result, t('settings.prompts.saveFailed'));
+                        return;
+                      }
+                      if (result.data) setUser(result.data);
                       toast.success(t('settings.prompts.saveSuccess'));
                     } catch (err) {
                       showApiError(err, t('settings.prompts.saveFailed'));
@@ -467,7 +472,7 @@ const SettingsPage = () => {
   );
 };
 
-function PhotoGridSettingsBlock({ user }: { user: User }) {
+function PhotoGridSettingsBlock({ user, onUserUpdate }: { user: User; onUserUpdate: (u: User) => void }) {
   const { t } = useLanguage();
   const [photos, setPhotos] = useState<string[]>(() => {
     const seed = [user.profileImage, ...(user.images ?? [])].filter(Boolean) as string[];
@@ -476,7 +481,12 @@ function PhotoGridSettingsBlock({ user }: { user: User }) {
 
   const save = async () => {
     try {
-      await usersApi.updateUser(user.id, { ...user, profileImage: photos[0] ?? '', images: photos });
+      const result = await usersApi.updateUser(user.id, { ...user, profileImage: photos[0] ?? '', images: photos });
+      if (!result.success) {
+        showApiError(result, t('settings.photos.saveFailed'));
+        return;
+      }
+      if (result.data) onUserUpdate(result.data);
       toast.success(t('settings.photos.saveSuccess'));
     } catch (err) {
       showApiError(err, t('settings.photos.saveFailed'));

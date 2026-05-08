@@ -364,7 +364,7 @@ const Friends = () => {
 
         <div className="p-4 relative z-10">
           <Card className="profile-card aspect-[3/4] relative overflow-hidden max-w-sm mx-auto">
-            <PhotoCarousel images={composePhotos(viewingUser)} mode="detail" className="absolute inset-0" />
+            <PhotoCarousel key={viewingUser.id} images={composePhotos(viewingUser)} mode="detail" className="absolute inset-0" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 pointer-events-none" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                 <div className="flex items-center gap-2 mb-2">
@@ -469,7 +469,7 @@ const Friends = () => {
               <div>
                 <SwipeCard onSwipeLeft={handlePass} onSwipeRight={handleLike} className="w-full max-w-sm mx-auto">
                   <Card className="profile-card aspect-[3/4] relative overflow-hidden">
-                    <PhotoCarousel images={composePhotos(currentUser)} mode="deck" className="absolute inset-0" />
+                    <PhotoCarousel key={currentUser.id} images={composePhotos(currentUser)} mode="deck" className="absolute inset-0" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 pointer-events-none" />
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                         <div className="flex items-center gap-2 mb-2">
