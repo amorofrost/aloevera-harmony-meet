@@ -7,6 +7,7 @@ import {
   createTopicSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  promptsSchema,
 } from '../validators';
 
 // ---------------------------------------------------------------------------
@@ -277,4 +278,44 @@ describe('resetPasswordSchema', () => {
     const result = resetPasswordSchema.safeParse({ ...validReset, confirmPassword: '' });
     expect(result.success).toBe(false);
   });
+});
+
+// ---------------------------------------------------------------------------
+// promptsSchema
+// ---------------------------------------------------------------------------
+describe('promptsSchema', () => {
+  const ok = (p: unknown) => promptsSchema.safeParse(p).success;
+  const fail = (p: unknown) => !promptsSchema.safeParse(p).success;
+
+  it('accepts empty array', () => expect(ok([])).toBe(true));
+  it('accepts up to 3 unique entries', () =>
+    expect(ok([
+      { promptId: 'looking_for', answer: 'a' },
+      { promptId: 'weekend',     answer: 'b' },
+      { promptId: 'playlist',    answer: 'c' },
+    ])).toBe(true));
+  it('rejects 4 entries', () =>
+    expect(fail([
+      { promptId: 'looking_for', answer: 'a' },
+      { promptId: 'weekend',     answer: 'b' },
+      { promptId: 'playlist',    answer: 'c' },
+      { promptId: 'first_date',  answer: 'd' },
+    ])).toBe(true));
+  it('rejects duplicate promptId', () =>
+    expect(fail([
+      { promptId: 'looking_for', answer: 'a' },
+      { promptId: 'looking_for', answer: 'b' },
+    ])).toBe(true));
+  it('rejects answer > 200 chars', () =>
+    expect(fail([
+      { promptId: 'looking_for', answer: 'x'.repeat(201) },
+    ])).toBe(true));
+  it('rejects HTML in answer', () =>
+    expect(fail([
+      { promptId: 'looking_for', answer: '<b>hi</b>' },
+    ])).toBe(true));
+  it('rejects unknown promptId', () =>
+    expect(fail([
+      { promptId: 'totally_invented', answer: 'a' },
+    ])).toBe(true));
 });

@@ -14,6 +14,12 @@ import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display
 import { uploadImage } from '@/services/api/imagesApi';
 import { UserBadges } from '@/components/ui/user-badges';
 import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
+import { PhotoCarousel } from '@/components/ui/photo-carousel';
+import { CommonGroundLine } from '@/components/profile/CommonGroundLine';
+import { CommonGroundSection } from '@/components/profile/CommonGroundSection';
+import { PromptCard } from '@/components/profile/PromptCard';
+import { commonGround } from '@/lib/commonGround';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
@@ -25,6 +31,16 @@ import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/da
 import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
 
+function composePhotos(user: { profileImage: string; images: string[] }): string[] {
+  const set = new Set<string>();
+  const out: string[] = [];
+  if (user.profileImage) { set.add(user.profileImage); out.push(user.profileImage); }
+  for (const u of user.images ?? []) {
+    if (u && !set.has(u)) { set.add(u); out.push(u); }
+  }
+  return out.slice(0, 6);
+}
+
 const Friends = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [messageText, setMessageText] = useState('');
@@ -32,6 +48,7 @@ const Friends = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user: viewer } = useCurrentUser();
 
   const viewingUserId = searchParams.get('userId');
   const activeTab = searchParams.get('tab') || 'search';
@@ -347,9 +364,9 @@ const Friends = () => {
 
         <div className="p-4 relative z-10">
           <Card className="profile-card aspect-[3/4] relative overflow-hidden max-w-sm mx-auto">
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${viewingUser.profileImage})` }}>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <PhotoCarousel key={viewingUser.id} images={composePhotos(viewingUser)} mode="detail" className="absolute inset-0" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={`w-3 h-3 rounded-full ${viewingUser.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
                   <span className="text-sm opacity-90">{viewingUser.isOnline ? 'Онлайн' : 'Недавно'}</span>
@@ -383,9 +400,16 @@ const Friends = () => {
                     ))}
                   </div>
                 ) : null}
-              </div>
             </div>
           </Card>
+          {viewer && (
+            <CommonGroundSection signals={commonGround(viewer, viewingUser)} />
+          )}
+          {viewingUser.prompts && viewingUser.prompts.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {viewingUser.prompts.map((p, i) => <PromptCard key={i} prompt={p} />)}
+            </div>
+          )}
           <div className="flex justify-center gap-6 mt-6">
             <Button size="lg" variant="outline" onClick={() => navigate(-1)} className="rounded-full w-16 h-16 btn-pass"><X className="w-8 h-8" /></Button>
             <Button size="lg" onClick={() => { matchingApi.sendLike(viewingUser.id); navigate(-1); }} className="rounded-full w-16 h-16 btn-like"><Heart className="w-8 h-8" /></Button>
@@ -445,9 +469,9 @@ const Friends = () => {
               <div>
                 <SwipeCard onSwipeLeft={handlePass} onSwipeRight={handleLike} className="w-full max-w-sm mx-auto">
                   <Card className="profile-card aspect-[3/4] relative overflow-hidden">
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${currentUser.profileImage})` }}>
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <PhotoCarousel key={currentUser.id} images={composePhotos(currentUser)} mode="deck" className="absolute inset-0" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                         <div className="flex items-center gap-2 mb-2">
                           <div className={`w-3 h-3 rounded-full ${currentUser.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
                           <span className="text-sm opacity-90">{currentUser.isOnline ? 'Онлайн' : 'Недавно'}</span>
@@ -482,7 +506,13 @@ const Friends = () => {
                             ))}
                           </div>
                         )}
-                      </div>
+                        {viewer && (() => {
+                          const signals = commonGround(viewer, currentUser);
+                          return signals.length > 0 ? <CommonGroundLine signal={signals[0]} className="mt-2" /> : null;
+                        })()}
+                        {currentUser.prompts && currentUser.prompts.length > 0 && (
+                          <PromptCard prompt={currentUser.prompts[0]} className="mt-3 bg-black/30 border-white/20" />
+                        )}
                     </div>
                   </Card>
                 </SwipeCard>

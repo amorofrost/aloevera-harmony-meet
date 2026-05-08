@@ -22,6 +22,7 @@ export function mapUserFromApi(dto: any): User {
     gender: mapGender(dto.gender),
     profileImage: dto.profileImage ?? '',
     images: dto.images ?? [],
+    prompts: dto.prompts ?? undefined,
     lastSeen: new Date(dto.lastSeen),
     isOnline: dto.isOnline ?? false,
     preferences: {
@@ -62,6 +63,7 @@ function mapUserToApi(u: Partial<User>): Record<string, unknown> {
     gender: u.gender ? (genderToApi[u.gender] ?? u.gender) : undefined,
     profileImage: u.profileImage,
     images: u.images,
+    prompts: u.prompts,
     isOnline: u.isOnline,
     preferences: u.preferences ? {
       ageRangeMin: u.preferences.ageRange?.[0],

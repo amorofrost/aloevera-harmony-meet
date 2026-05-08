@@ -12,6 +12,11 @@ export interface AloeVeraSong {
 export type UserRank = 'novice' | 'activeMember' | 'friendOfAloe' | 'aloeCrew';
 export type StaffRole = 'none' | 'moderator' | 'admin';
 
+export interface PromptAnswer {
+  promptId: string;
+  answer: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -41,6 +46,7 @@ export interface User {
   staffRole: StaffRole;
   registrationSourceEventId?: string;
   instagramHandle?: string;
+  prompts?: PromptAnswer[];
 }
 
 export interface Match {
