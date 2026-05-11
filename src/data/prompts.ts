@@ -1,5 +1,3 @@
-import { mockSongs } from './mockSongs';
-
 export interface PromptCatalogEntry {
   id: string;
   ru: string;
@@ -16,36 +14,122 @@ export interface PromptCatalogEntry {
 }
 
 // Song titles aren't translated — same list under ru and en.
-const ALOEVERA_SONG_TITLES: readonly string[] = mockSongs.map(s => s.title);
+const ALOEVERA_SONG_TITLES = [
+  'Беги',
+  'Берега',
+  'Боли буйство',
+  'Бросайте мужей',
+  'Ватрушка',
+  'Вместо меня',
+  'Во мне нет',
+  'Генерал',
+  'Георгины',
+  'Георгины осенние',
+  'Гладь',
+  'Город',
+  'Грязь',
+  'Дискац',
+  'Доктор',
+  'Дорогу осилит идущий',
+  'Дочь моряка',
+  'Если ты вернешься',
+  'Каждую мою весну',
+  'Как боги',
+  'Каково тебе',
+  'Калина',
+  'Капитан',
+  'Касаться',
+  'Качели',
+  'Кварталам',
+  'Колыбельная',
+  'Красиво',
+  'Крылья',
+  'Кто вы',
+  'Легче',
+  'Лето',
+  'Лётчики',
+  'Любила до рвоты',
+  'Мальчики',
+  'Марина',
+  'Механик',
+  'Морем',
+  'Назову его',
+  'Напрашиваясь на встречу',
+  'Не было',
+  'Не ломайте',
+  'Не по ГОСТу',
+  'Неумело',
+  'Нежность',
+  'Несуразная',
+  'Новости',
+  'Олег',
+  'Оправданий нет',
+  'Отвертка',
+  'Паратов',
+  'Пинженин',
+  'Письмо',
+  'Платье в точку',
+  'Позовите Олега',
+  'Понимаешь, девочка',
+  'Резина',
+  'Рейволюция',
+  'Самокат',
+  'Сделаем вид',
+  'Сделай мне хорошо',
+  'Сказочка про козявочку',
+  'Слушаю Каца',
+  'Сначала в бездну',
+  'Солдат',
+  'Солдатом',
+  'Стой',
+  'Страсти',
+  'Стыд',
+  'Сюжет для новой песни',
+  'Сэлинджер',
+  'Та-да-да',
+  'Танцы',
+  'Телеграм-канал',
+  'Тот, кто тебе нужен',
+  'Ты что такой?',
+  'Фотопространство',
+  'Хочется тебя касаться',
+  'Цыпочки',
+  'Что я делаю',
+  'Чтобы целоваться',
+  'Эта песня не про тебя',
+  'Это море',
+  'Я когда не люблю',
+  'Я не хочу',
+  'Я этого не выбирала'
+] as const;
+
+const ALOEVERA_SONG_TITLES_OPTIONS = {
+  ru: ALOEVERA_SONG_TITLES,
+  en: ALOEVERA_SONG_TITLES,
+};
 
 const INSTRUMENT_OPTIONS = {
-  ru: ['Гитара', 'Бас', 'Барабаны', 'Клавишные', 'Вокал', 'Скрипка', 'Саксофон'] as const,
-  en: ['Guitar', 'Bass', 'Drums', 'Keys', 'Vocals', 'Violin', 'Saxophone'] as const,
+  ru: ['Гитара', 'Бас', 'Барабаны', 'Клавишные', 'Вокал', 'Труба'] as const,
+  en: ['Guitar', 'Bass', 'Drums', 'Keys', 'Vocals', 'Tuba'] as const,
 };
 
 export const PROMPT_CATALOG: readonly PromptCatalogEntry[] = [
   { id: 'aloevera_first',    ru: 'Моё первое знакомство с AloeVera…',     en: 'How I first found AloeVera…' },
   {
     id: 'aloevera_song',
-    ru: 'Любимая песня AloeVera и почему',
-    en: 'Favorite AloeVera song and why',
-    options: { ru: ALOEVERA_SONG_TITLES, en: ALOEVERA_SONG_TITLES },
+    ru: 'Любимая песня АлоэВера',
+    en: 'Favorite AloeVera song',
+    options: ALOEVERA_SONG_TITLES_OPTIONS,
   },
-  { id: 'concert_memory',    ru: 'Лучший момент с концерта AloeVera',     en: 'Best AloeVera concert memory' },
+  { id: 'concert_memory',    ru: 'Лучший момент с концерта АлоэВера',     en: 'Best AloeVera concert memory' },
   { id: 'looking_for',       ru: 'Что я ищу здесь',                        en: "What I'm looking for here" },
-  { id: 'weekend',           ru: 'Идеальные выходные — это…',             en: 'A perfect weekend looks like…' },
-  { id: 'road_trip',         ru: 'На концерт AloeVera поеду…',             en: "I'd travel this far for an AloeVera show…" },
-  { id: 'playlist',          ru: 'Кроме AloeVera я слушаю…',              en: 'Besides AloeVera I listen to…' },
+  { id: 'playlist',          ru: 'Кроме АлоэВера я слушаю…',              en: 'Besides AloeVera I listen to…' },
   {
     id: 'instrument',
     ru: 'Если бы я был в группе, играл бы на…',
     en: "If I were in a band, I'd play…",
     options: INSTRUMENT_OPTIONS,
-  },
-  { id: 'unpopular_opinion', ru: 'Непопулярное мнение об AloeVera',        en: 'Unpopular AloeVera opinion' },
-  { id: 'dream_setlist',     ru: 'Сетлист моей мечты',                     en: 'My dream AloeVera setlist' },
-  { id: 'first_date',        ru: 'Идея для первого свидания',              en: 'First-date idea' },
-  { id: 'dealbreaker',       ru: 'Меня точно не зацепит…',                 en: "Won't work for me…" },
+  }
 ];
 
 export const PROMPT_IDS: readonly string[] = PROMPT_CATALOG.map(p => p.id);
