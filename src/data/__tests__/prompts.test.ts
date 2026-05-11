@@ -1,4 +1,5 @@
-import { PROMPT_CATALOG, PROMPT_IDS, getPromptText } from '@/data/prompts';
+import { PROMPT_CATALOG, PROMPT_IDS, getPromptText, getPromptOptions } from '@/data/prompts';
+import { mockSongs } from '@/data/mockSongs';
 
 describe('PROMPT_CATALOG', () => {
   it('has 12 entries', () => {
@@ -31,5 +32,29 @@ describe('PROMPT_CATALOG', () => {
 
   it('getPromptText returns null for unknown id', () => {
     expect(getPromptText('totally_invented', 'ru')).toBeNull();
+  });
+
+  it('getPromptOptions returns the song titles for aloevera_song', () => {
+    const options = getPromptOptions('aloevera_song', 'ru');
+    expect(options).not.toBeNull();
+    expect(options).toEqual(mockSongs.map(s => s.title));
+  });
+
+  it('getPromptOptions returns localized instruments for instrument', () => {
+    const ruOptions = getPromptOptions('instrument', 'ru');
+    const enOptions = getPromptOptions('instrument', 'en');
+    expect(ruOptions?.length).toBeGreaterThan(0);
+    expect(enOptions?.length).toBe(ruOptions?.length);
+    expect(ruOptions).toContain('Гитара');
+    expect(enOptions).toContain('Guitar');
+  });
+
+  it('getPromptOptions returns null for prompts without options', () => {
+    expect(getPromptOptions('looking_for', 'ru')).toBeNull();
+    expect(getPromptOptions('weekend', 'en')).toBeNull();
+  });
+
+  it('getPromptOptions returns null for unknown id', () => {
+    expect(getPromptOptions('totally_invented', 'ru')).toBeNull();
   });
 });
