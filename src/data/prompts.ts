@@ -114,7 +114,7 @@ const INSTRUMENT_OPTIONS = {
 };
 
 export const PROMPT_CATALOG: readonly PromptCatalogEntry[] = [
-  { id: 'aloevera_first',    ru: 'Моё первое знакомство с AloeVera…',     en: 'How I first found AloeVera…' },
+  { id: 'aloevera_first',    ru: 'Моё первое знакомство с АлоэВера…',     en: 'How I first found AloeVera…' },
   {
     id: 'aloevera_song',
     ru: 'Любимая песня АлоэВера',
