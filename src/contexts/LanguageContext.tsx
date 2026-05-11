@@ -201,6 +201,7 @@ const translations = {
     // Settings - Prompts
     'settings.prompts.title': 'Подсказки',
     'settings.prompts.placeholder': 'Выберите вопрос',
+    'settings.prompts.pickFromList': 'Выбрать из списка',
     'settings.prompts.answerPlaceholder': 'Ваш ответ',
     'settings.prompts.save': 'Сохранить',
     'settings.prompts.saveSuccess': 'Подсказки сохранены',
@@ -388,6 +389,7 @@ const translations = {
     // Settings - Prompts
     'settings.prompts.title': 'Prompts',
     'settings.prompts.placeholder': 'Pick a prompt',
+    'settings.prompts.pickFromList': 'Pick from list',
     'settings.prompts.answerPlaceholder': 'Your answer',
     'settings.prompts.save': 'Save',
     'settings.prompts.saveSuccess': 'Prompts saved',

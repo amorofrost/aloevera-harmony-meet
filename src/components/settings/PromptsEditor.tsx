@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { PROMPT_CATALOG } from '@/data/prompts';
+import { PROMPT_CATALOG, getPromptOptions } from '@/data/prompts';
 import type { PromptAnswer } from '@/types/user';
 
 interface PromptsEditorProps {
@@ -64,6 +64,9 @@ export function PromptsEditor({ initial, onSave }: PromptsEditorProps) {
       {[0, 1, 2].map(i => {
         const usedElsewhere = new Set(watched.filter((_, j) => j !== i).map(p => p.promptId).filter(Boolean));
         const available = PROMPT_CATALOG.filter(p => !usedElsewhere.has(p.id));
+        const slotPromptId = watched[i]?.promptId;
+        const slotAnswer = watched[i]?.answer ?? '';
+        const slotOptions = slotPromptId ? getPromptOptions(slotPromptId, language) : null;
         return (
           <div key={i} className="space-y-2 border rounded-md p-3">
             <Controller
@@ -80,6 +83,21 @@ export function PromptsEditor({ initial, onSave }: PromptsEditorProps) {
                 </Select>
               )}
             />
+            {slotOptions && slotOptions.length > 0 && (
+              <Select
+                value={slotOptions.includes(slotAnswer) ? slotAnswer : ''}
+                onValueChange={(v) => form.setValue(`prompts.${i}.answer`, v, { shouldValidate: true, shouldDirty: true })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('settings.prompts.pickFromList')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {slotOptions.map(o => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Textarea
               {...form.register(`prompts.${i}.answer`)}
               maxLength={200}
