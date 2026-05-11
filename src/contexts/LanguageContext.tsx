@@ -61,7 +61,10 @@ const translations = {
     // Search
     'search.title': 'Найди тех самых',
     'search.noMoreProfiles': 'Больше профилей пока нет',
-    'search.swipeInstructions': 'Свайп вправо - лайк, влево - пропустить',
+    'search.swipeInstructions': 'Свайп вправо - лайк, влево - пропустить, вверх - подробнее',
+    'search.moreInfo': 'Подробнее',
+    'search.lessInfo': 'Скрыть подробности',
+    'search.eventsCount': 'Событий посещено: {count}',
 
     // Events
     'events.title': 'События АлоэВера',
@@ -249,7 +252,10 @@ const translations = {
     // Search
     'search.title': 'Find Love',
     'search.noMoreProfiles': 'No more profiles for now',
-    'search.swipeInstructions': 'Swipe right to like, left to pass',
+    'search.swipeInstructions': 'Swipe right to like, left to pass, up for more info',
+    'search.moreInfo': 'More info',
+    'search.lessInfo': 'Hide details',
+    'search.eventsCount': '{count} events attended',
 
     // Events
     'events.title': 'AloeVera Events',
