@@ -53,4 +53,29 @@ describe('<PhotoCarousel>', () => {
     expect(screen.getByLabelText(/next/i)).toBeInTheDocument();
     expect(screen.queryByTestId('photo-carousel-tap-right')).toBeNull();
   });
+
+  it('shows next-hint in deck mode when more photos exist and hides it on the last photo', () => {
+    render(<PhotoCarousel images={['/a.jpg', '/b.jpg']} mode="deck" />);
+    expect(screen.getByTestId('photo-carousel-next-hint')).toBeInTheDocument();
+    expect(screen.queryByTestId('photo-carousel-prev-hint')).toBeNull();
+
+    const right = screen.getByTestId('photo-carousel-tap-right');
+    fireEvent.pointerDown(right, { clientX: 200 });
+    fireEvent.pointerUp(right, { clientX: 200 });
+
+    expect(screen.queryByTestId('photo-carousel-next-hint')).toBeNull();
+    expect(screen.getByTestId('photo-carousel-prev-hint')).toBeInTheDocument();
+  });
+
+  it('does not render hints in deck mode when there is only one image', () => {
+    render(<PhotoCarousel images={['/a.jpg']} mode="deck" />);
+    expect(screen.queryByTestId('photo-carousel-next-hint')).toBeNull();
+    expect(screen.queryByTestId('photo-carousel-prev-hint')).toBeNull();
+  });
+
+  it('does not render hints in detail mode', () => {
+    render(<PhotoCarousel images={['/a.jpg', '/b.jpg']} mode="detail" />);
+    expect(screen.queryByTestId('photo-carousel-next-hint')).toBeNull();
+    expect(screen.queryByTestId('photo-carousel-prev-hint')).toBeNull();
+  });
 });
