@@ -56,6 +56,24 @@ export function PhotoCarousel({ images, mode, className }: PhotoCarouselProps) {
 
       {mode === 'deck' && images.length > 1 && (
         <>
+          {safeIndex > 0 && (
+            <div
+              data-testid="photo-carousel-prev-hint"
+              aria-hidden="true"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/25 text-white/80 rounded-full p-1 pointer-events-none"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </div>
+          )}
+          {safeIndex < images.length - 1 && (
+            <div
+              data-testid="photo-carousel-next-hint"
+              aria-hidden="true"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/25 text-white/80 rounded-full p-1 pointer-events-none"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          )}
           <div
             data-testid="photo-carousel-tap-left"
             className="absolute inset-y-0 left-0 w-1/2 z-10"
