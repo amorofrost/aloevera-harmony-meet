@@ -24,8 +24,8 @@ export const mockSearchProfiles: User[] = [
         answer: 'Лучший момент — это когда весь зал поёт припев «Давайте разговаривать»',
       },
       {
-        promptId: 'weekend',
-        answer: 'Идеально провести выходные на концерте или в компании единомышленников',
+        promptId: 'looking_for',
+        answer: 'Тех, с кем можно поехать на любой концерт АлоэВера',
       },
     ] as PromptAnswer[],
   },

@@ -290,16 +290,16 @@ describe('promptsSchema', () => {
   it('accepts empty array', () => expect(ok([])).toBe(true));
   it('accepts up to 3 unique entries', () =>
     expect(ok([
-      { promptId: 'looking_for', answer: 'a' },
-      { promptId: 'weekend',     answer: 'b' },
-      { promptId: 'playlist',    answer: 'c' },
+      { promptId: 'looking_for',    answer: 'a' },
+      { promptId: 'concert_memory', answer: 'b' },
+      { promptId: 'playlist',       answer: 'c' },
     ])).toBe(true));
   it('rejects 4 entries', () =>
     expect(fail([
-      { promptId: 'looking_for', answer: 'a' },
-      { promptId: 'weekend',     answer: 'b' },
-      { promptId: 'playlist',    answer: 'c' },
-      { promptId: 'first_date',  answer: 'd' },
+      { promptId: 'looking_for',    answer: 'a' },
+      { promptId: 'concert_memory', answer: 'b' },
+      { promptId: 'playlist',       answer: 'c' },
+      { promptId: 'instrument',     answer: 'd' },
     ])).toBe(true));
   it('rejects duplicate promptId', () =>
     expect(fail([

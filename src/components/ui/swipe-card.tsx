@@ -5,6 +5,8 @@ interface SwipeCardProps {
   children: React.ReactNode;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
+  onSwipeUp?: () => void;
+  onSwipeDown?: () => void;
   onTap?: () => void;
   className?: string;
 }
@@ -13,6 +15,8 @@ const SwipeCard: React.FC<SwipeCardProps> = ({
   children,
   onSwipeLeft,
   onSwipeRight,
+  onSwipeUp,
+  onSwipeDown,
   onTap,
   className
 }) => {
@@ -47,12 +51,19 @@ const SwipeCard: React.FC<SwipeCardProps> = ({
 
     const threshold = 100;
     const absX = Math.abs(dragOffset.x);
+    const absY = Math.abs(dragOffset.y);
 
-    if (absX > threshold) {
+    if (absX > threshold && absX >= absY) {
       if (dragOffset.x > 0) {
         onSwipeRight();
       } else {
         onSwipeLeft();
+      }
+    } else if (absY > threshold && absY > absX) {
+      if (dragOffset.y < 0) {
+        onSwipeUp?.();
+      } else {
+        onSwipeDown?.();
       }
     } else if (!hasMoved && onTap) {
       // If no significant movement occurred, treat as a tap
