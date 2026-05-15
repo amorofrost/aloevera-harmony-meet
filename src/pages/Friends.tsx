@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,6 +44,7 @@ function composePhotos(user: { profileImage: string; images: string[] }): string
 const Friends = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [showDeckDetails, setShowDeckDetails] = useState(false);
+  const [deckPromptIdx, setDeckPromptIdx] = useState(0);
   const [messageText, setMessageText] = useState('');
   const [messageError, setMessageError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -175,6 +176,7 @@ const Friends = () => {
   const nextUser = () => {
     setCurrentUserIndex(prev => prev + 1);
     setShowDeckDetails(false);
+    setDeckPromptIdx(0);
   };
 
   const formatDateShort = (date: Date) =>
@@ -492,17 +494,27 @@ const Friends = () => {
                           {currentUser.name}{currentUser.age ? `, ${currentUser.age}` : ''}
                         </h2>
                         <UserBadges rank={currentUser.rank} staffRole={currentUser.staffRole} />
-                        {currentUser.location && (
-                          <p className="text-sm opacity-90 mb-2">{currentUser.location}</p>
+                        {(currentUser.location || (currentUser.eventsAttended && currentUser.eventsAttended.length > 0)) && (
+                          <div className="flex items-center gap-3 text-sm opacity-90 mb-2 flex-wrap">
+                            {currentUser.location && <span>{currentUser.location}</span>}
+                            {currentUser.eventsAttended && currentUser.eventsAttended.length > 0 && (
+                              <span
+                                className="inline-flex items-center gap-1 text-xs opacity-80"
+                                aria-label={t('search.eventsCount').replace('{count}', String(currentUser.eventsAttended.length))}
+                              >
+                                <Calendar className="w-3 h-3" />
+                                {currentUser.eventsAttended.length}
+                              </span>
+                            )}
+                          </div>
                         )}
                         {currentUser.bio && (
                           <p className="text-sm opacity-75 line-clamp-2">{currentUser.bio}</p>
                         )}
-                        {currentUser.eventsAttended && currentUser.eventsAttended.length > 0 && (
-                          <p className="text-xs opacity-80 mt-2">
-                            {t('search.eventsCount').replace('{count}', String(currentUser.eventsAttended.length))}
-                          </p>
-                        )}
+                        {viewer && (() => {
+                          const signals = commonGround(viewer, currentUser);
+                          return signals.length > 0 ? <CommonGroundLine signal={signals[0]} className="mt-2" /> : null;
+                        })()}
                         {showDeckDetails && (
                           <div className="mt-3 pt-3 border-t border-white/15 space-y-3 animate-in fade-in duration-200">
                             <div className="flex items-center gap-2">
@@ -521,13 +533,42 @@ const Friends = () => {
                                 @{currentUser.instagramHandle}
                               </a>
                             )}
-                            {viewer && (() => {
-                              const signals = commonGround(viewer, currentUser);
-                              return signals.length > 0 ? <CommonGroundLine signal={signals[0]} /> : null;
+                            {currentUser.prompts && currentUser.prompts.length > 0 && (() => {
+                              const promptCount = currentUser.prompts.length;
+                              const idx = Math.min(deckPromptIdx, promptCount - 1);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  {promptCount > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeckPromptIdx(i => Math.max(0, i - 1))}
+                                      disabled={idx === 0}
+                                      aria-label="Previous prompt"
+                                      className="flex-shrink-0 bg-white/15 disabled:opacity-30 rounded-full w-7 h-7 flex items-center justify-center"
+                                    >
+                                      <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <PromptCard prompt={currentUser.prompts[idx]} onDark className="bg-black/30 border-white/20" />
+                                    {promptCount > 1 && (
+                                      <p className="text-[10px] opacity-70 mt-1 text-center">{idx + 1} / {promptCount}</p>
+                                    )}
+                                  </div>
+                                  {promptCount > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeckPromptIdx(i => Math.min(promptCount - 1, i + 1))}
+                                      disabled={idx === promptCount - 1}
+                                      aria-label="Next prompt"
+                                      className="flex-shrink-0 bg-white/15 disabled:opacity-30 rounded-full w-7 h-7 flex items-center justify-center"
+                                    >
+                                      <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              );
                             })()}
-                            {currentUser.prompts && currentUser.prompts.length > 0 && (
-                              <PromptCard prompt={currentUser.prompts[0]} className="bg-black/30 border-white/20" />
-                            )}
                             {currentUser.eventsAttended && currentUser.eventsAttended.length > 0 && (
                               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
                                 {currentUser.eventsAttended.map((ev) => (
