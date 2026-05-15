@@ -98,4 +98,85 @@ describe('commonGround', () => {
     const b = baseUser('b', { eventsAttended: [evt] });
     expect(commonGround(a, b).some(s => s.kind === 'sharedUpcomingEvent')).toBe(true);
   });
+
+  it('returns sharedPromptAnswer when both users have the same prompt with the same answer', () => {
+    const a = baseUser('a', {
+      prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
+    });
+    const b = baseUser('b', {
+      prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
+    });
+    const r = commonGround(a, b);
+    expect(r.some(s =>
+      s.kind === 'sharedPromptAnswer' && s.promptId === 'aloevera_song' && s.answer === 'Hometown'
+    )).toBe(true);
+  });
+
+  it('matches sharedPromptAnswer case-insensitively and ignores whitespace', () => {
+    const a = baseUser('a', {
+      prompts: [{ promptId: 'aloevera_song', answer: '  Hometown  ' }],
+    });
+    const b = baseUser('b', {
+      prompts: [{ promptId: 'aloevera_song', answer: 'hometown' }],
+    });
+    expect(commonGround(a, b).some(s => s.kind === 'sharedPromptAnswer')).toBe(true);
+  });
+
+  it('does NOT return sharedPromptAnswer when the same prompt has different answers', () => {
+    const a = baseUser('a', {
+      prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
+    });
+    const b = baseUser('b', {
+      prompts: [{ promptId: 'aloevera_song', answer: 'Lullaby' }],
+    });
+    expect(commonGround(a, b).find(s => s.kind === 'sharedPromptAnswer')).toBeUndefined();
+  });
+
+  it('does NOT return sharedPromptAnswer when answers match but prompt ids differ', () => {
+    const a = baseUser('a', {
+      prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
+    });
+    const b = baseUser('b', {
+      prompts: [{ promptId: 'looking_for', answer: 'Hometown' }],
+    });
+    expect(commonGround(a, b).find(s => s.kind === 'sharedPromptAnswer')).toBeUndefined();
+  });
+
+  it('emits one sharedPromptAnswer per matching prompt', () => {
+    const a = baseUser('a', {
+      prompts: [
+        { promptId: 'aloevera_song', answer: 'Hometown' },
+        { promptId: 'looking_for', answer: 'Tour buddies' },
+      ],
+    });
+    const b = baseUser('b', {
+      prompts: [
+        { promptId: 'aloevera_song', answer: 'Hometown' },
+        { promptId: 'looking_for', answer: 'Tour buddies' },
+      ],
+    });
+    const matches = commonGround(a, b).filter(s => s.kind === 'sharedPromptAnswer');
+    expect(matches).toHaveLength(2);
+  });
+
+  it('places sharedPromptAnswer after shared events but before rank and city', () => {
+    const evt = event('e1', -5);
+    const a = baseUser('a', {
+      eventsAttended: [evt],
+      prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
+      rank: 'aloeCrew',
+      location: 'Moscow',
+    });
+    const b = baseUser('b', {
+      eventsAttended: [evt],
+      prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
+      rank: 'aloeCrew',
+      location: 'Moscow',
+    });
+    const r = commonGround(a, b);
+    expect(r[0].kind).toBe('sharedEventOne');
+    expect(r[1].kind).toBe('sharedPromptAnswer');
+    expect(r[2].kind).toBe('sharedRank');
+    expect(r[3].kind).toBe('sharedCity');
+  });
 });
