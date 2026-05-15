@@ -185,7 +185,7 @@ const translations = {
 
     // Common Ground
     'commonGround.title': 'Общее',
-    'commonGround.sharedEventsMany': 'Вы оба участвовали в {count} событиях AloeVera',
+    'commonGround.sharedEventsMany': 'Вы оба участвовали в {count} событиях АлоэВера',
     'commonGround.sharedEventOne': 'Вы оба были на {event}',
     'commonGround.sharedUpcomingEvent': 'Оба идут на {event}',
     'commonGround.sharedPromptAnswer': '{prompt}: {answer}',
