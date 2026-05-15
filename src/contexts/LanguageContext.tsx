@@ -65,6 +65,7 @@ const translations = {
     'search.moreInfo': 'Подробнее',
     'search.lessInfo': 'Скрыть подробности',
     'search.eventsCount': 'Событий посещено: {count}',
+    'search.scrollPrompts': '↕ Прокрутите, чтобы увидеть {count} ответа(ов)',
 
     // Events
     'events.title': 'События АлоэВера',
@@ -256,6 +257,7 @@ const translations = {
     'search.moreInfo': 'More info',
     'search.lessInfo': 'Hide details',
     'search.eventsCount': '{count} events attended',
+    'search.scrollPrompts': '↕ Scroll for {count} answers',
 
     // Events
     'events.title': 'AloeVera Events',
