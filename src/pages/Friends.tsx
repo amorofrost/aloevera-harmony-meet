@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,7 +44,6 @@ function composePhotos(user: { profileImage: string; images: string[] }): string
 const Friends = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [showDeckDetails, setShowDeckDetails] = useState(false);
-  const [deckPromptIdx, setDeckPromptIdx] = useState(0);
   const [messageText, setMessageText] = useState('');
   const [messageError, setMessageError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -176,7 +175,6 @@ const Friends = () => {
   const nextUser = () => {
     setCurrentUserIndex(prev => prev + 1);
     setShowDeckDetails(false);
-    setDeckPromptIdx(0);
   };
 
   const formatDateShort = (date: Date) =>
@@ -489,7 +487,7 @@ const Friends = () => {
                       )}
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-20">
                         <h2 className="text-2xl font-bold mb-1">
                           {currentUser.name}{currentUser.age ? `, ${currentUser.age}` : ''}
                         </h2>
@@ -533,42 +531,31 @@ const Friends = () => {
                                 @{currentUser.instagramHandle}
                               </a>
                             )}
-                            {currentUser.prompts && currentUser.prompts.length > 0 && (() => {
-                              const promptCount = currentUser.prompts.length;
-                              const idx = Math.min(deckPromptIdx, promptCount - 1);
-                              return (
-                                <div className="flex items-center gap-2">
-                                  {promptCount > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setDeckPromptIdx(i => Math.max(0, i - 1))}
-                                      disabled={idx === 0}
-                                      aria-label="Previous prompt"
-                                      className="flex-shrink-0 bg-white/15 disabled:opacity-30 rounded-full w-7 h-7 flex items-center justify-center"
-                                    >
-                                      <ChevronLeft className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <PromptCard prompt={currentUser.prompts[idx]} onDark className="bg-black/30 border-white/20" />
-                                    {promptCount > 1 && (
-                                      <p className="text-[10px] opacity-70 mt-1 text-center">{idx + 1} / {promptCount}</p>
-                                    )}
-                                  </div>
-                                  {promptCount > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setDeckPromptIdx(i => Math.min(promptCount - 1, i + 1))}
-                                      disabled={idx === promptCount - 1}
-                                      aria-label="Next prompt"
-                                      className="flex-shrink-0 bg-white/15 disabled:opacity-30 rounded-full w-7 h-7 flex items-center justify-center"
-                                    >
-                                      <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                  )}
+                            {currentUser.prompts && currentUser.prompts.length > 0 && (
+                              <div>
+                                <div
+                                  className="max-h-[110px] overflow-y-auto snap-y snap-mandatory space-y-2 pr-1 scrollbar-hide"
+                                  style={{ scrollbarWidth: 'none' }}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onMouseMove={(e) => e.stopPropagation()}
+                                  onMouseUp={(e) => e.stopPropagation()}
+                                  onTouchStart={(e) => e.stopPropagation()}
+                                  onTouchMove={(e) => e.stopPropagation()}
+                                  onTouchEnd={(e) => e.stopPropagation()}
+                                >
+                                  {currentUser.prompts.map((p, i) => (
+                                    <div key={i} className="snap-start">
+                                      <PromptCard prompt={p} onDark className="bg-black/30 border-white/20" />
+                                    </div>
+                                  ))}
                                 </div>
-                              );
-                            })()}
+                                {currentUser.prompts.length > 1 && (
+                                  <p className="text-[10px] opacity-70 mt-1 text-center">
+                                    {t('search.scrollPrompts').replace('{count}', String(currentUser.prompts.length))}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             {currentUser.eventsAttended && currentUser.eventsAttended.length > 0 && (
                               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
                                 {currentUser.eventsAttended.map((ev) => (
