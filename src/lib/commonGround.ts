@@ -16,6 +16,7 @@ export type CommonGroundSignal =
   | { kind: 'sharedEventsMany'; count: number }
   | { kind: 'sharedEventOne'; event: Event }
   | { kind: 'sharedUpcomingEvent'; event: Event }
+  | { kind: 'sharedPromptAnswer'; promptId: string; answer: string }
   | { kind: 'sharedRank'; rank: 'aloeCrew' | 'friendOfAloe' }
   | { kind: 'sharedCity'; city: string };
 
@@ -23,7 +24,8 @@ export type CommonGroundSignal =
  * Returns an ordered list of signals describing what viewer and target have
  * in common. Returns [] when viewer === target (same id) or nothing matches.
  *
- * Signal priority order: past shared events → upcoming shared event → rank → city.
+ * Signal priority order: past shared events → upcoming shared event →
+ * shared prompt answers → rank → city.
  */
 export function commonGround(viewer: User, target: User): CommonGroundSignal[] {
   if (viewer.id === target.id) return [];
@@ -46,6 +48,21 @@ export function commonGround(viewer: User, target: User): CommonGroundSignal[] {
 
   if (sharedUpcoming.length > 0) {
     out.push({ kind: 'sharedUpcomingEvent', event: sharedUpcoming[0] });
+  }
+
+  // Shared prompt answers: case-insensitive trimmed match on the same promptId.
+  const viewerPrompts = viewer.prompts ?? [];
+  const targetPrompts = target.prompts ?? [];
+  for (const vp of viewerPrompts) {
+    if (!vp.promptId || !vp.answer) continue;
+    const vAnswer = vp.answer.trim().toLowerCase();
+    if (!vAnswer) continue;
+    const match = targetPrompts.find(
+      tp => tp.promptId === vp.promptId && tp.answer.trim().toLowerCase() === vAnswer
+    );
+    if (match) {
+      out.push({ kind: 'sharedPromptAnswer', promptId: vp.promptId, answer: vp.answer.trim() });
+    }
   }
 
   if (

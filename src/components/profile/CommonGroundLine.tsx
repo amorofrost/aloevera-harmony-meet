@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getPromptText } from '@/data/prompts';
 import type { CommonGroundSignal } from '@/lib/commonGround';
 
 interface CommonGroundLineProps {
@@ -8,7 +9,7 @@ interface CommonGroundLineProps {
 }
 
 export function CommonGroundLine({ signal, className }: CommonGroundLineProps) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   let text = '';
   switch (signal.kind) {
     case 'sharedEventsMany':
@@ -20,6 +21,13 @@ export function CommonGroundLine({ signal, className }: CommonGroundLineProps) {
     case 'sharedUpcomingEvent':
       text = t('commonGround.sharedUpcomingEvent').replace('{event}', signal.event.title);
       break;
+    case 'sharedPromptAnswer': {
+      const promptText = getPromptText(signal.promptId, language) ?? signal.promptId;
+      text = t('commonGround.sharedPromptAnswer')
+        .replace('{prompt}', promptText)
+        .replace('{answer}', signal.answer);
+      break;
+    }
     case 'sharedRank':
       text = t(`commonGround.sharedRank.${signal.rank}`);
       break;
