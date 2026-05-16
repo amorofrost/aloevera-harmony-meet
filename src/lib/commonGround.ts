@@ -74,12 +74,36 @@ export function commonGround(viewer: User, target: User): CommonGroundSignal[] {
     out.push({ kind: 'sharedRank', rank: viewer.rank });
   }
 
-  // Same (country, region) tuple wins highest; same country with different region is softer.
-  if (viewer.country && viewer.country === target.country &&
-      viewer.region && viewer.region === target.region) {
-    out.push({ kind: 'sharedCity', city: viewer.region });
-  } else if (viewer.country && viewer.country === target.country) {
-    const countryName = COUNTRY_BY_CODE[viewer.country]?.nameRu ?? viewer.country;
+  // 4-way cross-slot scan: (viewer.primary × target.primary),
+  // (viewer.primary × target.secondary), (viewer.secondary × target.primary),
+  // (viewer.secondary × target.secondary). Strongest match wins.
+  const viewerSlots = [
+    { country: viewer.country, region: viewer.region },
+    { country: viewer.secondaryCountry ?? '', region: viewer.secondaryRegion ?? '' },
+  ].filter(s => s.country);
+
+  const targetSlots = [
+    { country: target.country, region: target.region },
+    { country: target.secondaryCountry ?? '', region: target.secondaryRegion ?? '' },
+  ].filter(s => s.country);
+
+  let cityMatch: { country: string; region: string } | null = null;
+  let countryMatch: { country: string; region: string } | null = null;
+
+  for (const v of viewerSlots) {
+    for (const t of targetSlots) {
+      if (v.country === t.country && v.region && v.region === t.region) {
+        cityMatch = cityMatch ?? v;
+      } else if (v.country === t.country) {
+        countryMatch = countryMatch ?? v;
+      }
+    }
+  }
+
+  if (cityMatch) {
+    out.push({ kind: 'sharedCity', city: cityMatch.region });
+  } else if (countryMatch) {
+    const countryName = COUNTRY_BY_CODE[countryMatch.country]?.nameRu ?? countryMatch.country;
     out.push({ kind: 'sharedCountry', country: countryName });
   }
 
