@@ -1,6 +1,6 @@
 # Known Issues & Technical Debt
 
-**Last Updated**: April 18, 2026
+**Last Updated**: 2026-05-15
 **Active issues only.** Resolved issues are archived in [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md).
 
 ---
@@ -149,14 +149,22 @@ A basic admin shell exists (`admin.html` → `src/admin/`, routes at `/admin/log
 
 ---
 
-### MCF.17. Telegram Mini App
-**Impact**: Users who prefer Telegram have no native way to access the platform
+### MCF.17. Telegram Mini App polish *(partial — auth + entry shell shipped)*
+**Impact**: Mini App authentication, entry page, and inline registration wizard are live, but the experience inside Telegram still needs polish.
 
-A Telegram Mini App would let users interact with AloeVera Harmony Meet without leaving Telegram. Planned as a separate repository (`@aloevera-telegram-bot/`).
+**Shipped**:
+- `POST /auth/telegram-miniapp-login`, `/telegram-miniapp-register`, `/telegram-miniapp-link-login` with full HMAC verification of `Telegram.WebApp.initData`
+- `/tg` entry route (`MiniAppEntry.tsx`) — reads initData, signs in or renders inline wizard
+- `Lovecraft.TelegramBot` worker (separate hosted-service; long-polls for `/start` commands)
+- `src/lib/telegramWebApp.ts` helpers (`isTelegramMiniApp()`, theme + viewport reads)
+- Mock-mode debug banner hidden inside Mini App contexts
 
-**Dependencies**: Telegram bot authentication on the backend (see `@lovecraft/Lovecraft/docs/AUTHENTICATION.md` — Phase 3, not yet implemented).
-
-*Note: significant scope — separate project and repository.*
+**Pending**:
+- Deep-link start params (`?startapp=link_{guid}`, `event_{id}`, `user_{id}`, `invite_{code}`)
+- Bot command menu (`/setMyCommands`, `SetChatMenuButton`)
+- Theme mapping (Telegram theme params → `aloe-*` CSS variables)
+- Back button / Main button integration with `Telegram.WebApp.BackButton` and `MainButton`
+- One-time linking codes (`telegramlinkrequests` table + bot worker handler)
 
 ---
 
@@ -362,15 +370,17 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 | Section | Count |
 |---|---|
 | 🔴 Production Blockers | 1 |
-| 🟠 Missing Core Features | 14 |
+| 🟠 Missing Core Features | 14 (3 partials: MCF.12, MCF.16, MCF.17) |
 | 🟡 Technical Debt & Infrastructure | 8 |
 | 🟢 UX / Polish | 11 |
 | **Total active** | **34** |
-| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | 16 |
+| ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | many |
 
 ---
 
 ## 📝 Changelog
+
+**May 15, 2026** — Documentation audit. MCF.17 (Telegram Mini App) updated from "not started" to "partial — auth + entry shell shipped; deep-link/command-menu/theme polish pending". Removed obsolete planning docs (DOCUMENTATION_SUMMARY.md, API_INTEGRATION_SUMMARY.md, BACKEND_PLAN.md, docs/README.md, AUTH_SIMPLIFICATION.md, AUTH_DECISIONS.md, AUTH_FLOWS.md, AUTH_IMPLEMENTATION.md). Updated AUTHENTICATION.md, FRONTEND_AUTH_GUIDE.md, DOCKER.md, QUICKSTART.md, ARCHITECTURE.md (both repos), FEATURES.md, IMPLEMENTATION_SUMMARY.md, AZURE_STORAGE.md to reflect Google + Telegram auth shipped.
 
 **April 18, 2026** — Audit pass. Moved PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), and UX.10 (SEO metadata) to `RESOLVED_ISSUES.md`. Updated MCF.16 to note basic admin scaffold exists. Updated TD.6 to note backend CI workflow exists.
 
@@ -378,7 +388,7 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 
 **April 13, 2026** — MCF.11 (rich text and media in forum & chat) resolved. BB code formatting via `src/components/ui/bbcode-renderer.tsx` with per-tag config in `src/config/bbcode.config.ts`; toolbar via `src/components/ui/bbcode-toolbar.tsx`. Image attachment picker (`src/components/ui/image-attachment-picker.tsx`) and display (`src/components/ui/image-attachment-display.tsx`). New backend endpoint `POST /api/v1/images/upload` (multipart/form-data, validates content-type and size ≤10 MB, resizes to 1200px, JPEG 85%, uploads to Azure Blob). `MessageDto` and `ForumReplyDto` now carry `imageUrls: string[]` arrays. Images uploaded at send time before persisting message/reply.
 
-**April 12, 2026** — PB.3 (rate limiting) resolved. Sliding window rate limiter (5 req / 15 min / IP) applied to `POST /auth/login`, `POST /auth/register`, `POST /auth/forgot-password`. Returns 429 `TOO_MANY_REQUESTS` with `Retry-After` header. `UseForwardedHeaders` added so real client IP is used behind nginx/Cloudflare. One shared permit bucket per IP across all three endpoints. `refresh`, `logout`, and other auth endpoints are intentionally not rate-limited.
+**April 12, 2026** — PB.3 (rate limiting) resolved. Sliding window rate limiter applied to `POST /auth/login`, `POST /auth/register`, `POST /auth/forgot-password` (and later extended to `reset-password`, `google-login`, `google-register`, `telegram-login`, `telegram-register`, `telegram-link-login`, `telegram-miniapp-*`). Currently 20 req / 1 min / IP with a single shared permit bucket across all rate-limited auth endpoints. Returns 429 `TOO_MANY_REQUESTS` with `Retry-After: 60` header. `UseForwardedHeaders` added so real client IP is used behind nginx/Cloudflare. `refresh`, `logout`, and `me` are intentionally NOT rate-limited.
 
 **April 11, 2026** — PB.5 (input sanitization) resolved. `HtmlGuard` static helper rejects inputs containing HTML tags with 400 `HTML_NOT_ALLOWED`. Guards added to `ForumController` (CreateTopic, CreateReply), `ChatsController` (SendMessage), and `UsersController` (UpdateUser: name, location, bio). Note: SignalR hub `SendMessage` path is not covered — must be addressed before MCF.11 ships.
 

@@ -359,8 +359,43 @@ When viewing a profile via `/friends?userId=…` or a forum reply link, the full
 
 ---
 
+## ~~Google OAuth + Telegram authentication (multi-provider sign-in)~~ ✅ RESOLVED
+**Resolved**: April 19–20, 2026 (Telegram Login Widget + Mini App scaffolding), with subsequent polish (Google sign-in, external photo download, attach-email, account linking) through April–May 2026.
+
+Multi-provider authentication is fully implemented. Originally tracked as future work in the now-deleted `AUTH_DECISIONS.md`/`AUTH_FLOWS.md` planning docs.
+
+**Backend** (`lovecraft/Lovecraft.Backend/`):
+- `Auth/GoogleIdTokenVerifier.cs` — verifies Google JWT against JWKS, checks audience/issuer/expiry
+- `Auth/TelegramLoginVerifier.cs` — HMAC verification of Login Widget payload (24-h replay window)
+- `Auth/TelegramWebAppVerifier.cs` — HMAC verification of Mini App `initData` (1-h replay window, different secret-key derivation: `HMAC_SHA256("WebAppData", bot_token)`)
+- New endpoints: `/auth/google-config`, `/auth/google-login`, `/auth/google-register`, `/auth/telegram-login-config`, `/auth/telegram-login`, `/auth/telegram-register`, `/auth/telegram-link-login`, `/auth/telegram-link`, `/auth/telegram-miniapp-login`, `/auth/telegram-miniapp-register`, `/auth/telegram-miniapp-link-login`, `/auth/attach-email`, `/auth/methods`
+- Pending-ticket flow for Google + Telegram Widget (short-lived server-signed ticket → frontend collects profile fields → `*-register` endpoint creates the user row)
+- Smart email-based linking: Google sign-in with matching email auto-links to existing local account (or returns `emailConflict` if local account exists but no auto-link is desired)
+- Reverse-lookup tables `usergoogleindex` and `usertelegramindex` added
+- `UserEntity.GoogleUserId`, `TelegramUserId`, `AuthMethodsJson` fields
+- `IImageService.DownloadAndUploadExternalImageAsync` — fetches Google/Telegram CDN profile photo, resizes to 800px, stores in Azure Blob (best-effort; failures don't block signup)
+- `Lovecraft.TelegramBot` — separate hosted-service worker container for Telegram long-poll
+- Tests: `TelegramLoginVerifierTests`, `TelegramPendingFlowTests`, `TelegramMiniAppFlowTests`, `GooglePendingFlowTests`
+
+**Frontend** (`aloevera-harmony-meet/`):
+- `src/components/GoogleSignInButton.tsx` — wraps `@react-oauth/google` `GoogleLogin`
+- `src/components/TelegramLoginWidget.tsx` — injects `telegram-widget.js`, registers `window.onTelegramAuth`
+- `src/components/GuestRoute.tsx` — redirect signed-in users away from `/`
+- `src/components/ForgotPasswordModal.tsx`
+- New pages: `WelcomeTelegram.tsx`, `WelcomeGoogle.tsx`, `WelcomePhoto.tsx`, `MiniAppEntry.tsx` (`/tg`), `VerifyEmail.tsx`, `ResetPassword.tsx`
+- `src/lib/telegramWebApp.ts` — Mini App helpers (`isTelegramMiniApp()`, theme params)
+- `src/lib/inviteRedirect.ts` — invite code carry-over via `sessionStorage`
+- `src/lib/authNavigation.ts` — post-login destination resolver
+- `authApi.ts` extended with all the new endpoints
+- `public/telegram/index.html` — Mini App embed entry stub
+
+See `aloevera-harmony-meet/docs/FRONTEND_AUTH_GUIDE.md` and `lovecraft/Lovecraft/docs/{AUTHENTICATION,TELEGRAM_AUTH,GOOGLE_OAUTH_SETUP}.md`.
+
+---
+
 ## 📝 Changelog
 
+- **May 15, 2026** — Documented Google OAuth + Telegram auth as resolved in the audit pass. Deleted obsolete planning docs (AUTH_DECISIONS.md, AUTH_FLOWS.md, AUTH_IMPLEMENTATION.md, AUTH_SIMPLIFICATION.md, frontend BACKEND_PLAN.md, frontend DOCUMENTATION_SUMMARY.md, frontend API_INTEGRATION_SUMMARY.md, frontend docs/README.md).
 - **April 27, 2026** — Event badges/Instagram missing on search page, redundant user fetches, and search take=10 cap resolved.
 - **April 26, 2026** — External profile photo download (Telegram/Google → Azure Blob), Instagram handle field, unified swipe card profile view, optional age at registration.
 - **April 18, 2026** — PB.1 (email service), MCF.3 (profile image upload), MCF.10 (gated registration), MCF.11 (rich text/media), UX.10 (SEO metadata) resolved and moved here.

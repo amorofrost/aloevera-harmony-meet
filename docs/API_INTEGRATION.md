@@ -239,11 +239,10 @@ docker run -p 8080:80 aloevera-frontend
 
 ## ✅ Current State
 
-All API services are implemented and wired. The full stack is deployed on Azure VM. JWT token refresh is fully implemented end-to-end.
+All API services are implemented and wired. Full stack deployed at https://aloeve.club. Multi-provider auth (Google + Telegram Widget + Mini App) is live; SignalR real-time chat is live; SendGrid email is live.
 
 **Remaining gaps**:
-- `chatsApi.ts` and `songsApi.ts` always return mock data — backend has no endpoints for these yet
-- No user-visible error messages for failed API calls (console.error only)
+- `songsApi.ts` always returns mock data — backend has no songs endpoint yet (MCF.5)
 
 ---
 
@@ -272,6 +271,6 @@ Product rules (visibility, invites, multiline descriptions, free-text price, for
 
 ## 🔜 Next Steps
 
-1. **Chat / Songs backend endpoints** — implement in `Lovecraft.Backend` and wire frontend services
-2. **Error handling** — surface API errors to users via toast notifications
-3. **Form validation** — apply React Hook Form + Zod to login/register/profile forms
+1. **Songs backend endpoint** — implement in `Lovecraft.Backend` and wire frontend `songsApi.ts` to it
+2. **TanStack Query adoption** — replace `useEffect` + `useState` fetch patterns page by page (TD.3)
+3. **Pagination** — wire `PagedResult<T>` from the backend through to list views (MCF.6)

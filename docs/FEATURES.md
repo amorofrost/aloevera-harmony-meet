@@ -2,9 +2,10 @@
 
 **AloeVera Harmony Meet** - Detailed Feature Documentation
 
-**Last Updated**: April 26, 2026
+**Last Updated**: 2026-05-15
 
 **Events:** See **[EVENTS.md](./EVENTS.md)** (visibility, invites, forum topic access, admin).
+**Auth:** See **[FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md)** for the full implementation (local + Google + Telegram + Mini App).
 
 ---
 
@@ -21,45 +22,53 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 
 ## 🚪 1. Welcome / Authentication
 
-**Route**: `/`  
-**Component**: `src/pages/Welcome.tsx`  
-**Status**: Mock UI only, no actual authentication
+**Status**: Fully implemented end-to-end against the LoveCraft backend.
 
-### Features
+### 1.1 Landing — `src/pages/Welcome.tsx`
 
-#### 1.1 Landing Page
-- Hero section with background image
-- AloeVera brand theming (flame, gold, ocean colors)
-- Language switcher (Russian/English)
-- Tagline: "Dating for Music Lovers" / "Знакомства для тех, кто на одной волне"
+- Hero section + language switcher (ru/en)
+- **Local login** (email + password) — `loginSchema` via react-hook-form + Zod
+- **Local register** — `registerSchema` or `registerSchemaWithInvite` depending on `GET /auth/registration-config`
+- **Continue with Google** — Google Identity Services via `<GoogleSignInButton>`. Existing-account auto-link (smart email-based linking); new identities → `/welcome/google` for the pending-ticket flow
+- **Continue with Telegram** — Telegram Login Widget via `<TelegramLoginWidget>`. Known Telegram id signs in; new id → `/welcome/telegram`
+- **Forgot password** — `<ForgotPasswordModal>` posts to `/auth/forgot-password` (anti-enumeration: always shows success)
 
-#### 1.2 Login Form
-- Email input
-- Password input
-- Sign In button
-- Link to registration
-- **Current**: Form doesn't actually authenticate
+`<GuestRoute>` wraps `/` so authenticated users get redirected to `/friends`.
 
-#### 1.3 Registration Form
-- Email, password, age (optional), gender, location, bio fields
-- Gender options: Male, Female, Non-binary, Prefer not to say
-- Create Account button
-- Link to login
-- **Current**: Form doesn't create account
+### 1.2 Pending-ticket redemption
 
-### Mock Behavior
-- Both forms just log data to console
-- No validation
-- No API calls
-- No session management
+| Route | When | Inputs |
+|---|---|---|
+| `/welcome/telegram` | New Telegram id, no existing email match | Name, age, location, gender, bio, optional invite code |
+| `/welcome/google` | New Google sub | Same |
+| `/welcome/photo` | First-time profile photo step | Image picker |
 
-### Future Implementation
-- Email/password authentication
-- OAuth (Google, Facebook, Spotify)
-- Email verification
-- Password reset
-- Terms of service acceptance
-- Age verification (18+)
+Each posts to the matching `*-register` endpoint (or `*-link-login` if the user has an existing email account they want to link).
+
+### 1.3 Email verification + password reset
+
+- `/verify-email?token=…` → `VerifyEmail.tsx` → `GET /auth/verify-email`
+- `/reset-password?token=…` → `ResetPassword.tsx` → `POST /auth/reset-password`
+
+Both links arrive via SendGrid (or are logged to backend console when `SENDGRID_API_KEY` is absent).
+
+### 1.4 Telegram Mini App entry — `/tg` (`MiniAppEntry.tsx`)
+
+When opened inside a Telegram client, the page reads `Telegram.WebApp.initData` and calls `/auth/telegram-miniapp-login`:
+- `signedIn` → save tokens, navigate to `/friends`
+- `needsRegistration` → render inline profile wizard, then `/auth/telegram-miniapp-register`
+
+The mock-mode debug banner is hidden inside Mini App contexts so it doesn't push content off the cramped Telegram WebView.
+
+### 1.5 Account management (in Settings)
+
+- **Linked methods** via `GET /auth/methods`
+- **Attach email** for Telegram-only / Google-only accounts via `/auth/attach-email` (sends verification email; `local` method only added when the verification link is clicked)
+- **Link Telegram** to current account via `/auth/telegram-link` (or `/auth/telegram-link-login` in the public flow)
+
+### 1.6 Password requirements
+
+Enforced both client (Zod) and server: ≥ 8 chars, uppercase, lowercase, digit, special char from `!@#$%^&*()_+-=[]{}|;:,.<>?`.
 
 ---
 
@@ -583,5 +592,5 @@ See `docs/ARCHITECTURE.md` ("ACL enforcement" subsection) for how `PermissionGua
 
 **For implementation details, see**:
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Technical architecture
-- [BACKEND_PLAN.md](./BACKEND_PLAN.md) - Backend roadmap
+- [FRONTEND_AUTH_GUIDE.md](./FRONTEND_AUTH_GUIDE.md) - Multi-provider authentication
 - [ISSUES.md](./ISSUES.md) - Known issues
