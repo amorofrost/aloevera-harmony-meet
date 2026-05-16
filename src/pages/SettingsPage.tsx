@@ -23,7 +23,7 @@ import { toast } from '@/components/ui/sonner';
 import { profileEditSchema, type ProfileEditSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import { UserBadges } from '@/components/ui/user-badges';
-import { CountryRegionPicker } from '@/components/ui/country-region-picker';
+import { DualLocationPicker } from '@/components/ui/dual-location-picker';
 import { LocationDisplay } from '@/components/ui/location-display';
 import LinkedAccountsCard from '@/components/settings/LinkedAccountsCard';
 
@@ -59,6 +59,8 @@ const SettingsPage = () => {
           age: userRes.data.age,
           country: userRes.data.country ?? '',
           region: userRes.data.region ?? '',
+          secondaryCountry: userRes.data.secondaryCountry ?? '',
+          secondaryRegion: userRes.data.secondaryRegion ?? '',
           bio: userRes.data.bio ?? '',
           instagramHandle: userRes.data.instagramHandle ?? '',
         });
@@ -220,7 +222,7 @@ const SettingsPage = () => {
                       </Button>
                     </div>
                   )}
-                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} className="mt-1" /><LocationDisplay country={user.country} region={user.region} location={user.location} className="text-sm text-muted-foreground" /></div>
+                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} className="mt-1" /><LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} className="text-sm text-muted-foreground" /></div>
                 </div>
               </CardContent>
             </Card>
@@ -262,12 +264,16 @@ const SettingsPage = () => {
                           control={profileForm.control}
                           name="country"
                           render={({ field }) => (
-                            <CountryRegionPicker
+                            <DualLocationPicker
                               country={field.value ?? ''}
                               region={profileForm.watch('region') ?? ''}
-                              onChange={({ country, region }) => {
+                              secondaryCountry={profileForm.watch('secondaryCountry') ?? ''}
+                              secondaryRegion={profileForm.watch('secondaryRegion') ?? ''}
+                              onChange={({ country, region, secondaryCountry, secondaryRegion }) => {
                                 profileForm.setValue('country', country, { shouldValidate: true });
                                 profileForm.setValue('region', region, { shouldValidate: true });
+                                profileForm.setValue('secondaryCountry', secondaryCountry, { shouldValidate: true });
+                                profileForm.setValue('secondaryRegion', secondaryRegion, { shouldValidate: true });
                               }}
                             />
                           )}
@@ -278,10 +284,16 @@ const SettingsPage = () => {
                         {profileForm.formState.errors.region && (
                           <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.region.message}</p>
                         )}
+                        {profileForm.formState.errors.secondaryCountry && (
+                          <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.secondaryCountry.message}</p>
+                        )}
+                        {profileForm.formState.errors.secondaryRegion && (
+                          <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.secondaryRegion.message}</p>
+                        )}
                       </>
                     ) : (
                       <div className="mt-1">
-                        <LocationDisplay country={user.country} region={user.region} location={user.location} className="text-sm text-muted-foreground" />
+                        <LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} className="text-sm text-muted-foreground" />
                       </div>
                     )}
                   </div>

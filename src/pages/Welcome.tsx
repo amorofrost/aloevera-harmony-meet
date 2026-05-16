@@ -14,7 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
-import { CountryRegionPicker } from '@/components/ui/country-region-picker';
+import { DualLocationPicker } from '@/components/ui/dual-location-picker';
 import { showApiError } from '@/lib/apiError';
 import { navigateAfterAuth } from '@/lib/authNavigation';
 import { safeRedirectFrom, inviteCodeFrom } from '@/lib/inviteRedirect';
@@ -45,7 +45,7 @@ const Welcome = () => {
       return zodResolver(schema)(values, context, options);
     },
     mode: 'onBlur',
-    defaultValues: { inviteCode: pendingInviteCode, country: '', region: '' },
+    defaultValues: { inviteCode: pendingInviteCode, country: '', region: '', secondaryCountry: '', secondaryRegion: '' },
   });
   const [showRegister, setShowRegister] = useState(false);
   const [requireEventInvite, setRequireEventInvite] = useState(false);
@@ -104,6 +104,8 @@ const Welcome = () => {
         age: data.age,
         country: data.country,
         region: data.region,
+        secondaryCountry: data.secondaryCountry,
+        secondaryRegion: data.secondaryRegion,
         gender: data.gender,
         bio: data.bio,
         inviteCode: data.inviteCode?.trim() || undefined,
@@ -378,12 +380,16 @@ const Welcome = () => {
                     control={registerForm.control}
                     name="country"
                     render={({ field }) => (
-                      <CountryRegionPicker
+                      <DualLocationPicker
                         country={field.value ?? ''}
                         region={registerForm.watch('region') ?? ''}
-                        onChange={({ country, region }) => {
+                        secondaryCountry={registerForm.watch('secondaryCountry') ?? ''}
+                        secondaryRegion={registerForm.watch('secondaryRegion') ?? ''}
+                        onChange={({ country, region, secondaryCountry, secondaryRegion }) => {
                           registerForm.setValue('country', country, { shouldValidate: true });
                           registerForm.setValue('region', region, { shouldValidate: true });
+                          registerForm.setValue('secondaryCountry', secondaryCountry, { shouldValidate: true });
+                          registerForm.setValue('secondaryRegion', secondaryRegion, { shouldValidate: true });
                         }}
                       />
                     )}
@@ -393,6 +399,12 @@ const Welcome = () => {
                   )}
                   {registerForm.formState.errors.region && (
                     <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.region.message}</p>
+                  )}
+                  {registerForm.formState.errors.secondaryCountry && (
+                    <p className="text-xs text-destructive mt-1">{registerForm.formState.errors.secondaryCountry.message}</p>
+                  )}
+                  {registerForm.formState.errors.secondaryRegion && (
+                    <p className="text-xs text-destructive mt-1">{registerForm.formState.errors.secondaryRegion.message}</p>
                   )}
                 </div>
 

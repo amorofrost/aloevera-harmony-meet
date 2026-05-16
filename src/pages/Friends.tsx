@@ -367,7 +367,7 @@ const Friends = () => {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold truncate">{user.name}, {user.age}</h3>
-            <p className="text-sm text-muted-foreground truncate"><LocationDisplay country={user.country} region={user.region} location={user.location} /></p>
+            <p className="text-sm text-muted-foreground truncate"><LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} /></p>
             {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
           </div>
           {actionButton}
@@ -399,9 +399,9 @@ const Friends = () => {
               {target.name}{target.age ? `, ${target.age}` : ''}
             </h2>
             <UserBadges rank={target.rank} staffRole={target.staffRole} />
-            {(target.country || target.location || (target.eventsAttended && target.eventsAttended.length > 0)) && (
+            {(target.country || target.secondaryCountry || target.location || (target.eventsAttended && target.eventsAttended.length > 0)) && (
               <div className="flex items-center gap-3 text-sm opacity-90 mb-2 flex-wrap">
-                {(target.country || target.location) && <LocationDisplay country={target.country} region={target.region} location={target.location} />}
+                {(target.country || target.secondaryCountry || target.location) && <LocationDisplay country={target.country} region={target.region} secondaryCountry={target.secondaryCountry} secondaryRegion={target.secondaryRegion} location={target.location} />}
                 {target.eventsAttended && target.eventsAttended.length > 0 && (
                   <span
                     className="inline-flex items-center gap-1 text-xs opacity-80"

@@ -377,3 +377,34 @@ describe('country/region in telegramRegisterSchema', () => {
     }).success).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// secondary country/region in registerSchema
+// ---------------------------------------------------------------------------
+describe('secondary country/region in registerSchema', () => {
+  const base = {
+    email: 'a@b.co',
+    password: 'Aa1!aaaa',
+    name: 'X',
+    age: 25,
+    country: 'RU',
+    region: 'Москва',
+    gender: 'male',
+  };
+
+  it('accepts secondary country and region', () => {
+    expect(registerSchema.safeParse({ ...base, secondaryCountry: 'TH', secondaryRegion: 'Пхукет' }).success).toBe(true);
+  });
+
+  it('accepts absent secondary fields', () => {
+    expect(registerSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('rejects secondaryCountry longer than 56 chars', () => {
+    expect(registerSchema.safeParse({ ...base, secondaryCountry: 'a'.repeat(57) }).success).toBe(false);
+  });
+
+  it('rejects secondaryRegion longer than 80 chars', () => {
+    expect(registerSchema.safeParse({ ...base, secondaryRegion: 'a'.repeat(81) }).success).toBe(false);
+  });
+});

@@ -27,6 +27,10 @@ export interface User {
   country: string;
   /** Free text up to 80 chars. Curated dropdown for priority countries; else custom text. */
   region: string;
+  /** ISO-3166-1 alpha-2 code or custom free-text label for the secondary slot; empty when unset. */
+  secondaryCountry?: string;
+  /** Free text up to 80 chars for the secondary slot; empty when unset. */
+  secondaryRegion?: string;
   /** @deprecated Legacy free-text location. Read-only fallback for users who haven't set country/region yet. */
   location?: string;
   gender: 'male' | 'female' | 'non-binary' | 'prefer-not-to-say';
