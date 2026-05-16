@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CountryRegionPicker } from '@/components/ui/country-region-picker';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authApi, apiClient } from '@/services/api';
@@ -67,7 +68,8 @@ const MiniAppEntry: React.FC = () => {
     defaultValues: {
       name: [hint?.firstName, hint?.lastName].filter(Boolean).join(' ').trim(),
       bio: '',
-      location: '',
+      country: '',
+      region: '',
       gender: '',
     },
     mode: 'onBlur',
@@ -167,7 +169,8 @@ const MiniAppEntry: React.FC = () => {
         initData: initDataRef.current,
         name: data.name,
         age: data.age,
-        location: data.location,
+        country: data.country,
+        region: data.region,
         gender: data.gender,
         bio: data.bio,
         inviteCode: data.inviteCode?.trim() || undefined,
@@ -372,16 +375,28 @@ const MiniAppEntry: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mini-location">{t('auth.location')} *</Label>
-                <Input
-                  id="mini-location"
-                  placeholder={t('auth.cityCountry')}
-                  {...registerForm.register('location')}
-                  disabled={isSubmitting}
+                <Controller
+                  control={registerForm.control}
+                  name="country"
+                  render={({ field }) => (
+                    <CountryRegionPicker
+                      country={field.value ?? ''}
+                      region={registerForm.watch('region') ?? ''}
+                      onChange={({ country, region }) => {
+                        registerForm.setValue('country', country, { shouldValidate: true });
+                        registerForm.setValue('region', region, { shouldValidate: true });
+                      }}
+                    />
+                  )}
                 />
-                {registerForm.formState.errors.location && (
+                {registerForm.formState.errors.country && (
                   <p role="alert" className="text-xs text-destructive">
-                    {registerForm.formState.errors.location.message}
+                    {registerForm.formState.errors.country.message}
+                  </p>
+                )}
+                {registerForm.formState.errors.region && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {registerForm.formState.errors.region.message}
                   </p>
                 )}
               </div>

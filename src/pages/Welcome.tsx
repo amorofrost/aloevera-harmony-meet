@@ -14,6 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
+import { CountryRegionPicker } from '@/components/ui/country-region-picker';
 import { showApiError } from '@/lib/apiError';
 import { navigateAfterAuth } from '@/lib/authNavigation';
 import { safeRedirectFrom, inviteCodeFrom } from '@/lib/inviteRedirect';
@@ -44,7 +45,7 @@ const Welcome = () => {
       return zodResolver(schema)(values, context, options);
     },
     mode: 'onBlur',
-    defaultValues: { inviteCode: pendingInviteCode },
+    defaultValues: { inviteCode: pendingInviteCode, country: '', region: '' },
   });
   const [showRegister, setShowRegister] = useState(false);
   const [requireEventInvite, setRequireEventInvite] = useState(false);
@@ -101,7 +102,8 @@ const Welcome = () => {
         password: data.password,
         name: data.name,
         age: data.age,
-        location: data.location,
+        country: data.country,
+        region: data.region,
         gender: data.gender,
         bio: data.bio,
         inviteCode: data.inviteCode?.trim() || undefined,
@@ -372,18 +374,25 @@ const Welcome = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location" className="text-white font-medium">
-                    {t('auth.location')}
-                  </Label>
-                  <Input
-                    id="location"
-                    placeholder={t('auth.cityCountry')}
-                    {...registerForm.register('location')}
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                    disabled={isLoading}
+                  <Controller
+                    control={registerForm.control}
+                    name="country"
+                    render={({ field }) => (
+                      <CountryRegionPicker
+                        country={field.value ?? ''}
+                        region={registerForm.watch('region') ?? ''}
+                        onChange={({ country, region }) => {
+                          registerForm.setValue('country', country, { shouldValidate: true });
+                          registerForm.setValue('region', region, { shouldValidate: true });
+                        }}
+                      />
+                    )}
                   />
-                  {registerForm.formState.errors.location && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.location.message}</p>
+                  {registerForm.formState.errors.country && (
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.country.message}</p>
+                  )}
+                  {registerForm.formState.errors.region && (
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.region.message}</p>
                   )}
                 </div>
 
