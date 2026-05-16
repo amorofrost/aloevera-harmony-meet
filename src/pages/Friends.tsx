@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar } from 'lucide-react';
+import { SearchFilterSheet } from '@/components/SearchFilterSheet';
+import { LocationDisplay } from '@/components/ui/location-display';
+import { COUNTRY_BY_CODE } from '@/data/countries';
+import { flagEmoji } from '@/lib/countryFlag';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,6 +59,7 @@ const Friends = () => {
   const likesTab = searchParams.get('sub') || 'matches';
   const selectedChat = searchParams.get('chat');
 
+  const [filter, setFilter] = useState<{ country: string; region: string }>({ country: '', region: '' });
   const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
   const [matches, setMatches] = useState<MatchWithUser[]>([]);
   const [sentLikes, setSentLikes] = useState<SentLikeWithUser[]>([]);
@@ -87,28 +92,25 @@ const Friends = () => {
     });
   }, [activeChatId, onEvent]);
 
+  // Load matches, likes and chats once on mount
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const [profilesRes, matchesRes, sentRes, receivedRes, chatsRes] = await Promise.all([
-        matchingApi.getSearchProfiles(),
+      const [matchesRes, sentRes, receivedRes, chatsRes] = await Promise.all([
         matchingApi.getMatches(),
         matchingApi.getSentLikes(),
         matchingApi.getReceivedLikes(),
         chatsApi.getChats(),
       ]);
-      if (profilesRes.success && profilesRes.data) setSearchProfiles(profilesRes.data);
       if (matchesRes.success && matchesRes.data) setMatches(matchesRes.data);
       if (sentRes.success && sentRes.data) setSentLikes(sentRes.data);
       if (receivedRes.success && receivedRes.data) setReceivedLikes(receivedRes.data);
       if (chatsRes.success && chatsRes.data) {
         const allMatches = matchesRes.success && matchesRes.data ? matchesRes.data : [];
-        const allProfiles = profilesRes.success && profilesRes.data ? profilesRes.data : [];
         const enriched: PrivateChatWithUser[] = (chatsRes.data as any[]).map((chat: any) => {
           const participants: string[] = chat.participants ?? [];
           const otherUser =
             allMatches.find(m => participants.includes(m.otherUser.id))?.otherUser ??
-            allProfiles.find(u => participants.includes(u.id)) ??
             { id: participants[0] ?? '', name: 'Пользователь', age: 0, bio: '', location: '',
               gender: 'prefer-not-to-say' as const, profileImage: '', images: [],
               lastSeen: new Date(), isOnline: false,
@@ -131,6 +133,26 @@ const Friends = () => {
     };
     load();
   }, []);
+
+  // Reload search deck whenever the filter changes
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      setCurrentUserIndex(0);
+      try {
+        const result = await usersApi.getUsers({
+          skip: 0,
+          take: 100,
+          country: filter.country || undefined,
+          region: filter.region || undefined,
+        });
+        if (result.success && result.data) setSearchProfiles(result.data);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [filter.country, filter.region]);
 
   // Sync activeChatId with URL and load messages when selectedChat changes
   useEffect(() => {
@@ -345,7 +367,7 @@ const Friends = () => {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold truncate">{user.name}, {user.age}</h3>
-            <p className="text-sm text-muted-foreground truncate">{user.location}</p>
+            <p className="text-sm text-muted-foreground truncate"><LocationDisplay country={user.country} region={user.region} location={user.location} /></p>
             {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
           </div>
           {actionButton}
@@ -377,9 +399,9 @@ const Friends = () => {
               {target.name}{target.age ? `, ${target.age}` : ''}
             </h2>
             <UserBadges rank={target.rank} staffRole={target.staffRole} />
-            {(target.location || (target.eventsAttended && target.eventsAttended.length > 0)) && (
+            {(target.country || target.location || (target.eventsAttended && target.eventsAttended.length > 0)) && (
               <div className="flex items-center gap-3 text-sm opacity-90 mb-2 flex-wrap">
-                {target.location && <span>{target.location}</span>}
+                {(target.country || target.location) && <LocationDisplay country={target.country} region={target.region} location={target.location} />}
                 {target.eventsAttended && target.eventsAttended.length > 0 && (
                   <span
                     className="inline-flex items-center gap-1 text-xs opacity-80"
@@ -517,7 +539,10 @@ const Friends = () => {
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">Друзья</h1>
-          <Heart className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-1">
+            <SearchFilterSheet country={filter.country} region={filter.region} onApply={setFilter} />
+            <Heart className="w-6 h-6 text-primary" />
+          </div>
         </div>
       </div>
 
@@ -544,6 +569,26 @@ const Friends = () => {
 
           {/* Search Tab */}
           <TabsContent value="search" className="mt-6">
+            {(filter.country || filter.region) && (
+              <div className="flex items-center gap-2 px-4 py-2 text-sm">
+                <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1">
+                  {filter.country && (
+                    <>
+                      {flagEmoji(filter.country) || '📍'}{' '}
+                      {COUNTRY_BY_CODE[filter.country]?.nameRu ?? filter.country}
+                    </>
+                  )}
+                  {filter.region && <> · {filter.region}</>}
+                  <button
+                    onClick={() => setFilter({ country: '', region: '' })}
+                    aria-label={t('search.clearFilter')}
+                    className="ml-1"
+                  >
+                    ✕
+                  </button>
+                </span>
+              </div>
+            )}
             {isLoading ? (
               <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
             ) : currentUserIndex >= searchProfiles.length ? (
