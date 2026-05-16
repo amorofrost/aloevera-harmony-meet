@@ -37,7 +37,7 @@ async function getAllUsers(): Promise<User[]> {
   const now = Date.now();
   if (_allUsersFetch && now - _allUsersFetchAt < ALL_USERS_TTL) return _allUsersFetch;
   _allUsersFetchAt = now;
-  _allUsersFetch = usersApi.getUsers(0, 500).then(res =>
+  _allUsersFetch = usersApi.getUsers({ skip: 0, take: 500 }).then(res =>
     res.success && res.data ? res.data : []
   );
   return _allUsersFetch;

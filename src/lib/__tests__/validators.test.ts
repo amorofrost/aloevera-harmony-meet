@@ -2,6 +2,7 @@ import {
   loginSchema,
   registerSchema,
   profileEditSchema,
+  telegramRegisterSchema,
   messageSchema,
   replySchema,
   createTopicSchema,
@@ -38,7 +39,8 @@ const validRegister = {
   password: 'Password1!',
   name: 'Alice',
   age: 25,
-  location: 'Moscow',
+  country: 'RU',
+  region: 'Moscow',
   gender: 'female',
   bio: 'Hello there',
 };
@@ -91,12 +93,13 @@ describe('registerSchema', () => {
 const validProfileEdit = {
   name: 'Alice',
   age: 30,
-  location: 'Moscow',
+  country: 'RU',
+  region: 'Moscow',
   bio: 'Short bio',
 };
 
 describe('profileEditSchema', () => {
-  it('passes with valid name, age, and location', () => {
+  it('passes with valid name, age, and country', () => {
     const result = profileEditSchema.safeParse(validProfileEdit);
     expect(result.success).toBe(true);
   });
@@ -318,4 +321,59 @@ describe('promptsSchema', () => {
     expect(fail([
       { promptId: 'totally_invented', answer: 'a' },
     ])).toBe(true));
+});
+
+// ---------------------------------------------------------------------------
+// country/region in registerSchema
+// ---------------------------------------------------------------------------
+describe('country/region in registerSchema', () => {
+  const base = {
+    email: 'a@b.co',
+    password: 'Aa1!aaaa',
+    name: 'X',
+    age: 25,
+    gender: 'male',
+  };
+
+  it('accepts ISO country and region', () => {
+    expect(registerSchema.safeParse({ ...base, country: 'RU', region: 'Москва' }).success).toBe(true);
+  });
+
+  it('accepts custom country', () => {
+    expect(registerSchema.safeParse({ ...base, country: 'Atlantis', region: '' }).success).toBe(true);
+  });
+
+  it('rejects empty country', () => {
+    expect(registerSchema.safeParse({ ...base, country: '', region: '' }).success).toBe(false);
+  });
+
+  it('rejects country longer than 56 chars', () => {
+    expect(registerSchema.safeParse({ ...base, country: 'a'.repeat(57), region: '' }).success).toBe(false);
+  });
+
+  it('rejects region longer than 80 chars', () => {
+    expect(registerSchema.safeParse({ ...base, country: 'RU', region: 'a'.repeat(81) }).success).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// country/region in profileEditSchema
+// ---------------------------------------------------------------------------
+describe('country/region in profileEditSchema', () => {
+  it('accepts country + empty region', () => {
+    expect(profileEditSchema.safeParse({
+      name: 'X', age: 25, country: 'RU', region: '',
+    }).success).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// country/region in telegramRegisterSchema
+// ---------------------------------------------------------------------------
+describe('country/region in telegramRegisterSchema', () => {
+  it('accepts ISO country', () => {
+    expect(telegramRegisterSchema.safeParse({
+      name: 'X', age: 25, country: 'RU', region: 'Москва', gender: 'male',
+    }).success).toBe(true);
+  });
 });

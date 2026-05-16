@@ -7,6 +7,8 @@ export const mockCurrentUser: User = {
   name: 'Александра',
   age: 26,
   bio: 'Фанатка AloeVera с 2018 года. Люблю концерты, арт и хорошую компанию 🎵',
+  country: 'RU',
+  region: 'Москва',
   location: 'Москва',
   gender: 'female',
   profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop&crop=face',

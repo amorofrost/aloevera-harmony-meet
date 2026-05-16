@@ -43,11 +43,13 @@ aloevera-harmony-meet/
 │   │   ├── GoogleSignInButton.tsx      # @react-oauth/google wrapper
 │   │   ├── TelegramLoginWidget.tsx     # telegram-widget.js injector
 │   │   ├── ForgotPasswordModal.tsx
+│   │   ├── SearchFilterSheet.tsx       # Country + region filter drawer for swipe deck
 │   │   ├── forum/                      # TopicDetail, CreateTopicModal
 │   │   ├── profile/, settings/
 │   │   └── ui/                         # shadcn/ui + custom: bottom-navigation, swipe-card,
 │   │                                     event-postmark, user-badges, bbcode-{renderer,toolbar},
-│   │                                     image-attachment-{picker,display}
+│   │                                     image-attachment-{picker,display},
+│   │                                     country-region-picker, location-display
 │   ├── config/
 │   │   ├── api.config.ts               # VITE_API_MODE (mock/api) + base URL
 │   │   └── bbcode.config.ts            # Per-tag BB code enable/disable
@@ -59,7 +61,9 @@ aloevera-harmony-meet/
 │   ├── data/                           # All mock data — never embed in components
 │   │   ├── mockUsers, mockCurrentUser, mockProfiles, mockEvents, mockStoreItems,
 │   │   ├── mockBlogPosts, mockForumData, mockChats, mockSongs
-│   │   └── prompts.ts                  # Profile-prompt list
+│   │   ├── prompts.ts                  # Profile-prompt list
+│   │   ├── countries.ts               # Country list (code + name)
+│   │   └── regions.ts                 # Region list keyed by country code
 │   ├── contexts/LanguageContext.tsx    # i18n (ru/en) — only Context provider
 │   ├── hooks/
 │   │   ├── useCurrentUser.tsx          # Loads logged-in user
@@ -75,6 +79,7 @@ aloevera-harmony-meet/
 │   │   ├── inviteRedirect.ts           # sessionStorage ?code= carry-over
 │   │   ├── authNavigation.ts           # Post-login destination resolver
 │   │   ├── commonGround.ts             # Profile match scoring
+│   │   ├── countryFlag.ts             # countryCodeToFlag() — ISO 3166-1 alpha-2 → emoji flag
 │   │   └── utils.ts                    # cn()
 │   ├── App.tsx                         # Routing
 │   ├── main.tsx                        # Entry

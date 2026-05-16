@@ -39,7 +39,7 @@ AloeVera Harmony Meet is a fan community platform for AloeVera music band enthus
 
 | Route | When | Inputs |
 |---|---|---|
-| `/welcome/telegram` | New Telegram id, no existing email match | Name, age, location, gender, bio, optional invite code |
+| `/welcome/telegram` | New Telegram id, no existing email match | Name, age, country + region, gender, bio, optional invite code |
 | `/welcome/google` | New Google sub | Same |
 | `/welcome/photo` | First-time profile photo step | Image picker |
 
@@ -83,7 +83,7 @@ Enforced both client (Zod) and server: ≥ 8 chars, uppercase, lowercase, digit,
 #### Features
 - **Swipeable profile cards** with Tinder-like UX
 - Profile card always shows full content:
-  - Name, age, location
+  - Name, age, country + region (location legacy field retained)
   - Profile image (large)
   - Bio text
   - Instagram handle link (if set)
@@ -101,8 +101,12 @@ Enforced both client (Zod) and server: ≥ 8 chars, uppercase, lowercase, digit,
 - Favorite songs
 - Online status
 
+#### Filters
+
+A **`<SearchFilterSheet>`** drawer (accessible from the Search tab header) lets users filter the swipe deck by country and region.
+
 #### Future Implementation
-- User preferences filtering (age range, distance, gender)
+- Additional preferences filtering (age range, distance, gender)
 - Matching algorithm based on:
   - Music preferences (favorite songs, albums)
   - Event attendance overlap
@@ -373,7 +377,7 @@ Enforced both client (Zod) and server: ≥ 8 chars, uppercase, lowercase, digit,
 - **Edit mode**:
   - Name input
   - Age input
-  - Location input
+  - Country + region picker (`<CountryRegionPicker>`); location field retained for legacy compat
   - Bio textarea
   - Instagram handle input (optional; username without @)
   - Save/Cancel buttons

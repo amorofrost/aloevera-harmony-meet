@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CountryRegionPicker } from '@/components/ui/country-region-picker';
 import { Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authApi, apiClient } from '@/services/api';
@@ -44,7 +45,8 @@ const WelcomeGoogle: React.FC = () => {
     defaultValues: {
       name: state?.google?.name || '',
       bio: '',
-      location: '',
+      country: '',
+      region: '',
       gender: '',
     },
     mode: 'onBlur',
@@ -78,7 +80,8 @@ const WelcomeGoogle: React.FC = () => {
         ticket,
         name: data.name,
         age: data.age,
-        location: data.location,
+        country: data.country,
+        region: data.region,
         gender: data.gender,
         bio: data.bio,
         inviteCode: data.inviteCode?.trim() || undefined,
@@ -198,17 +201,28 @@ const WelcomeGoogle: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="goo-location" className="text-white font-medium">{t('auth.location')} *</Label>
-                <Input
-                  id="goo-location"
-                  placeholder={t('auth.cityCountry')}
-                  {...registerForm.register('location')}
-                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                  disabled={isLoading}
+                <Controller
+                  control={registerForm.control}
+                  name="country"
+                  render={({ field }) => (
+                    <CountryRegionPicker
+                      country={field.value ?? ''}
+                      region={registerForm.watch('region') ?? ''}
+                      onChange={({ country, region }) => {
+                        registerForm.setValue('country', country, { shouldValidate: true });
+                        registerForm.setValue('region', region, { shouldValidate: true });
+                      }}
+                    />
+                  )}
                 />
-                {registerForm.formState.errors.location && (
+                {registerForm.formState.errors.country && (
                   <p role="alert" className="text-xs text-red-300">
-                    {registerForm.formState.errors.location.message}
+                    {registerForm.formState.errors.country.message}
+                  </p>
+                )}
+                {registerForm.formState.errors.region && (
+                  <p role="alert" className="text-xs text-red-300">
+                    {registerForm.formState.errors.region.message}
                   </p>
                 )}
               </div>

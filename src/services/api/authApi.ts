@@ -12,7 +12,8 @@ export interface RegisterRequest {
   password: string;
   name: string;
   age?: number;
-  location?: string;
+  country?: string;
+  region?: string;
   gender?: string;
   bio?: string;
   inviteCode?: string;
@@ -64,7 +65,8 @@ export interface TelegramRegisterRequest {
   ticket: string;
   name: string;
   age: number;
-  location: string;
+  country: string;
+  region?: string;
   gender: string;
   bio?: string;
   inviteCode?: string;
@@ -87,7 +89,8 @@ export interface TelegramMiniAppRegisterRequest {
   initData: string;
   name: string;
   age: number;
-  location: string;
+  country: string;
+  region?: string;
   gender: string;
   bio?: string;
   inviteCode?: string;
@@ -120,7 +123,8 @@ export interface GoogleRegisterRequest {
   ticket: string;
   name: string;
   age: number;
-  location: string;
+  country: string;
+  region?: string;
   gender: string;
   bio?: string;
   inviteCode?: string;

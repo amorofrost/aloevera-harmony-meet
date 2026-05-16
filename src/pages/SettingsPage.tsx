@@ -17,12 +17,14 @@ import { usersApi, songsApi, apiClient, authApi } from '@/services/api';
 import { PhotoGrid } from '@/components/settings/PhotoGrid';
 import { PromptsEditor } from '@/components/settings/PromptsEditor';
 import heroBg from '@/assets/hero-bg.jpg';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { profileEditSchema, type ProfileEditSchema } from '@/lib/validators';
 import { showApiError } from '@/lib/apiError';
 import { UserBadges } from '@/components/ui/user-badges';
+import { CountryRegionPicker } from '@/components/ui/country-region-picker';
+import { LocationDisplay } from '@/components/ui/location-display';
 import LinkedAccountsCard from '@/components/settings/LinkedAccountsCard';
 
 const SettingsPage = () => {
@@ -55,7 +57,8 @@ const SettingsPage = () => {
         profileForm.reset({
           name: userRes.data.name,
           age: userRes.data.age,
-          location: userRes.data.location,
+          country: userRes.data.country ?? '',
+          region: userRes.data.region ?? '',
           bio: userRes.data.bio ?? '',
           instagramHandle: userRes.data.instagramHandle ?? '',
         });
@@ -217,7 +220,7 @@ const SettingsPage = () => {
                       </Button>
                     </div>
                   )}
-                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} className="mt-1" /><p className="text-muted-foreground">{user.location}</p></div>
+                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} className="mt-1" /><LocationDisplay country={user.country} region={user.region} location={user.location} className="text-sm text-muted-foreground" /></div>
                 </div>
               </CardContent>
             </Card>
@@ -253,14 +256,33 @@ const SettingsPage = () => {
                   </div>
                   <div>
                     <Label>{t('profile.location')}</Label>
-                    <Input
-                      {...(isEditing ? profileForm.register('location') : {})}
-                      value={isEditing ? undefined : user.location}
-                      disabled={!isEditing}
-                      className="mt-1"
-                    />
-                    {isEditing && profileForm.formState.errors.location && (
-                      <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.location.message}</p>
+                    {isEditing ? (
+                      <>
+                        <Controller
+                          control={profileForm.control}
+                          name="country"
+                          render={({ field }) => (
+                            <CountryRegionPicker
+                              country={field.value ?? ''}
+                              region={profileForm.watch('region') ?? ''}
+                              onChange={({ country, region }) => {
+                                profileForm.setValue('country', country, { shouldValidate: true });
+                                profileForm.setValue('region', region, { shouldValidate: true });
+                              }}
+                            />
+                          )}
+                        />
+                        {profileForm.formState.errors.country && (
+                          <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.country.message}</p>
+                        )}
+                        {profileForm.formState.errors.region && (
+                          <p className="text-xs text-destructive mt-1">{profileForm.formState.errors.region.message}</p>
+                        )}
+                      </>
+                    ) : (
+                      <div className="mt-1">
+                        <LocationDisplay country={user.country} region={user.region} location={user.location} className="text-sm text-muted-foreground" />
+                      </div>
                     )}
                   </div>
                   <div>
