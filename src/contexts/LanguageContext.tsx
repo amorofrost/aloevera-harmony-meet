@@ -46,6 +46,9 @@ const translations = {
     'location.useCustomValue': 'Указать своё значение…',
     'location.regionUnavailable': 'Фильтр по региону недоступен для этой страны',
     'location.clearCountry': 'Очистить страну',
+    'location.addSecond': '+ Добавить вторую локацию',
+    'location.removeSecond': 'Убрать',
+    'location.secondary': 'Дополнительная локация',
 
     // Profile
     'profile.title': 'Ваш профиль',
@@ -251,6 +254,9 @@ const translations = {
     'location.useCustomValue': 'Use custom value…',
     'location.regionUnavailable': 'Region filter not available for this country',
     'location.clearCountry': 'Clear country',
+    'location.addSecond': '+ Add second location',
+    'location.removeSecond': 'Remove',
+    'location.secondary': 'Secondary location',
 
     // Profile
     'profile.title': 'Your Profile',
