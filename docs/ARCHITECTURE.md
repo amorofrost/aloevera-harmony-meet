@@ -224,6 +224,9 @@ src/
 - `BottomNavigation`: Fixed bottom nav with active state detection
 - `SwipeCard`: Swipeable card for Tinder-like UX
 - `EventPostmark`: Artistic postage stamp-style event badges
+- `CountryRegionPicker`: Two-step country + region select (uses `src/data/countries.ts` + `regions.ts`)
+- `LocationDisplay`: Read-only display of country + region with flag emoji (uses `src/lib/countryFlag.ts`)
+- `SearchFilterSheet`: Filter drawer for the swipe deck (country + region)
 
 ---
 
@@ -293,7 +296,8 @@ export const eventsApi = {
 ```typescript
 // Core Entities
 User {
-  id, name, age, bio, location, gender
+  id, name, age, bio, country, region, gender
+  // `location` retained as legacy free-text field
   profileImage, images[]
   lastSeen, isOnline
   eventsAttended[], favoriteSong

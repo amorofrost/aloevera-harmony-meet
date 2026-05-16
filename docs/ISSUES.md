@@ -61,10 +61,12 @@ Events, blog posts, forum topics, store items, and user search results all fetch
 
 User preferences (age range, gender, location) exist in `UserPreferencesDto` and `SettingsPage.tsx` but are not sent to or honoured by `GET /api/v1/users`. The matching swipe deck shows every user regardless of preferences.
 
+**2026-05-16**: Country + region filter shipped — `GET /api/v1/users?country=&region=` parameters added on the backend; `<SearchFilterSheet>` drawer in `Friends.tsx` wires them on the frontend. Age, gender, and distance filters remain open.
+
 **Resolution**:
-- Backend: Add filter parameters to `GET /api/v1/users` (`?country=&city=&minAge=&maxAge=&gender=&eventId=`)
-- Frontend: Pass the current user's preferences when calling `usersApi.getUsers()` in `src/pages/Friends.tsx`
-- UI: Add a filter sheet/drawer accessible from the Search tab header
+- Backend: Add remaining filter parameters to `GET /api/v1/users` (`?minAge=&maxAge=&gender=&eventId=`)
+- Frontend: Pass the current user's preferences (age range, gender) when calling `usersApi.getUsers()` in `src/pages/Friends.tsx`
+- UI: Extend the existing filter sheet with age/gender controls
 
 ---
 
