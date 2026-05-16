@@ -19,6 +19,8 @@ export function mapUserFromApi(dto: any): User {
     age: dto.age,
     bio: dto.bio ?? '',
     location: dto.location ?? '',
+    country: dto.country ?? '',
+    region: dto.region ?? '',
     gender: mapGender(dto.gender),
     profileImage: dto.profileImage ?? '',
     images: dto.images ?? [],
@@ -60,6 +62,8 @@ function mapUserToApi(u: Partial<User>): Record<string, unknown> {
     age: u.age,
     bio: u.bio,
     location: u.location,
+    country: u.country,
+    region: u.region,
     gender: u.gender ? (genderToApi[u.gender] ?? u.gender) : undefined,
     profileImage: u.profileImage,
     images: u.images,
@@ -84,15 +88,23 @@ function mockSuccess<T>(data: T): ApiResponse<T> {
 }
 
 export const usersApi = {
-  async getUsers(skip = 0, take = 100): Promise<ApiResponse<User[]>> {
+  async getUsers(opts: { skip?: number; take?: number; country?: string; region?: string } = {}): Promise<ApiResponse<User[]>> {
+    const { skip = 0, take = 100, country, region } = opts;
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>(`/api/v1/users?skip=${skip}&take=${take}`);
+      const params = new URLSearchParams({ skip: String(skip), take: String(take) });
+      if (country) params.set('country', country);
+      if (region) params.set('region', region);
+      const res = await apiClient.get<any[]>(`/api/v1/users?${params.toString()}`);
       if (res.success && res.data) {
         return { ...res, data: res.data.map(mapUserFromApi) };
       }
       return res as ApiResponse<User[]>;
     }
-    return mockSuccess(mockSearchProfiles);
+    // mock-mode filter
+    let list = mockSearchProfiles;
+    if (country) list = list.filter(u => u.country?.toLowerCase() === country.toLowerCase());
+    if (region) list = list.filter(u => u.region?.toLowerCase() === region.toLowerCase());
+    return mockSuccess(list.slice(skip, skip + take));
   },
 
   /** Admin only — backend enforces [RequireStaffRole("admin")]. */
