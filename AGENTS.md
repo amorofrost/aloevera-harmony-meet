@@ -49,7 +49,7 @@ aloevera-harmony-meet/
 │   │   └── ui/                         # shadcn/ui + custom: bottom-navigation, swipe-card,
 │   │                                     event-postmark, user-badges, bbcode-{renderer,toolbar},
 │   │                                     image-attachment-{picker,display},
-│   │                                     country-region-picker, location-display
+│   │                                     country-region-picker, dual-location-picker, location-display
 │   ├── config/
 │   │   ├── api.config.ts               # VITE_API_MODE (mock/api) + base URL
 │   │   └── bbcode.config.ts            # Per-tag BB code enable/disable
