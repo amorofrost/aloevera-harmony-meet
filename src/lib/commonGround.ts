@@ -11,6 +11,7 @@
  */
 
 import type { User, Event } from '@/types/user';
+import { COUNTRY_BY_CODE } from '@/data/countries';
 
 export type CommonGroundSignal =
   | { kind: 'sharedEventsMany'; count: number }
@@ -18,7 +19,8 @@ export type CommonGroundSignal =
   | { kind: 'sharedUpcomingEvent'; event: Event }
   | { kind: 'sharedPromptAnswer'; promptId: string; answer: string }
   | { kind: 'sharedRank'; rank: 'aloeCrew' | 'friendOfAloe' }
-  | { kind: 'sharedCity'; city: string };
+  | { kind: 'sharedCity'; city: string }
+  | { kind: 'sharedCountry'; country: string };
 
 /**
  * Returns an ordered list of signals describing what viewer and target have
@@ -72,10 +74,13 @@ export function commonGround(viewer: User, target: User): CommonGroundSignal[] {
     out.push({ kind: 'sharedRank', rank: viewer.rank });
   }
 
-  const vCity = viewer.location.trim().toLowerCase();
-  const tCity = target.location.trim().toLowerCase();
-  if (vCity && tCity && vCity === tCity) {
-    out.push({ kind: 'sharedCity', city: viewer.location.trim() });
+  // Same (country, region) tuple wins highest; same country with different region is softer.
+  if (viewer.country && viewer.country === target.country &&
+      viewer.region && viewer.region === target.region) {
+    out.push({ kind: 'sharedCity', city: viewer.region });
+  } else if (viewer.country && viewer.country === target.country) {
+    const countryName = COUNTRY_BY_CODE[viewer.country]?.nameRu ?? viewer.country;
+    out.push({ kind: 'sharedCountry', country: countryName });
   }
 
   return out;
