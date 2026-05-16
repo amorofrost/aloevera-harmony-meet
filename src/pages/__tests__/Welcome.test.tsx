@@ -28,6 +28,20 @@ vi.mock('@/components/ui/sonner', () => ({
   Toaster: () => null,
 }));
 
+// Mock CountryRegionPicker — cmdk + Radix Popover require pointer events / ResizeObserver
+// not available in jsdom. Replace with a plain text input that calls onChange directly.
+vi.mock('@/components/ui/country-region-picker', () => ({
+  CountryRegionPicker: ({ country, onChange }: any) => (
+    <input
+      role="textbox"
+      aria-label="country"
+      value={country}
+      onChange={(e) => onChange({ country: e.target.value, region: '' })}
+      data-testid="country-picker"
+    />
+  ),
+}));
+
 // Mock Radix Select — jsdom does not support pointer events required by Radix portal
 vi.mock('@/components/ui/select', () => ({
   Select: ({ onValueChange, children }: any) => (
@@ -206,8 +220,8 @@ describe('Welcome — register form', () => {
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
     // Gender uses native <select> mock with data-testid
     await user.selectOptions(screen.getByTestId('gender-select'), 'female');
-    // 'auth.location' label → matches /location/i
-    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    // CountryRegionPicker is mocked as a plain textbox with aria-label="country"
+    await user.type(screen.getByRole('textbox', { name: /^country$/i }), 'RU');
   }
 
   it('shows inline error for password under 8 characters', async () => {
@@ -303,7 +317,8 @@ describe('Welcome — register form', () => {
           password: 'Secure1!',
           age: 25,
           gender: 'female',
-          location: 'Moscow',
+          country: 'RU',
+          region: '',
         })
       );
     });
@@ -396,7 +411,7 @@ describe('Welcome — register form — invite code', () => {
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
     await user.selectOptions(screen.getByTestId('gender-select'), 'female');
-    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    await user.type(screen.getByRole('textbox', { name: /^country$/i }), 'RU');
     await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
     await waitFor(() => {
       expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
@@ -422,7 +437,7 @@ describe('Welcome — register form — invite code', () => {
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
     await user.selectOptions(screen.getByTestId('gender-select'), 'female');
-    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    await user.type(screen.getByRole('textbox', { name: /^country$/i }), 'RU');
     await user.type(screen.getByPlaceholderText(/inviteCodePlaceholder/i), 'MYCODE');
     await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
     await waitFor(() => {
@@ -453,7 +468,7 @@ describe('Welcome — register form — invite code', () => {
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
     await user.selectOptions(screen.getByTestId('gender-select'), 'female');
-    await user.type(screen.getByRole('textbox', { name: /location/i }), 'Moscow');
+    await user.type(screen.getByRole('textbox', { name: /^country$/i }), 'RU');
     await user.type(screen.getByPlaceholderText(/inviteCodePlaceholder/i), 'WRONG');
     await user.click(screen.getByRole('button', { name: /auth\.createAccount/i }));
     await waitFor(() => {
