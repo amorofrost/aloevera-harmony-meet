@@ -10,9 +10,9 @@ This document provides context and instructions for AI coding assistants (like C
 
 **AloeVera Harmony Meet** is a fan community platform for AloeVera music band enthusiasts that combines dating features, social networking, event management, and e-commerce.
 
-**Current State**: React application with full backend integration. The **LoveCraft** backend (`@lovecraft/`) is running with JWT auth and mock data. All pages are wired to `src/services/api/` service layer. Authentication is enforced — all content routes require a valid JWT stored in `localStorage`. The full stack runs end-to-end in Docker.
+**Current State**: React SPA with full backend integration. The **LoveCraft** backend (`@lovecraft/`) runs with JWT auth + Azure Table Storage + SignalR. Multi-provider sign-in shipped (email/password, Google Identity Services, Telegram Login Widget, Telegram Mini App). All content pages are wired to `src/services/api/` and gated by `<ProtectedRoute>`. Full stack deployed at `https://aloeve.club` via Docker on Azure VM.
 
-**Tech Stack**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, React Router DOM, react-hook-form + Zod (forms), sonner (toasts)
+**Tech Stack**: React 18, TypeScript, Vite (two HTML entries: `index.html` + `admin.html`), Tailwind CSS, shadcn/ui, React Router DOM v6, react-hook-form + Zod, sonner toasts, TanStack Query (installed, currently unused), `@microsoft/signalr`, `@react-oauth/google`, `@dnd-kit/core`+`sortable`, `react-qr-code`
 
 ---
 
@@ -21,63 +21,80 @@ This document provides context and instructions for AI coding assistants (like C
 ```
 aloevera-harmony-meet/
 ├── src/
-│   ├── pages/              # Page components (main routes)
+│   ├── pages/                          # Page components
+│   │   ├── Welcome.tsx                 # Landing + local login/register + Google + Telegram buttons
+│   │   ├── WelcomeTelegram.tsx         # Pending-ticket redemption (Telegram Login Widget)
+│   │   ├── WelcomeGoogle.tsx           # Pending-ticket redemption (Google Sign-In)
+│   │   ├── WelcomePhoto.tsx            # First-time profile photo step
+│   │   ├── MiniAppEntry.tsx            # Telegram Mini App entry (/tg)
+│   │   ├── VerifyEmail.tsx             # /verify-email
+│   │   ├── ResetPassword.tsx           # /reset-password
+│   │   ├── Friends.tsx, Talks.tsx, AloeVera.tsx
+│   │   ├── EventDetails.tsx, BlogPost.tsx, StoreItem.tsx
+│   │   ├── SettingsPage.tsx, NotFound.tsx
+│   │   └── (orphaned — exist but no routes: Chats, Events, Index, Likes, Profile, Search)
+│   ├── admin/                          # Second Vite entry (admin.html → admin/main.tsx)
+│   │   ├── AdminApp.tsx, main.tsx
+│   │   ├── pages/                      # AdminLogin, AdminUsers, AdminConfig,
+│   │   │                                 AdminEventEditorPage, AdminInvitesPage, etc.
+│   │   └── components/
 │   ├── components/
-│   │   ├── ui/             # Reusable UI components (shadcn/ui + custom)
-│   │   ├── forum/
-│   │   │   └── TopicDetail.tsx # Forum topic detail view (post + replies + reply input)
-│   │   └── ProtectedRoute.tsx  # Auth guard — redirects unauthenticated users to /
+│   │   ├── ProtectedRoute.tsx, GuestRoute.tsx
+│   │   ├── GoogleSignInButton.tsx      # @react-oauth/google wrapper
+│   │   ├── TelegramLoginWidget.tsx     # telegram-widget.js injector
+│   │   ├── ForgotPasswordModal.tsx
+│   │   ├── SearchFilterSheet.tsx       # Country + region filter drawer for swipe deck
+│   │   ├── forum/                      # TopicDetail, CreateTopicModal
+│   │   ├── profile/, settings/
+│   │   └── ui/                         # shadcn/ui + custom: bottom-navigation, swipe-card,
+│   │                                     event-postmark, user-badges, bbcode-{renderer,toolbar},
+│   │                                     image-attachment-{picker,display},
+│   │                                     country-region-picker, location-display
 │   ├── config/
-│   │   └── api.config.ts   # API mode (mock/api) and base URL config
+│   │   ├── api.config.ts               # VITE_API_MODE (mock/api) + base URL
+│   │   └── bbcode.config.ts            # Per-tag BB code enable/disable
 │   ├── services/
-│   │   ├── api/            # API service layer
-│   │   │   ├── apiClient.ts    # Base HTTP client (auth headers, 401 handling, localStorage token)
-│   │   │   ├── authApi.ts      # Auth endpoints (login/register/logout/refresh)
-│   │   │   ├── usersApi.ts     # User endpoints (getCurrentUser, getUsers, updateUser)
-│   │   │   ├── eventsApi.ts    # Events (list, detail, register, interest, invites) — see docs/EVENTS.md
-│   │   │   ├── storeApi.ts     # Store items (list, detail)
-│   │   │   ├── blogApi.ts      # Blog posts (list, detail)
-│   │   │   ├── forumsApi.ts    # Forum sections, topics, topic detail, and replies
-│   │   │   ├── matchingApi.ts  # Search profiles, matches, likes
-│   │   │   ├── chatsApi.ts     # Private chats — dual-mode (mock + real backend REST)
-│   │   │   ├── songsApi.ts     # AloeVera songs (mock-only)
-│   │   │   └── index.ts        # Central exports
-│   │   └── signalr/        # SignalR layer
-│   │       └── chatConnection.ts  # Module-level singleton; no-op in mock mode
-│   ├── data/               # Centralized mock data (used by API services in mock mode)
-│   │   ├── mockUsers.ts
-│   │   ├── mockCurrentUser.ts
-│   │   ├── mockEvents.ts
-│   │   ├── mockStoreItems.ts
-│   │   ├── mockBlogPosts.ts
-│   │   ├── mockForumData.ts    # Sections, topics, mockTopicDetails (12 topics × replies)
-│   │   ├── mockChats.ts
-│   │   ├── mockProfiles.ts
-│   │   └── mockSongs.ts
-│   ├── contexts/           # React Context providers (LanguageContext)
-│   ├── types/              # TypeScript type definitions
-│   ├── hooks/              # Custom React hooks (useChatSignalR)
-│   ├── lib/                # Utility functions
-│   │   ├── validators.ts   # Zod schemas: loginSchema, registerSchema, profileEditSchema, messageSchema, replySchema
-│   │   ├── apiError.ts     # showApiError(err, fallback) — extracts ApiResponse error message and calls toast.error()
-│   │   └── utils.ts        # cn() and other utilities
-│   ├── assets/             # Images and static assets
-│   ├── App.tsx             # Main app with routing (all routes except / are ProtectedRoute)
-│   ├── main.tsx            # Entry point
-│   └── index.css           # Global styles + design system
-├── docs/                   # Documentation
-│   ├── ARCHITECTURE.md     # Technical architecture
-│   ├── API_INTEGRATION.md  # API service layer guide
-│   ├── FRONTEND_AUTH_GUIDE.md # Auth integration guide
-│   ├── ISSUES.md           # Active issues and technical debt
-│   ├── RESOLVED_ISSUES.md  # Archive of resolved issues
-│   ├── FEATURES.md         # Feature specifications
-│   └── BACKEND_PLAN.md     # Backend implementation roadmap
-├── .env.development        # VITE_API_MODE=mock (default)
-├── .env.production         # VITE_API_MODE=api
-├── public/                 # Static public assets
-├── [config files]          # vite.config.ts, tsconfig.json, tailwind.config.ts, etc.
-└── AGENTS.md              # This file
+│   │   ├── api/                        # apiClient, authApi, usersApi, eventsApi, storeApi,
+│   │   │                                 blogApi, forumsApi, matchingApi, chatsApi,
+│   │   │                                 songsApi (mock-only), imagesApi, adminApi
+│   │   └── signalr/chatConnection.ts   # Module-level singleton (no-op in mock mode)
+│   ├── data/                           # All mock data — never embed in components
+│   │   ├── mockUsers, mockCurrentUser, mockProfiles, mockEvents, mockStoreItems,
+│   │   ├── mockBlogPosts, mockForumData, mockChats, mockSongs
+│   │   ├── prompts.ts                  # Profile-prompt list
+│   │   ├── countries.ts               # Country list (code + name)
+│   │   └── regions.ts                 # Region list keyed by country code
+│   ├── contexts/LanguageContext.tsx    # i18n (ru/en) — only Context provider
+│   ├── hooks/
+│   │   ├── useCurrentUser.tsx          # Loads logged-in user
+│   │   └── useChatSignalR.ts           # Group join/leave + event subscription
+│   ├── types/                          # user.ts, chat.ts, forum.ts, index.ts
+│   ├── lib/
+│   │   ├── validators.ts               # Zod schemas (login, register, registerWithInvite,
+│   │   │                                  profileEdit, message, reply, createTopic)
+│   │   ├── apiError.ts                 # showApiError(err, fallback) → toast.error
+│   │   ├── acl.ts                      # Effective-level mirror (Novice/.../Admin → 0–5)
+│   │   ├── jwt.ts                      # getStaffRoleFromAccessToken
+│   │   ├── telegramWebApp.ts           # isTelegramMiniApp / initData / theme reads
+│   │   ├── inviteRedirect.ts           # sessionStorage ?code= carry-over
+│   │   ├── authNavigation.ts           # Post-login destination resolver
+│   │   ├── commonGround.ts             # Profile match scoring
+│   │   ├── countryFlag.ts             # countryCodeToFlag() — ISO 3166-1 alpha-2 → emoji flag
+│   │   └── utils.ts                    # cn()
+│   ├── App.tsx                         # Routing
+│   ├── main.tsx                        # Entry
+│   └── index.css                       # Design system tokens
+├── docs/
+│   ├── ARCHITECTURE.md, FEATURES.md, ISSUES.md, RESOLVED_ISSUES.md
+│   ├── API_INTEGRATION.md, FRONTEND_AUTH_GUIDE.md
+│   ├── EVENTS.md, GOOGLE_OAUTH_SETUP.md, HTTPS_SETUP.md
+├── .env.development                    # VITE_API_MODE=mock (default)
+├── .env.production                     # VITE_API_MODE=api, VITE_API_BASE_URL=""
+├── public/                             # Static (incl. public/telegram/index.html stub)
+├── admin.html, index.html              # Two Vite HTML entries
+├── nginx.conf, Dockerfile, Dockerfile.dev, docker-compose.yml
+├── vite.config.ts, tsconfig*.json, tailwind.config.ts, eslint.config.js
+└── AGENTS.md                           # This file
 ```
 
 ---
@@ -308,17 +325,29 @@ const Component = () => {
 
 **Router**: React Router DOM v6
 
-**Routes**:
+**Public routes**:
 ```
-/                              → Welcome (landing/auth)
+/                       → Welcome (login + register + Google + Telegram); wrapped in <GuestRoute>
+/welcome/telegram       → WelcomeTelegram — Telegram pending-ticket redemption
+/welcome/google         → WelcomeGoogle  — Google pending-ticket redemption
+/welcome/photo          → WelcomePhoto   — first-time profile photo
+/tg                     → MiniAppEntry   — Telegram Mini App entry
+/verify-email           → VerifyEmail
+/reset-password         → ResetPassword
+```
+
+**Protected routes** (wrapped in `<ProtectedRoute>`):
+```
 /friends                       → Friends (search, likes, chats)
-/talks                         → Talks (forum, event chats)
+/talks                         → Talks (forum, event discussions)
 /aloevera                      → AloeVera (events, store, blog)
-/aloevera/events/:eventId      → Event details
-/aloevera/blog/:postId         → Blog post details
-/aloevera/store/:itemId        → Store item details
-/settings                      → Settings
+/aloevera/events/:eventId      → EventDetails
+/aloevera/blog/:postId         → BlogPost
+/aloevera/store/:itemId        → StoreItem
+/settings                      → SettingsPage
 ```
+
+**Admin entry**: `/admin/*` mounted under `admin.html` (separate Vite entry with `BrowserRouter basename="/admin"`).
 
 **Legacy Redirects** (don't add new ones):
 ```
@@ -495,29 +524,30 @@ Use this anywhere you need the current user's ID (e.g. filtering match partners,
 
 **See [docs/ISSUES.md](./docs/ISSUES.md) for active issues. Resolved issues are archived in [docs/RESOLVED_ISSUES.md](./docs/RESOLVED_ISSUES.md).**
 
-**Current State**:
-1. ✅ Backend exists (`@lovecraft/`) with JWT auth and mock services
-2. ✅ Auth endpoints (login/register) wired to backend
-3. ✅ Access token stored in `localStorage` via `apiClient.setAccessToken()` on login
-4. ✅ Refresh token stored in `localStorage` via `apiClient.setRefreshToken()` on login
-5. ✅ All content routes protected by `<ProtectedRoute>` — unauthenticated users redirected to `/`
-6. ✅ Silent token refresh: `apiClient` intercepts 401 responses, calls `POST /api/v1/auth/refresh` with the stored refresh token, retries the original request
-7. ✅ Proactive refresh in `ProtectedRoute`: near-expiry tokens (<5 min) trigger a background refresh; expired tokens with a valid refresh token trigger a silent refresh with a loading spinner
-8. ✅ All pages wired to API services (mock or real depending on `VITE_API_MODE`)
-9. ✅ All mock data centralized in `src/data/`
-10. ❌ **No data persistence in mock mode** — `MockAuthService` uses in-memory storage, data resets on restart (Azure Storage mode persists)
-11. ⚠️ TypeScript is loosely configured (see tsconfig.json)
-12. ✅ Frontend testing: Vitest + RTL, 50 tests (47 existing + 3 new chatsApi tests)
-13. ✅ Duplicate `Message` interface — removed from `user.ts`; single source in `chat.ts`
-14. ✅ User-visible error handling: `showApiError` in `src/lib/apiError.ts` + sonner `<Toaster />` in `App.tsx`
-15. ✅ Form validation: react-hook-form + Zod on all auth, profile, and reply forms (see `src/lib/validators.ts`)
-16. ✅ Real-time chat: `chatConnection.ts` singleton + `useChatSignalR` hook + backend SignalR hub at `/hubs/chat`
-17. ✅ Matching fixed end-to-end: `MatchingController` reads real user ID from JWT; matches computed as like intersection (no dedicated table); mutual like auto-creates a 1-on-1 chat; `getCurrentUserIdFromToken()` decodes JWT client-side for match partner resolution and message alignment
-18. ✅ Backend: 81 unit tests passing (added 13 `MatchingTests` covering mutual like, auto-chat, intersection logic, idempotency)
+**Current state** (high-level — see [docs/ISSUES.md](./docs/ISSUES.md) for the full list):
 
-**Don't Try to Fix Without Context**:
-- Type system strictness (requires codebase-wide changes)
-- Test setup (requires project decision on framework)
+- ✅ Backend `@lovecraft/` runs against Azure Table Storage (23 tables) with mock-mode fallback
+- ✅ Multi-provider auth: email/password + **Google Identity Services** + **Telegram Login Widget** + **Telegram Mini App** (all shipped end-to-end)
+- ✅ Account linking across providers; smart email-based auto-link for Google
+- ✅ `Lovecraft.TelegramBot` worker (separate hosted-service container)
+- ✅ Tokens in `localStorage`; silent refresh on 401 (deduplicated); proactive near-expiry refresh in `ProtectedRoute`
+- ✅ All pages wired to `src/services/api/` (mock or real depending on `VITE_API_MODE`)
+- ✅ All mock data centralized in `src/data/`
+- ✅ Real-time chat via SignalR (`chatConnection.ts` + `useChatSignalR`)
+- ✅ Email delivery via SendGrid (`NullEmailService` console-logs when key absent)
+- ✅ Rate limiting (sliding window, 20 req/min/IP, shared bucket on all auth endpoints)
+- ✅ HTTPS in production (Cloudflare + Origin Cert on nginx, https://aloeve.club)
+- ✅ Image upload + BB code + image attachments in forum & chat
+- ✅ Roles & ACL (`appconfig` thresholds + permissions; `[RequireStaffRole]` + `[RequirePermission]`)
+- ✅ Admin shell (`/admin/*`) for user/role/rank-override management + event editor + invites
+- ⚠️ TypeScript loosely configured (see `tsconfig.json` — TD.1)
+- ❌ **No persistence in mock mode** — `MockAuthService` is in-memory; restart resets state. Azure mode persists.
+- ❌ Songs backend endpoint not yet built (`songsApi.ts` always returns mock — MCF.5)
+
+**Don't fix without context**:
+- Type system strictness (requires codebase-wide changes — TD.1)
+- localStorage → in-memory token migration (depends on backend HttpOnly cookie path — TD.7)
+- Blob storage SAS tokens (cross-cutting backend change — TD.8)
 
 ---
 
@@ -720,49 +750,40 @@ if (isLoading) return null;
 
 ---
 
-## 🚀 Backend Integration — Current State & Next Steps
+## 🚀 Backend Integration — Current State
 
-**The API service layer is fully in place.** All pages are wired. Authentication is enforced end-to-end.
+The full stack is deployed and operational at `https://aloeve.club`. All API services are wired; multi-provider authentication is enforced end-to-end.
 
-### What's Done
+### Shipped
 
-- All domain API services exist in `src/services/api/`
+- All domain API services in `src/services/api/` (dual-mode: mock + real)
 - All pages fetch data via `useEffect` + API service calls, with loading states
-- Token stored in `localStorage`; `apiClient` reads it on every request
-- All content routes guarded by `<ProtectedRoute>` — redirects to `/` if no valid token
+- Tokens in `localStorage`; `apiClient` adds bearer header + silent 401 refresh + proactive near-expiry refresh in `ProtectedRoute`
+- All content routes guarded by `<ProtectedRoute>`; `/` guarded by `<GuestRoute>`
 - Backend returns camelCase enum strings matching frontend expectations
-- Full-stack Docker Compose workflow tested and working
+- Real-time chat & forum reply broadcast via SignalR `/hubs/chat`
+- Google + Telegram (Login Widget + Mini App) sign-in via `<GoogleSignInButton>` and `<TelegramLoginWidget>`
+- Profile photo upload + BB code + image attachments
+- Roles/ACL: backend `[RequireStaffRole]` + `[RequirePermission]`; frontend mirror via `src/lib/acl.ts` + `<UserBadges>`
 
-### What's Left / Next Steps
+### Open
 
-#### 1. Token refresh (Issue #2 follow-up)
-Implement proper refresh token flow so users aren't logged out every hour:
-```typescript
-// src/contexts/AuthContext.tsx
-export function AuthProvider({ children }) {
-  const [accessToken, setAccessToken] = useState<string | null>(
-    localStorage.getItem('access_token')
-  );
-  // Set up refresh interval using authApi.refreshToken()
-}
-```
+- Songs backend endpoint (`songsApi.ts` still mock)
+- Token storage hardening (`localStorage` → in-memory + HttpOnly cookie — TD.7)
+- Blob storage SAS tokens (containers currently public-read — TD.8)
+- Pagination on list views (`PagedResult<T>` exists server-side, unused on client — MCF.6)
 
-#### 2. Azure Storage (Issue #3)
-Replace in-memory `Mock*Service` implementations in the backend with real Azure Table Storage / Blob Storage. See `@lovecraft/Lovecraft/docs/AZURE_STORAGE.md`.
+### `appconfig` Azure Table
 
-#### 3. Backend endpoints for songs
-`songsApi.ts` still returns mock data — the backend has no songs endpoint yet. `chatsApi.ts` is now dual-mode (REST + SignalR backend implemented as of March 15, 2026).
+Three partitions drive the runtime config:
 
-**`appconfig` Azure Table** (new in the Roles & ACL spec)
-
-Two partitions drive the rank + permission system:
-
-- `rank_thresholds` — 10 integer rows (`active_replies`, `active_likes`, `active_events`, `friend_replies`, `friend_likes`, `friend_events`, `crew_replies`, `crew_likes`, `crew_events`, `crew_matches`). Consumed by `RankCalculator`.
-- `permissions` — 11 string rows (`create_topic`, `delete_own_reply`, `delete_any_reply`, `delete_any_topic`, `pin_topic`, `ban_user`, `assign_role`, `override_rank`, `manage_events`, `manage_blog`, `manage_store`). Each value is the minimum rank/role name that may perform the action. Consumed by `[RequirePermission("<key>")]`.
+- **`rank_thresholds`** — 10 integer rows (`active_replies`, `active_likes`, `active_events`, `friend_replies`, `friend_likes`, `friend_events`, `crew_replies`, `crew_likes`, `crew_events`, `crew_matches`). Consumed by `RankCalculator`.
+- **`permissions`** — 11 string rows (`create_topic`, `delete_own_reply`, `delete_any_reply`, `delete_any_topic`, `pin_topic`, `ban_user`, `assign_role`, `override_rank`, `manage_events`, `manage_blog`, `manage_store`). Each value is the minimum rank/role name. Consumed by `[RequirePermission("<key>")]`.
+- **`registration`** — `require_event_invite` (bool). Exposed via `GET /api/v1/auth/registration-config`.
 
 Served by `IAppConfigService` (1-hour `IMemoryCache`), seeded by `Lovecraft.Tools.Seeder`, exposed read-only via `GET /api/v1/admin/config` (admin-only).
 
-**See [docs/API_INTEGRATION.md](./docs/API_INTEGRATION.md) and [docs/FRONTEND_AUTH_GUIDE.md](./docs/FRONTEND_AUTH_GUIDE.md) for details.**
+**See [docs/API_INTEGRATION.md](./docs/API_INTEGRATION.md), [docs/FRONTEND_AUTH_GUIDE.md](./docs/FRONTEND_AUTH_GUIDE.md), and [`../lovecraft/Lovecraft/docs/AUTHENTICATION.md`](../lovecraft/Lovecraft/docs/AUTHENTICATION.md).**
 
 ---
 
@@ -843,16 +864,16 @@ Served by `IAppConfigService` (1-hour `IMemoryCache`), seeded by `Lovecraft.Tool
 ## ❓ FAQ for AI Agents
 
 **Q: Is there a backend?**  
-A: Yes. The LoveCraft backend (`@lovecraft/`) is a .NET 10 API with JWT auth and mock services. It runs at `http://localhost:5000`. The frontend has an API service layer in `src/services/api/`.
+A: Yes — `@lovecraft/` (.NET 10) is deployed at `https://aloeve.club`. It runs against Azure Table Storage with JWT auth, SignalR, and SendGrid email. There's a `MockDataStore` in-memory fallback (`USE_AZURE_STORAGE=false`) for offline dev. The frontend's API service layer is in `src/services/api/`.
 
 **Q: Should I make API calls in page components?**  
-A: All existing pages now use the API service pattern (`useEffect` + `[domain]Api.[method]()`). Follow the same pattern for any new pages. Never embed mock data directly in page components — add it to `src/data/` and consume it via the API service.
+A: All existing pages use the API service pattern (`useEffect` + `[domain]Api.[method]()`). Follow the same for new pages. Never embed mock data directly in page components — add it to `src/data/` and consume it via the API service.
 
 **Q: What mode is the app running in?**  
-A: Controlled by `VITE_API_MODE` env var. `mock` (default) = uses local mock data. `api` = calls real backend. Set `.env.development` to `VITE_API_MODE=api` to use the real backend in dev.
+A: Controlled by `VITE_API_MODE` env var. `mock` (default in `.env.development`) = uses local mock data, no backend required. `api` (default in `.env.production`) = calls real backend. For local API-mode dev: `VITE_API_MODE=api npm run dev` (Google/Telegram sign-in only work in API mode).
 
-**Q: How is the access token stored?**  
-A: In `localStorage` under the key `access_token`. `apiClient.setAccessToken()` / `getAccessToken()` / `clearAccessToken()` manage it. `Welcome.tsx` stores it on login; `SettingsPage.tsx` clears it on logout. On a `401` response, `apiClient` clears the token and redirects to `/`.
+**Q: How are tokens stored?**  
+A: `localStorage` under `access_token` and `refresh_token`. Managed by `apiClient.setAccessToken()/setRefreshToken()/clearTokens()`. Set on login (`Welcome.tsx`, `WelcomeGoogle.tsx`, `WelcomeTelegram.tsx`, `MiniAppEntry.tsx`); cleared on logout (`SettingsPage.tsx`). On a 401 response `apiClient` calls `/auth/refresh` with the stored refresh token, retries the original request, deduplicates concurrent refreshes.
 
 **Q: Should I fix TypeScript strict mode issues?**  
 A: No. This requires codebase-wide changes. It's in ISSUES.md as known technical debt.
@@ -871,6 +892,12 @@ A: No. This project uses shadcn/ui exclusively. Use existing components or creat
 
 **Q: Can I add dark mode?**  
 A: The design system supports it (check index.css), but it's not implemented. Only add if specifically requested.
+
+**Q: How does Google / Telegram sign-in work?**  
+A: Google uses `@react-oauth/google` via `<GoogleSignInButton>` which calls `/auth/google-login` with the ID token. Telegram Login Widget uses `<TelegramLoginWidget>` which calls `/auth/telegram-login`. Both return `signedIn` (immediate JWT), `pending` (new identity — route to `/welcome/google` or `/welcome/telegram` for profile fields), or `emailConflict` (Google only — user must enter password to auto-link). Mini App uses `MiniAppEntry.tsx` and `/auth/telegram-miniapp-login`. See `docs/FRONTEND_AUTH_GUIDE.md`.
+
+**Q: How is the admin panel accessed?**  
+A: Open `/admin` (in API mode with an account whose JWT has `staffRole: admin`). Dev: `http://localhost:8080/admin`. It's a separate Vite entry (`admin.html` → `src/admin/main.tsx`) with `BrowserRouter basename="/admin"`. UI is gated via `getStaffRoleFromAccessToken` in `src/lib/jwt.ts`.
 
 **Q: Should I centralize mock data?**  
 A: Yes — always. All mock data lives in `src/data/`. Do not define new mock data in page components or service files. Add a new `src/data/mock[Domain].ts` file if needed.
@@ -919,7 +946,7 @@ A: Only if specifically requested or if making changes that naturally lead to re
 - **Known issues**: See [docs/ISSUES.md](./docs/ISSUES.md)
 - **API integration**: See [docs/API_INTEGRATION.md](./docs/API_INTEGRATION.md)
 - **Auth integration**: See [docs/FRONTEND_AUTH_GUIDE.md](./docs/FRONTEND_AUTH_GUIDE.md)
-- **Backend plans**: See [docs/BACKEND_PLAN.md](./docs/BACKEND_PLAN.md)
+- **Backend docs**: See [`../lovecraft/Lovecraft/docs/`](../lovecraft/Lovecraft/docs/) (IMPLEMENTATION_SUMMARY.md, AUTHENTICATION.md, EVENTS.md, etc.)
 - **Setup/deployment**: See [README.md](./README.md)
 
 **If you're unsure**:

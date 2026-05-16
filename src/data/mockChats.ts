@@ -3,7 +3,7 @@ import type { User } from '@/types/user';
 
 export const mockChatUsers: Record<string, User> = {
   '1': {
-    id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', location: 'Москва', gender: 'female',
+    id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', country: 'RU', region: 'Москва', location: 'Москва', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
     images: [], lastSeen: new Date(), isOnline: true,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
@@ -11,7 +11,7 @@ export const mockChatUsers: Record<string, User> = {
     rank: 'novice', staffRole: 'none',
   },
   '2': {
-    id: '2', name: 'Дмитрий', age: 28, bio: 'Музыкант, фанат AloeVera', location: 'Санкт-Петербург', gender: 'male',
+    id: '2', name: 'Дмитрий', age: 28, bio: 'Музыкант, фанат AloeVera', country: 'RU', region: 'Санкт-Петербург', location: 'Санкт-Петербург', gender: 'male',
     profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
     images: [], lastSeen: new Date(), isOnline: false,
     preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },

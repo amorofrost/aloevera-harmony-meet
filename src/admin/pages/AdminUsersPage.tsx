@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
     if (append) setLoadingMore(true);
     else setLoading(true);
     try {
-      const res = await usersApi.getUsers(from, PAGE);
+      const res = await usersApi.getUsers({ skip: from, take: PAGE });
       if (!res.success || !res.data) {
         toast.error(res.error?.message ?? "Failed to load users");
         return;

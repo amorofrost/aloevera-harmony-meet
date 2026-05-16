@@ -40,6 +40,13 @@ const translations = {
     'common.loading': 'Загрузка...',
     'common.error': 'Ошибка',
 
+    // Location
+    'location.country': 'Страна',
+    'location.region': 'Регион',
+    'location.useCustomValue': 'Указать своё значение…',
+    'location.regionUnavailable': 'Фильтр по региону недоступен для этой страны',
+    'location.clearCountry': 'Очистить страну',
+
     // Profile
     'profile.title': 'Ваш профиль',
     'profile.edit': 'Редактировать профиль',
@@ -66,6 +73,11 @@ const translations = {
     'search.lessInfo': 'Скрыть подробности',
     'search.eventsCount': 'Событий посещено: {count}',
     'search.scrollPrompts': '↕ Прокрутите, чтобы увидеть {count} ответа(ов)',
+    'search.filter': 'Фильтр',
+    'search.applyFilter': 'Применить',
+    'search.clearFilter': 'Сбросить фильтры',
+    'search.allCountries': 'Все страны',
+    'search.allRegions': 'Все регионы',
 
     // Events
     'events.title': 'События АлоэВера',
@@ -185,7 +197,7 @@ const translations = {
 
     // Common Ground
     'commonGround.title': 'Общее',
-    'commonGround.sharedEventsMany': 'Вы оба участвовали в {count} событиях AloeVera',
+    'commonGround.sharedEventsMany': 'Вы оба участвовали в {count} событиях АлоэВера',
     'commonGround.sharedEventOne': 'Вы оба были на {event}',
     'commonGround.sharedUpcomingEvent': 'Оба идут на {event}',
     'commonGround.sharedPromptAnswer': '{prompt}: {answer}',
@@ -233,6 +245,13 @@ const translations = {
     'common.loading': 'Loading...',
     'common.error': 'Error',
 
+    // Location
+    'location.country': 'Country',
+    'location.region': 'Region',
+    'location.useCustomValue': 'Use custom value…',
+    'location.regionUnavailable': 'Region filter not available for this country',
+    'location.clearCountry': 'Clear country',
+
     // Profile
     'profile.title': 'Your Profile',
     'profile.edit': 'Edit Profile',
@@ -259,6 +278,11 @@ const translations = {
     'search.lessInfo': 'Hide details',
     'search.eventsCount': '{count} events attended',
     'search.scrollPrompts': '↕ Scroll for {count} answers',
+    'search.filter': 'Filter',
+    'search.applyFilter': 'Apply',
+    'search.clearFilter': 'Clear filters',
+    'search.allCountries': 'All countries',
+    'search.allRegions': 'All regions',
 
     // Events
     'events.title': 'AloeVera Events',

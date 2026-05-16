@@ -23,7 +23,12 @@ export interface User {
   email?: string;
   age: number;
   bio: string;
-  location: string;
+  /** ISO-3166-1 alpha-2 code (e.g. "RU") OR a free-text custom country name. Empty when unset. */
+  country: string;
+  /** Free text up to 80 chars. Curated dropdown for priority countries; else custom text. */
+  region: string;
+  /** @deprecated Legacy free-text location. Read-only fallback for users who haven't set country/region yet. */
+  location?: string;
   gender: 'male' | 'female' | 'non-binary' | 'prefer-not-to-say';
   profileImage: string;
   images: string[];

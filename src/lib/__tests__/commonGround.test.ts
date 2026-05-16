@@ -4,6 +4,7 @@ import type { User, Event } from '@/types/user';
 
 const baseUser = (id: string, overrides: Partial<User> = {}): User => ({
   id, name: id, age: 25, bio: '', location: '',
+  country: '', region: '',
   gender: 'prefer-not-to-say', profileImage: '', images: [],
   lastSeen: new Date(), isOnline: false,
   preferences: { ageRange: [18, 65], maxDistance: 50, showMe: 'everyone' },
@@ -52,25 +53,39 @@ describe('commonGround', () => {
     expect(commonGround(a, b).find(s => s.kind === 'sharedRank')).toBeUndefined();
   });
 
-  it('returns sharedCity for case-insensitive location match', () => {
-    const a = baseUser('a', { location: ' Moscow ' });
-    const b = baseUser('b', { location: 'moscow' });
+  it('returns sharedCity for same country+region match', () => {
+    const a = baseUser('a', { country: 'RU', region: 'Москва', location: 'Москва' });
+    const b = baseUser('b', { country: 'RU', region: 'Москва', location: 'Москва' });
     expect(commonGround(a, b).some(s => s.kind === 'sharedCity')).toBe(true);
   });
 
-  it('does NOT return sharedCity for empty location', () => {
-    const a = baseUser('a', { location: '' });
-    const b = baseUser('b', { location: '' });
+  it('does NOT return sharedCity for empty country/region', () => {
+    const a = baseUser('a', { country: '', region: '' });
+    const b = baseUser('b', { country: '', region: '' });
     expect(commonGround(a, b).find(s => s.kind === 'sharedCity')).toBeUndefined();
+  });
+
+  it('returns sharedCountry for same country but different region', () => {
+    const a = baseUser('a', { country: 'RU', region: 'Москва', location: 'Москва' });
+    const b = baseUser('b', { country: 'RU', region: 'Санкт-Петербург', location: 'Санкт-Петербург' });
+    const r = commonGround(a, b);
+    expect(r.some(s => s.kind === 'sharedCountry')).toBe(true);
+    expect(r.find(s => s.kind === 'sharedCity')).toBeUndefined();
+  });
+
+  it('does NOT return sharedCountry when countries differ', () => {
+    const a = baseUser('a', { country: 'RU', region: 'Москва' });
+    const b = baseUser('b', { country: 'DE', region: 'Berlin' });
+    expect(commonGround(a, b).find(s => s.kind === 'sharedCountry')).toBeUndefined();
   });
 
   it('orders signals: events > rank > city', () => {
     const evt = event('e1', -5);
     const a = baseUser('a', {
-      eventsAttended: [evt], rank: 'aloeCrew', location: 'Moscow'
+      eventsAttended: [evt], rank: 'aloeCrew', country: 'RU', region: 'Москва', location: 'Moscow'
     });
     const b = baseUser('b', {
-      eventsAttended: [evt], rank: 'aloeCrew', location: 'Moscow'
+      eventsAttended: [evt], rank: 'aloeCrew', country: 'RU', region: 'Москва', location: 'Moscow'
     });
     const r = commonGround(a, b);
     expect(r[0].kind).toBe('sharedEventOne');
@@ -79,14 +94,14 @@ describe('commonGround', () => {
   });
 
   it('returns [] when nothing matches', () => {
-    const a = baseUser('a', { location: 'Moscow', rank: 'novice' });
-    const b = baseUser('b', { location: 'Berlin', rank: 'novice' });
+    const a = baseUser('a', { country: 'RU', region: 'Москва', rank: 'novice' });
+    const b = baseUser('b', { country: 'DE', region: 'Berlin', rank: 'novice' });
     expect(commonGround(a, b)).toEqual([]);
   });
 
   it('tolerates missing eventsAttended', () => {
-    const a = baseUser('a', { location: 'X', rank: 'aloeCrew' });
-    const b = baseUser('b', { location: 'X', rank: 'aloeCrew' });
+    const a = baseUser('a', { country: 'RU', region: 'Москва', rank: 'aloeCrew' });
+    const b = baseUser('b', { country: 'RU', region: 'Москва', rank: 'aloeCrew' });
     expect(commonGround(a, b).length).toBeGreaterThan(0);
   });
 
@@ -165,13 +180,13 @@ describe('commonGround', () => {
       eventsAttended: [evt],
       prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
       rank: 'aloeCrew',
-      location: 'Moscow',
+      country: 'RU', region: 'Москва', location: 'Moscow',
     });
     const b = baseUser('b', {
       eventsAttended: [evt],
       prompts: [{ promptId: 'aloevera_song', answer: 'Hometown' }],
       rank: 'aloeCrew',
-      location: 'Moscow',
+      country: 'RU', region: 'Москва', location: 'Moscow',
     });
     const r = commonGround(a, b);
     expect(r[0].kind).toBe('sharedEventOne');

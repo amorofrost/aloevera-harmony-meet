@@ -17,27 +17,27 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 
 ## 🎯 Current Status
 
-**✅ Full-stack deployed on Azure VM.** The backend (.NET 10) runs with JWT authentication and Azure Table Storage. All frontend pages are wired to the backend via a dual-mode API service layer. The full stack runs in Docker behind an nginx proxy on a single port.
+**✅ Full-stack deployed at `https://aloeve.club`** behind Cloudflare + nginx (Origin Certificate). The .NET 10 backend runs with JWT auth and Azure Table Storage; the React SPA is wired to it via a dual-mode (mock + real) service layer.
 
 | Area | Status |
-|------|--------|
-| API service layer (`src/services/api/`) | ✅ Implemented (all domains) |
-| Auth endpoints (login/register) | ✅ Connected to backend |
-| Token storage (`localStorage`) | ✅ Both `access_token` and `refresh_token` stored |
-| Protected routes (`ProtectedRoute`) | ✅ All content routes guarded; proactive refresh on near-expiry |
-| Friends / matching pages | ✅ Wired to `matchingApi` / `chatsApi` |
-| Events / Store / Blog pages | ✅ Wired to `eventsApi` / `storeApi` / `blogApi` |
-| Talks / Forum pages | ✅ Wired (sections, topic list, topic detail, reply posting; **event discussions** via `event-discussions/*`) |
-| Forum topic detail view | ✅ `TopicDetail` component with author navigation |
-| Mock data centralized | ✅ All in `src/data/` |
-| Backend data persistence | ✅ Azure Table Storage integrated (`USE_AZURE_STORAGE=true`) |
-| Seed tool | ✅ `Lovecraft.Tools.Seeder` — seeds all tables from mock data |
-| Docker deployment | ✅ nginx proxy on port 8080 (no need to expose port 5000) |
-| Token refresh | ✅ Silent refresh in `apiClient`; proactive refresh in `ProtectedRoute` |
-| Form validation | ✅ react-hook-form + Zod on all auth, profile, and reply forms (`src/lib/validators.ts`) |
-| User-visible error handling | ✅ sonner toasts via `showApiError` (`src/lib/apiError.ts`); success toasts on auth/save/reply |
+|---|---|
+| API service layer (`src/services/api/`) | ✅ All domains (auth, users, events, store, blog, forum, matching, chats, songs, images, admin) |
+| Authentication | ✅ Email/password + Google Identity Services + Telegram Login Widget + Telegram Mini App (with smart account linking + attach-email + multi-provider sign-in) |
+| Tokens | ✅ `access_token` + `refresh_token` in `localStorage`; silent refresh on 401; proactive near-expiry refresh in `ProtectedRoute` |
+| Routes | ✅ `<ProtectedRoute>` on content; `<GuestRoute>` on `/`; admin shell at `/admin/*` (second Vite entry) |
+| Real-time | ✅ SignalR `/hubs/chat` — private chat + forum reply broadcast |
+| Email | ✅ SendGrid (`NullEmailService` console fallback) |
+| Image upload | ✅ Profile photos + forum/chat attachments (Azure Blob, 1200px resize, JPEG Q85) |
+| Forms | ✅ react-hook-form + Zod on all wired forms (`src/lib/validators.ts`) |
+| Error handling | ✅ sonner toasts via `showApiError` (`src/lib/apiError.ts`) |
+| Forum | ✅ Sections, topics, replies, topic creation, per-topic event visibility; **event discussions** via `event-discussions/*` |
+| Backend persistence | ✅ Azure Table Storage (23 tables, `Lovecraft.Tools.Seeder`) |
+| Telegram bot worker | ✅ `Lovecraft.TelegramBot` separate hosted-service container |
+| HTTPS | ✅ Cloudflare proxy + Origin Cert on nginx; HTTP→HTTPS redirect |
+| Rate limiting | ✅ Sliding window 20 req/min/IP on auth endpoints |
+| Roles & ACL | ✅ `appconfig`-driven rank thresholds + permissions; `[RequireStaffRole]` + `[RequirePermission]`; `staffRole` JWT claim |
 
-See [/docs/ISSUES.md](/docs/ISSUES.md) for detailed issues, [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for integration guide, and [/docs/EVENTS.md](/docs/EVENTS.md) for **events** (visibility, invites, forum topic access, admin).
+See [/docs/ISSUES.md](/docs/ISSUES.md) for open issues, [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for the service layer, [/docs/FRONTEND_AUTH_GUIDE.md](/docs/FRONTEND_AUTH_GUIDE.md) for auth integration, and [/docs/EVENTS.md](/docs/EVENTS.md) for event behavior.
 
 ## 🚀 Quick Start
 
@@ -140,7 +140,7 @@ Detailed documentation is available in the `/docs` directory:
 - **[FRONTEND_AUTH_GUIDE.md](/docs/FRONTEND_AUTH_GUIDE.md)** - Auth integration guide for developers
 - **[ISSUES.md](/docs/ISSUES.md)** - Known issues and technical debt
 - **[FEATURES.md](/docs/FEATURES.md)** - Detailed feature specifications
-- **[BACKEND_PLAN.md](/docs/BACKEND_PLAN.md)** - Backend implementation roadmap
+- **[FRONTEND_AUTH_GUIDE.md](/docs/FRONTEND_AUTH_GUIDE.md)** - Multi-provider auth (local + Google + Telegram + Mini App)
 - **[AGENTS.md](/AGENTS.md)** - Instructions for AI agents working on this project
 
 ## 🎨 Features
@@ -177,21 +177,12 @@ The app supports Russian (ru) and English (en) via `LanguageContext`. Translatio
 
 ## 🎭 Mock Data & API Integration
 
-The app operates in two modes controlled by `VITE_API_MODE`:
+Two modes controlled by `VITE_API_MODE`:
 
-- **`mock` (default/dev)**: Uses local mock data. No backend required.
-- **`api`**: Calls the real LoveCraft backend at `VITE_API_BASE_URL`.
+- **`mock`** (default in `.env.development`) — local mock data from `src/data/`. No backend required, but Google/Telegram sign-in unavailable.
+- **`api`** (default in `.env.production`) — calls the real LoveCraft backend at `VITE_API_BASE_URL` (empty in production → relative URLs).
 
-**Centralized mock data** (partially done):
-- `src/data/mockUsers.ts` - Auth mock users
-
-**Still embedded in page components** (to be migrated):
-- **Users**: `Friends.tsx`, `EventDetails.tsx`, `SettingsPage.tsx`
-- **Events**: `AloeVera.tsx`, `EventDetails.tsx`
-- **Store Items**: `AloeVera.tsx`, `StoreItem.tsx`
-- **Blog Posts**: `AloeVera.tsx`, `BlogPost.tsx`
-- **Forum Topics**: `Talks.tsx`
-- **Chats/Messages**: `Friends.tsx`, `Talks.tsx`
+All mock data is centralized in `src/data/`. Every domain has a corresponding `src/services/api/[domain]Api.ts` service that dual-routes between the mock data and the real backend based on `isApiMode()`.
 
 ## 🐳 Docker Support
 
@@ -239,42 +230,43 @@ Changes made via Lovable are automatically committed to the repository.
 
 ## 🚧 Known Issues
 
-See [/docs/ISSUES.md](/docs/ISSUES.md) for a comprehensive list. Major issues include:
+See [/docs/ISSUES.md](/docs/ISSUES.md) for the full list. Active items include:
 
-- ✅ Backend exists in `@lovecraft/` (.NET 10 with JWT auth)
-- ✅ Auth endpoints wired to backend API
-- ⚠️ AuthContext / token storage not implemented — access token is not persisted
-- ⚠️ No protected routes — pages accessible without login
-- ⚠️ Friends, Talks, AloeVera pages still use embedded mock data
-- ⚠️ Loose TypeScript configuration
-- ✅ Testing setup — Vitest + RTL, 47 tests covering `src/lib/` utilities and `Welcome.tsx`
-- ⚠️ Type inconsistencies (duplicate Message interface)
+- 🔴 **PB.4** — no account lockout after failed login attempts
+- 🟠 **MCF.1** — desktop navigation (bottom-nav is mobile-only)
+- 🟠 **MCF.5** — songs backend endpoint not implemented (frontend `songsApi.ts` always returns mock)
+- 🟠 **MCF.6** — pagination on list views
+- 🟠 **MCF.17** partial — Telegram Mini App auth shipped; deep-link + command menu + theme polish pending
+- 🟡 **TD.1** — loose TypeScript configuration
+- 🟡 **TD.7** — token storage in `localStorage` (XSS surface)
+- 🟡 **TD.8** — Azure Blob containers public-read; SAS tokens needed
 
 ## 🗺️ Roadmap
 
-### Backend — `@lovecraft/` (Working Mock)
+### Shipped
 
-The backend is running with in-memory mock data:
-- ✅ **.NET 10** REST API with all controllers
-- ✅ **JWT** authentication (login, register, refresh, email verify)
-- ✅ **Docker** containerization
-- ✅ **Swagger UI** at `/swagger`
-- ⚠️ **Azure Storage** — not yet integrated (still in-memory)
-- ⚠️ **Email service** — not yet integrated (tokens logged to console)
+- ✅ Multi-provider authentication (local + Google Identity Services + Telegram Login Widget + Telegram Mini App)
+- ✅ Smart account linking + attach-email flow
+- ✅ Azure Table Storage (23 tables) + Azure Blob Storage (profile + content images)
+- ✅ Real-time chat via SignalR
+- ✅ SendGrid email
+- ✅ Rate limiting (20 req/min/IP)
+- ✅ HTTPS via Cloudflare Origin Certificate
+- ✅ Admin panel scaffold (users, role assignment, rank override, event editor, invites, appconfig view)
+- ✅ Roles & ACL system (rank thresholds + permissions in `appconfig`)
+- ✅ BB code + image attachments in forum & chat
+- ✅ Profile image upload
+- ✅ External profile photo download from Google/Telegram CDN
+- ✅ Forum topic creation + per-topic event visibility
 
-See [/docs/BACKEND_PLAN.md](/docs/BACKEND_PLAN.md) for the full roadmap.
-
-### Frontend Integration — Immediate Next Steps
-
-1. **AuthContext** — store access token in React Context, implement auto-refresh
-2. **Protected routes** — redirect unauthenticated users to `/`
-3. **Wire remaining pages** — create `eventsApi`, `matchingApi`, `forumsApi`, `storeApi`, `blogApi`
-4. **Replace embedded mock data** — Friends, AloeVera, Talks pages
-5. **Loading & error states** — for all async data fetches
-
-### Future Clients
-- Telegram Mini App (JavaScript)
-- Native mobile apps (iOS/Android)
+### Open
+- Songs endpoint
+- Account lockout
+- Notifications + online presence
+- SAS tokens for blobs
+- Desktop navigation
+- Pagination
+- Telegram Mini App polish (deep links, command menu)
 
 ## 🤝 Contributing
 
