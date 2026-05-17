@@ -225,6 +225,7 @@ src/
 - `SwipeCard`: Swipeable card for Tinder-like UX
 - `EventPostmark`: Artistic postage stamp-style event badges
 - `CountryRegionPicker`: Two-step country + region select (uses `src/data/countries.ts` + `regions.ts`)
+- `DualLocationPicker`: Two-slot picker wrapping `CountryRegionPicker` for primary + optional secondary location
 - `LocationDisplay`: Read-only display of country + region with flag emoji (uses `src/lib/countryFlag.ts`)
 - `SearchFilterSheet`: Filter drawer for the swipe deck (country + region)
 
@@ -296,7 +297,7 @@ export const eventsApi = {
 ```typescript
 // Core Entities
 User {
-  id, name, age, bio, country, region, gender
+  id, name, age, bio, country, region, secondaryCountry?, secondaryRegion?, gender
   // `location` retained as legacy free-text field
   profileImage, images[]
   lastSeen, isOnline

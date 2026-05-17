@@ -22,6 +22,8 @@ export const registerSchema = z.object({
   ),
   country: z.string().min(1, 'Country is required').max(56, 'Country must be 56 characters or less'),
   region: z.string().max(80, 'Region must be 80 characters or less').optional(),
+  secondaryCountry: z.string().max(56, 'Secondary country must be 56 characters or less').optional(),
+  secondaryRegion: z.string().max(80, 'Secondary region must be 80 characters or less').optional(),
   gender: z.string().min(1, 'Gender is required'),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
   /** Event invite; optional when registration is open, validated as required via registerSchemaWithInvite when policy demands it */
@@ -37,6 +39,8 @@ export const profileEditSchema = z.object({
     .max(99, 'Must be 99 or under'),
   country: z.string().min(1, 'Country is required').max(56, 'Country must be 56 characters or less'),
   region: z.string().max(80, 'Region must be 80 characters or less').optional(),
+  secondaryCountry: z.string().max(56, 'Secondary country must be 56 characters or less').optional(),
+  secondaryRegion: z.string().max(80, 'Secondary region must be 80 characters or less').optional(),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
   instagramHandle: z
     .string()
@@ -94,6 +98,8 @@ export const telegramRegisterSchema = z.object({
   ),
   country: z.string().min(1, 'Country is required').max(56, 'Country must be 56 characters or less'),
   region: z.string().max(80, 'Region must be 80 characters or less').optional(),
+  secondaryCountry: z.string().max(56, 'Secondary country must be 56 characters or less').optional(),
+  secondaryRegion: z.string().max(80, 'Secondary region must be 80 characters or less').optional(),
   gender: z.string().min(1, 'Gender is required'),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
   inviteCode: z.string().optional(),

@@ -6,7 +6,7 @@ export const mockSearchProfiles: User[] = [
   {
     id: '1', name: 'Анна', age: 25,
     bio: 'Обожаю музыку AloeVera и концерты под открытым небом ❤️',
-    country: 'RU', region: 'Москва', location: 'Москва', gender: 'female',
+    country: 'RU', region: 'Москва', secondaryCountry: 'TH', secondaryRegion: 'Пхукет', location: 'Москва', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
     images: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
@@ -94,7 +94,7 @@ export const mockSearchProfiles: User[] = [
   {
     id: 'mock-user-us', name: 'Sarah', age: 28,
     bio: 'Discovered AloeVera through a friend and fell in love with their sound',
-    country: 'US', region: 'California', location: 'San Francisco, USA', gender: 'female',
+    country: 'US', region: 'California', secondaryCountry: 'RU', secondaryRegion: 'Москва', location: 'San Francisco, USA', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
     images: [], lastSeen: new Date(), isOnline: false,
     preferences: { ageRange: [24, 35], maxDistance: 200, showMe: 'everyone' },
@@ -133,7 +133,7 @@ export const mockMatches: MatchWithUser[] = [
   {
     id: 'm1', users: ['current-user', '1'], createdAt: new Date('2024-02-20'), isRead: false,
     otherUser: {
-      id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', country: 'RU', region: 'Москва', location: 'Москва', gender: 'female',
+      id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', country: 'RU', region: 'Москва', secondaryCountry: 'TH', secondaryRegion: 'Пхукет', location: 'Москва', gender: 'female',
       profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
       images: [], lastSeen: new Date(), isOnline: true,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },

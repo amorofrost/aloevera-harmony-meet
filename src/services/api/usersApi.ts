@@ -21,6 +21,8 @@ export function mapUserFromApi(dto: any): User {
     location: dto.location ?? '',
     country: dto.country ?? '',
     region: dto.region ?? '',
+    secondaryCountry: dto.secondaryCountry ?? '',
+    secondaryRegion: dto.secondaryRegion ?? '',
     gender: mapGender(dto.gender),
     profileImage: dto.profileImage ?? '',
     images: dto.images ?? [],
@@ -64,6 +66,8 @@ function mapUserToApi(u: Partial<User>): Record<string, unknown> {
     location: u.location,
     country: u.country,
     region: u.region,
+    secondaryCountry: u.secondaryCountry,
+    secondaryRegion: u.secondaryRegion,
     gender: u.gender ? (genderToApi[u.gender] ?? u.gender) : undefined,
     profileImage: u.profileImage,
     images: u.images,
@@ -100,10 +104,19 @@ export const usersApi = {
       }
       return res as ApiResponse<User[]>;
     }
-    // mock-mode filter
+    // mock-mode OR-match filter (mirrors backend Task 3)
+    const ci = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
     let list = mockSearchProfiles;
-    if (country) list = list.filter(u => u.country?.toLowerCase() === country.toLowerCase());
-    if (region) list = list.filter(u => u.region?.toLowerCase() === region.toLowerCase());
+    if (country && region) {
+      list = list.filter(u =>
+        (ci(u.country, country) && ci(u.region, region)) ||
+        (ci(u.secondaryCountry, country) && ci(u.secondaryRegion, region))
+      );
+    } else if (country) {
+      list = list.filter(u => ci(u.country, country) || ci(u.secondaryCountry, country));
+    } else if (region) {
+      list = list.filter(u => ci(u.region, region) || ci(u.secondaryRegion, region));
+    }
     return mockSuccess(list.slice(skip, skip + take));
   },
 

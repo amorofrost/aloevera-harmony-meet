@@ -195,3 +195,30 @@ describe('commonGround', () => {
     expect(r[3].kind).toBe('sharedCity');
   });
 });
+
+describe('commonGround cross-slot matching', () => {
+  it('sharedCity matches when viewer.secondary equals target.primary', () => {
+    const viewer = { ...baseUser('v'), country: 'US', region: 'California', secondaryCountry: 'RU', secondaryRegion: 'Москва' };
+    const target = { ...baseUser('t'), country: 'RU', region: 'Москва' };
+    const result = commonGround(viewer, target);
+    expect(result.some(s => s.kind === 'sharedCity' && s.city === 'Москва')).toBe(true);
+  });
+
+  it('sharedCity matches when viewer.primary equals target.secondary', () => {
+    const viewer = { ...baseUser('v'), country: 'RU', region: 'Москва' };
+    const target = { ...baseUser('t'), country: 'US', region: 'California', secondaryCountry: 'RU', secondaryRegion: 'Москва' };
+    const result = commonGround(viewer, target);
+    expect(result.some(s => s.kind === 'sharedCity' && s.city === 'Москва')).toBe(true);
+  });
+
+  it('sharedCity beats sharedCountry when both pairings exist', () => {
+    // viewer.primary same country as target.primary (sharedCountry candidate via RU/RU)
+    // viewer.secondary city = target.secondary city (sharedCity candidate via Brooklyn/Brooklyn)
+    const viewer = { ...baseUser('v'), country: 'RU', region: 'Санкт-Петербург', secondaryCountry: 'US', secondaryRegion: 'Brooklyn' };
+    const target = { ...baseUser('t'), country: 'RU', region: 'Москва', secondaryCountry: 'US', secondaryRegion: 'Brooklyn' };
+    const result = commonGround(viewer, target);
+    expect(result.filter(s => s.kind === 'sharedCity').length).toBe(1);
+    expect(result.find(s => s.kind === 'sharedCity')?.city).toBe('Brooklyn');
+    expect(result.some(s => s.kind === 'sharedCountry')).toBe(false);
+  });
+});

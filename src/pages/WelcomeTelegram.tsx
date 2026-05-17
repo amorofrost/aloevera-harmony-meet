@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CountryRegionPicker } from '@/components/ui/country-region-picker';
+import { DualLocationPicker } from '@/components/ui/dual-location-picker';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authApi, apiClient } from '@/services/api';
@@ -62,6 +62,8 @@ const WelcomeTelegram: React.FC = () => {
       bio: '',
       country: '',
       region: '',
+      secondaryCountry: '',
+      secondaryRegion: '',
       gender: '',
     },
     mode: 'onBlur',
@@ -119,6 +121,8 @@ const WelcomeTelegram: React.FC = () => {
         age: data.age,
         country: data.country,
         region: data.region,
+        secondaryCountry: data.secondaryCountry,
+        secondaryRegion: data.secondaryRegion,
         gender: data.gender,
         bio: data.bio,
         inviteCode: data.inviteCode?.trim() || undefined,
@@ -345,12 +349,16 @@ const WelcomeTelegram: React.FC = () => {
                       control={registerForm.control}
                       name="country"
                       render={({ field }) => (
-                        <CountryRegionPicker
+                        <DualLocationPicker
                           country={field.value ?? ''}
                           region={registerForm.watch('region') ?? ''}
-                          onChange={({ country, region }) => {
+                          secondaryCountry={registerForm.watch('secondaryCountry') ?? ''}
+                          secondaryRegion={registerForm.watch('secondaryRegion') ?? ''}
+                          onChange={({ country, region, secondaryCountry, secondaryRegion }) => {
                             registerForm.setValue('country', country, { shouldValidate: true });
                             registerForm.setValue('region', region, { shouldValidate: true });
+                            registerForm.setValue('secondaryCountry', secondaryCountry, { shouldValidate: true });
+                            registerForm.setValue('secondaryRegion', secondaryRegion, { shouldValidate: true });
                           }}
                         />
                       )}
@@ -364,6 +372,12 @@ const WelcomeTelegram: React.FC = () => {
                       <p role="alert" className="text-xs text-red-300">
                         {registerForm.formState.errors.region.message}
                       </p>
+                    )}
+                    {registerForm.formState.errors.secondaryCountry && (
+                      <p className="text-xs text-destructive mt-1">{registerForm.formState.errors.secondaryCountry.message}</p>
+                    )}
+                    {registerForm.formState.errors.secondaryRegion && (
+                      <p className="text-xs text-destructive mt-1">{registerForm.formState.errors.secondaryRegion.message}</p>
                     )}
                   </div>
 

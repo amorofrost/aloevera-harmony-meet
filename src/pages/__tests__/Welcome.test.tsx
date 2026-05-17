@@ -28,16 +28,19 @@ vi.mock('@/components/ui/sonner', () => ({
   Toaster: () => null,
 }));
 
-// Mock CountryRegionPicker — cmdk + Radix Popover require pointer events / ResizeObserver
+// Mock DualLocationPicker — cmdk + Radix Popover require pointer events / ResizeObserver
 // not available in jsdom. Replace with a plain text input that calls onChange directly.
-vi.mock('@/components/ui/country-region-picker', () => ({
-  CountryRegionPicker: ({ country, onChange }: any) => (
+vi.mock('@/components/ui/dual-location-picker', () => ({
+  DualLocationPicker: ({ onChange }: any) => (
     <input
       role="textbox"
       aria-label="country"
-      value={country}
-      onChange={(e) => onChange({ country: e.target.value, region: '' })}
-      data-testid="country-picker"
+      onChange={(e) => onChange({
+        country: e.target.value,
+        region: '',
+        secondaryCountry: '',
+        secondaryRegion: '',
+      })}
     />
   ),
 }));

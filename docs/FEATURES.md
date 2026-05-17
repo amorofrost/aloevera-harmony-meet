@@ -378,6 +378,7 @@ A **`<SearchFilterSheet>`** drawer (accessible from the Search tab header) lets 
   - Name input
   - Age input
   - Country + region picker (`<CountryRegionPicker>`); location field retained for legacy compat
+  - Secondary location (`<DualLocationPicker>`) — optional second country + region slot; both are shown inline (`🇷🇺 Москва · 🇹🇭 Пхукет`) on profile cards. Search filters return users when either slot matches.
   - Bio textarea
   - Instagram handle input (optional; username without @)
   - Save/Cancel buttons

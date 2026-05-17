@@ -133,6 +133,8 @@ export const mockUsers: (User & { email: string; password: string })[] = [
     bio: 'Discovered AloeVera through a friend and fell in love with their sound',
     country: 'US',
     region: 'California',
+    secondaryCountry: 'RU',
+    secondaryRegion: 'Москва',
     location: 'San Francisco, USA',
     gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
