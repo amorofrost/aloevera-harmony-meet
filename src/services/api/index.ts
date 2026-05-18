@@ -13,3 +13,5 @@ export { imagesApi, uploadImage } from './imagesApi';
 export type { ApiResponse } from './apiClient';
 export { adminApi, type AppConfigDto, type EventInviteAdminDto } from './adminApi';
 export type { LoginRequest, RegisterRequest, AuthResponse } from './authApi';
+export { notificationsApi } from './notificationsApi';
+export { pushApi } from './pushApi';
