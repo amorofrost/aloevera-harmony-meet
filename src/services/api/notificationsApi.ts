@@ -2,7 +2,7 @@ import { apiClient } from './apiClient';
 import { isApiMode } from '@/config/api.config';
 import type {
   Notification, NotificationListResponse, UnreadCountResponse,
-  NotificationPreferences,
+  NotificationPreferences, NotificationAvailability,
 } from '@/types/notification';
 
 const mockNotifications: Notification[] = [];          // mock mode: empty by default
@@ -77,5 +77,12 @@ export const notificationsApi = {
   async updatePreferences(prefs: NotificationPreferences) {
     if (!isApiMode()) { mockPrefs = { ...prefs }; return { success: true, data: { ...mockPrefs } }; }
     return apiClient.put<NotificationPreferences>('/api/v1/notifications/preferences', prefs);
+  },
+
+  async getAvailability() {
+    if (!isApiMode()) {
+      return { success: true, data: { telegramLinked: false, emailVerified: false, webPushSubscribed: false } as NotificationAvailability };
+    }
+    return apiClient.get<NotificationAvailability>('/api/v1/notifications/availability');
   },
 };

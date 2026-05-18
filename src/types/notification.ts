@@ -47,6 +47,12 @@ export interface NotificationPreferences {
   mutedUntilUtc?: string | null;
 }
 
+export interface NotificationAvailability {
+  telegramLinked: boolean;
+  emailVerified: boolean;
+  webPushSubscribed: boolean;
+}
+
 export interface WebPushSubscription {
   deviceId: string;
   endpoint: string;
