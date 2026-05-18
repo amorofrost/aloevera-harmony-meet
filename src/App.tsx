@@ -20,6 +20,7 @@ import EventDetails from "./pages/EventDetails";
 import BlogPost from "./pages/BlogPost";
 import StoreItem from "./pages/StoreItem";
 import SettingsPage from "./pages/SettingsPage";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
@@ -62,6 +63,7 @@ const App = () => {
               <Route path="/aloevera/blog/:postId" element={<ProtectedRoute><BlogPost /></ProtectedRoute>} />
               <Route path="/aloevera/store/:itemId" element={<ProtectedRoute><StoreItem /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
               {/* Legacy redirects */}
               <Route path="/search" element={<Navigate to="/friends" replace />} />

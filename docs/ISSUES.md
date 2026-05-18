@@ -29,12 +29,18 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 ---
 
-### MCF.4. Notification System
+### MCF.4. Notification System *(partial — Phase A + B shipped, Phases C–F pending)*
 **Impact**: No engagement hooks — users are never informed of new activity
 
-There are no notifications for: new match, received like, reply to a forum post you authored, new message. Users must manually refresh to discover activity.
+**Shipped (2026-05-18)**: Phase A (infrastructure) + Phase B (in-app notifications + producers)
+- Backend: notification model + 4 producer call sites (LikeReceived, MatchCreated, MessageReceived, ForumReplyToThread)
+- Frontend: bell UI, dropdown, /notifications page, preferences settings (in-app mode only)
+- Delivery: in-app via SignalR immediately
+- Defaults: conservative (in-app only, no Telegram/email/Web Push)
 
-**Resolution**: Design notification model (type, userId, payload, read flag). Implement `GET /api/v1/notifications` and `POST /api/v1/notifications/{id}/read` endpoints. Push new notifications via SignalR `ChatHub` as a `NotificationReceived` server event. Add notification bell UI to the header.
+**Pending**: Phases C–F (worker, Telegram, Web Push, email digests) and Phase G (event reminders, admin broadcast) and Phase H (rank-up notifications)
+
+**Resolution** (remaining phases): Implement `Lovecraft.NotificationsWorker` to drain `notificationsoutbox` for Telegram and email. Integrate push service for Web Push delivery. Build email digest scheduler. Add event reminder worker. Wire `RankUp` producer.
 
 ---
 
@@ -372,7 +378,7 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 | Section | Count |
 |---|---|
 | 🔴 Production Blockers | 1 |
-| 🟠 Missing Core Features | 14 (3 partials: MCF.12, MCF.16, MCF.17) |
+| 🟠 Missing Core Features | 14 (4 partials: MCF.4, MCF.12, MCF.16, MCF.17) |
 | 🟡 Technical Debt & Infrastructure | 8 |
 | 🟢 UX / Polish | 11 |
 | **Total active** | **34** |
@@ -381,6 +387,8 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 ---
 
 ## 📝 Changelog
+
+**May 18, 2026** — Notifications Phase B documentation. MCF.4 updated from "missing" to "partial — Phase A + B shipped (in-app + 4 producers); Phases C–F (worker, Telegram, Web Push, email) and G–H pending". Updated FEATURES.md, API_INTEGRATION.md, AGENTS.md, and backend NOTIFICATIONS.md to document the Phase B scope.
 
 **May 15, 2026** — Documentation audit. MCF.17 (Telegram Mini App) updated from "not started" to "partial — auth + entry shell shipped; deep-link/command-menu/theme polish pending". Removed obsolete planning docs (DOCUMENTATION_SUMMARY.md, API_INTEGRATION_SUMMARY.md, BACKEND_PLAN.md, docs/README.md, AUTH_SIMPLIFICATION.md, AUTH_DECISIONS.md, AUTH_FLOWS.md, AUTH_IMPLEMENTATION.md). Updated AUTHENTICATION.md, FRONTEND_AUTH_GUIDE.md, DOCKER.md, QUICKSTART.md, ARCHITECTURE.md (both repos), FEATURES.md, IMPLEMENTATION_SUMMARY.md, AZURE_STORAGE.md to reflect Google + Telegram auth shipped.
 

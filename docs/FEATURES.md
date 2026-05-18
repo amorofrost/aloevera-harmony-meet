@@ -414,7 +414,7 @@ A **`<SearchFilterSheet>`** drawer (accessible from the Search tab header) lets 
 
 ---
 
-## 🧭 6. Navigation
+## 🎯 6. Navigation
 
 ### Bottom Navigation Bar
 
@@ -483,7 +483,35 @@ Artistic postage stamp-style badges for events:
 
 ---
 
-## 🎖️ 9. Roles & Ranks
+## 📬 9. Notifications
+
+**Status**: Phase A + B shipped (in-app + producers). Telegram/Email/Web Push pending (Phases C–F).
+
+### Features
+
+- **Notification Bell** — header icon with unread count bubble; click to open dropdown
+- **Notification Dropdown** — recent notifications with timestamps and action buttons (open chat/go to forum/etc.)
+- **Notification List** (`/notifications`) — full paginated list with filters (all/unread, type filtering)
+- **Notification Preferences** (`/settings` → Notifications) — per-notification-type frequency toggle (immediate/daily); channel preferences (in-app only for now, future: Telegram/email/Web Push)
+
+### Producers wired (Phase B)
+
+- **LikeReceived** — when another user likes your profile (non-anonymous)
+- **MatchCreated** — when you and another user mutually like each other
+- **MessageReceived** — when someone sends you a private message
+- **ForumReplyToThread** — when someone replies to a forum thread you created or previously replied in
+
+### Architecture
+
+- Backend writes to `notifications` and `notificationsoutbox` Azure tables
+- In-app notifications dispatched directly via SignalR `NotificationReceived` event
+- Worker (Phase C) will drain `notificationsoutbox` for Telegram and email
+- Frontend: `useNotificationStore` (Zustand) + `useNotificationSignalR` hook
+- Conservative defaults: in-app only (Telegram/email opt-in pending)
+
+---
+
+## 🎖️ 10. Roles & Ranks
 
 ### Ranks (auto-computed)
 
