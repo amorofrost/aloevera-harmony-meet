@@ -68,7 +68,11 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
   const handleSave = async () => {
     setSaving(true);
     try {
-      await notificationsApi.updatePreferences(prefs);
+      const r = await notificationsApi.updatePreferences(prefs);
+      if (!r.success) {
+        showApiError(r, 'Failed to save preferences');
+        return;
+      }
       toast.success('Preferences saved');
     } catch (err) {
       showApiError(err, 'Failed to save preferences');

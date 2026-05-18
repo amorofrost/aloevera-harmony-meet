@@ -5,6 +5,13 @@ import { NotificationPreferences } from '../NotificationPreferences';
 import { renderWithProviders } from '@/test/utils';
 import type { NotificationPreferences as Prefs } from '@/types/notification';
 
+vi.mock('@/components/ui/sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+  Toaster: () => null,
+}));
+
+import { toast } from '@/components/ui/sonner';
+
 const defaultPrefs: Prefs = {
   matrix: {
     likeReceived: { inApp: true, telegram: false, webPush: false, email: false },
@@ -45,13 +52,17 @@ vi.mock('@/services/api', () => {
   return {
     notificationsApi: {
       getPreferences: vi.fn().mockResolvedValue({ success: true, data: prefs }),
-      updatePreferences: (...args: unknown[]) => mockUpdate(...args).then(() => ({ success: true, data: args[0] })),
+      updatePreferences: (...args: unknown[]) => mockUpdate(...args),
     },
   };
 });
 
 describe('NotificationPreferences', () => {
-  beforeEach(() => mockUpdate.mockClear().mockResolvedValue({ success: true }));
+  beforeEach(() => {
+    mockUpdate.mockClear().mockResolvedValue({ success: true, data: {} });
+    (toast.error as ReturnType<typeof vi.fn>).mockClear();
+    (toast.success as ReturnType<typeof vi.fn>).mockClear();
+  });
 
   it('renders four channel blocks', async () => {
     renderWithProviders(<NotificationPreferences telegramLinked={false} pushSubscribed={false} emailVerified={false} />);
@@ -78,5 +89,20 @@ describe('NotificationPreferences', () => {
     const save = screen.getByRole('button', { name: /save/i });
     await userEvent.click(save);
     expect(mockUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('save shows error when API returns success=false', async () => {
+    mockUpdate.mockResolvedValueOnce({
+      success: false,
+      error: { code: 'INVALID_PREFERENCES', message: 'bad hour' },
+    });
+
+    renderWithProviders(<NotificationPreferences telegramLinked={true} pushSubscribed={true} emailVerified={true} />);
+    await screen.findByText(/notifications.settings.channel.inApp/i);
+    const save = screen.getByRole('button', { name: /save/i });
+    await userEvent.click(save);
+
+    expect(toast.error).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });
