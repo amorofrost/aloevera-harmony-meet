@@ -15,6 +15,7 @@ import type { EventDiscussionSection } from '@/types/forum';
 import TopicDetail from '@/components/forum/TopicDetail';
 import { CreateTopicModal } from '@/components/forum/CreateTopicModal';
 import heroBg from '@/assets/hero-bg.jpg';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const Talks = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -191,6 +192,7 @@ const Talks = () => {
               </a>
             </Button>
           )}
+          <NotificationBell />
           <MessageSquare className="w-6 h-6 text-primary shrink-0" />
         </div>
       </div>

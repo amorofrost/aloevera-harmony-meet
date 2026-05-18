@@ -26,6 +26,7 @@ import { UserBadges } from '@/components/ui/user-badges';
 import { DualLocationPicker } from '@/components/ui/dual-location-picker';
 import { LocationDisplay } from '@/components/ui/location-display';
 import LinkedAccountsCard from '@/components/settings/LinkedAccountsCard';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -171,7 +172,8 @@ const SettingsPage = () => {
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">Настройки</h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
+            <NotificationBell />
             <Button variant="ghost" size="sm" onClick={() => {
               if (!isEditing) setEditStartUser(user);
               setIsEditing(!isEditing);
