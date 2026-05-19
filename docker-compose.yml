@@ -35,7 +35,12 @@ services:
       dockerfile: Dockerfile.telegram-bot
     container_name: aloevera-telegram-bot
     env_file:
+      # Picks up TELEGRAM_BOT_TOKEN. Phase D also uses INTERNAL_SERVICE_TOKEN +
+      # BACKEND_INTERNAL_URL (defaults to http://backend:8080) for the mute-type
+      # callback flow.
       - ../lovecraft/Lovecraft/.env
+    depends_on:
+      - backend
     networks:
       - aloevera-network
     restart: unless-stopped
@@ -47,6 +52,9 @@ services:
       dockerfile: Dockerfile.notifications-worker
     container_name: aloevera-notifications-worker
     env_file:
+      # Picks up AZURE_STORAGE_CONNECTION_STRING + USE_AZURE_STORAGE.
+      # Phase D also uses TELEGRAM_BOT_TOKEN for the real Telegram dispatcher
+      # (stub fallback when token missing).
       - ../lovecraft/Lovecraft/.env
     depends_on:
       - backend
