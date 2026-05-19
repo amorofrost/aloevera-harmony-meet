@@ -236,6 +236,10 @@ Maintained in: `<NotificationBell>`, `<NotificationDropdown>`, notification list
 
 Web Push channel: opt-in per device via Settings → Notifications → Browser push → "Enable on this device". Helper at `src/lib/webPush.ts`. Backend uses `WebPushDispatcher` (in-process; no worker involvement). Dead subscriptions auto-cleaned on HTTP 404/410.
 
+### Email Channel
+
+Email channel: daily digest delivery via SendGrid (Phase F shipped 2026-05-18). Outbox rows aggregated per user at `DailyDigestHourUtc` (default 9am UTC). `EmailDispatcher` renders HTML digest with notifications grouped by type. Unsubscribe via signed token: `GET /api/v1/notifications/unsubscribe?token=...` (public endpoint, token validated via HMAC-SHA256). Token format: `{userIdBase64Url}.{expiresAtUnixSeconds}.{base64hmac}` (dot-separated, base64url-encoded), valid for 30 days.
+
 ### Admin shell (second Vite entry)
 
 - **HTML entry**: `admin.html` → `src/admin/main.tsx`. Production build emits `dist/admin.html` + `dist/assets/admin-*.js`.

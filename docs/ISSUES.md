@@ -29,7 +29,7 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 ---
 
-### MCF.4. Notification System *(partial — Phase A + B shipped, Phases C–F pending)*
+### MCF.4. Notification System *(partial — Phase A–F shipped, Phases G–H pending)*
 **Impact**: No engagement hooks — users are never informed of new activity
 
 **Shipped (2026-05-18)**: Phase A (infrastructure) + Phase B (in-app notifications + producers)
@@ -40,11 +40,15 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 **Shipped (2026-05-18)**: Phase C (worker scaffold) — Lovecraft.NotificationsWorker with DispatcherWorker (10s), DigestWorker (top-of-hour), JanitorWorker (3am UTC). Channel dispatchers are stubs (log + Delivered). 
 
+**Shipped (2026-05-18)**: Phase D (real Telegram dispatcher + mute callback) — TelegramDispatcher lookup from users table, HTML body + inline keyboard, rate limiting, mute-type callback flow.
+
 **Shipped (2026-05-18)**: Phase E (Web Push) — WebPushDispatcher in-process, VAPID keypair config, service worker + browser helper, device opt-in UI.
 
-**Pending**: Phases F–H (email digests, event reminders/broadcast, rank-up notifications)
+**Shipped (2026-05-18)**: Phase F (email digests) — EmailDispatcher + EmailDigestRenderer via SendGrid, UnsubscribeToken signed links, `POST /api/v1/notifications/unsubscribe` endpoint, required env vars (SENDGRID_API_KEY, FROM_EMAIL, FRONTEND_BASE_URL, JWT_SECRET_KEY).
 
-**Resolution** (remaining phases): Phase D (real Telegram dispatcher + mute callback) shipped 2026-05-18. Phase E (Web Push) shipped 2026-05-18. Phase F adds SendGrid email digest rendering. Phase G adds event reminders + admin broadcast. Phase H adds RankUp producer.
+**Pending**: Phases G–H (event reminders/broadcast, rank-up notifications)
+
+**Resolution** (remaining phases): Phase G adds event reminders + admin broadcast (EventPublished, EventReminder, CommunityBroadcast types). Phase H adds RankUp producer.
 
 ---
 
