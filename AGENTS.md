@@ -772,6 +772,7 @@ The full stack is deployed and operational at `https://aloeve.club`. All API ser
 - Google + Telegram (Login Widget + Mini App) sign-in via `<GoogleSignInButton>` and `<TelegramLoginWidget>`
 - Profile photo upload + BB code + image attachments
 - Roles/ACL: backend `[RequireStaffRole]` + `[RequirePermission]`; frontend mirror via `src/lib/acl.ts` + `<UserBadges>`
+- Notifications Phase B + Phase D: in-app notifications via SignalR + real Telegram dispatch. Telegram channel: opt-in per notification type in Settings → Notifications. When enabled, the worker dispatches via Telegram.Bot SDK to the user's linked chat. "Mute these" inline button flips the type's Telegram toggle off via service-token internal endpoint.
 
 ### Open
 
