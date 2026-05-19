@@ -48,6 +48,8 @@ services:
     container_name: aloevera-notifications-worker
     env_file:
       - ../lovecraft/Lovecraft/.env
+    depends_on:
+      - backend
     networks:
       - aloevera-network
     restart: unless-stopped
