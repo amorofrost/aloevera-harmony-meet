@@ -40,6 +40,18 @@ services:
       - aloevera-network
     restart: unless-stopped
 
+  # Notifications outbox worker (no inbound port; reads/writes Azure Tables)
+  notifications-worker:
+    build:
+      context: ../lovecraft/Lovecraft
+      dockerfile: Dockerfile.notifications-worker
+    container_name: aloevera-notifications-worker
+    env_file:
+      - ../lovecraft/Lovecraft/.env
+    networks:
+      - aloevera-network
+    restart: unless-stopped
+
   # Frontend (React + nginx)
   frontend:
     build:
