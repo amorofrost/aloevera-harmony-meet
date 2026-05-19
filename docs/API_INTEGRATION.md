@@ -296,10 +296,13 @@ Product rules (visibility, invites, multiline descriptions, free-text price, for
 - `MessageReceived` (ChatsController)
 - `ForumReplyToThread` (ForumService)
 
+### Now real (Phase E)
+
+- `GET /api/v1/push/vapid-public-key` (no auth) — returns the configured VAPID public key for the frontend to use as `applicationServerKey` in `pushManager.subscribe`.
+- `POST /api/v1/push/subscribe` / `DELETE /api/v1/push/subscribe/{deviceId}` — register/unregister device push subscription (these existed from Phase A; now real).
+
 ### Not yet shipped
 
-- Telegram delivery (Phase D)
-- Web Push delivery (Phase E)
 - Email digests (Phase F)
 - Event reminders + admin broadcast (Phase G)
 - Rank-up notifications (Phase H)
