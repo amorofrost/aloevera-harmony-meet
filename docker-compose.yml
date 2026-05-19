@@ -56,8 +56,9 @@ services:
     container_name: aloevera-notifications-worker
     env_file:
       # Picks up AZURE_STORAGE_CONNECTION_STRING + USE_AZURE_STORAGE.
-      # Phase D also uses TELEGRAM_BOT_TOKEN for the real Telegram dispatcher
-      # (stub fallback when token missing).
+      # Phase D uses TELEGRAM_BOT_TOKEN for real Telegram dispatcher (stub fallback when missing).
+      # Phase F (email digests) uses SENDGRID_API_KEY, FROM_EMAIL, FRONTEND_BASE_URL, JWT_SECRET_KEY
+      # for real EmailDispatcher and UnsubscribeToken signing.
       - ../lovecraft/Lovecraft/.env
     depends_on:
       - backend
