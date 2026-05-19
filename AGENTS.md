@@ -240,6 +240,14 @@ Web Push channel: opt-in per device via Settings → Notifications → Browser p
 
 Email channel: daily digest delivery via SendGrid (Phase F shipped 2026-05-18). Outbox rows aggregated per user at `DailyDigestHourUtc` (default 9am UTC). `EmailDispatcher` renders HTML digest with notifications grouped by type. Unsubscribe via signed token: `GET /api/v1/notifications/unsubscribe?token=...` (public endpoint, token validated via HMAC-SHA256). Token format: `{userIdBase64Url}.{expiresAtUnixSeconds}.{base64hmac}` (dot-separated, base64url-encoded), valid for 30 days.
 
+### Admin Broadcasts + Event Reminders (Phase G)
+
+Admin community broadcast UI lives at `/admin/broadcasts` — compose form (title ≤100, body ≤1000, optional link, audience selector) + history table with status badge. Backend endpoint `POST /api/v1/admin/notifications/broadcast` returns `{ broadcastId, estimatedRecipients }` synchronously, then fans out `CommunityBroadcast` producer calls in background `Task.Run`. Audience types: `all` / `attendingEvent` (eventId) / `minRank` (rank name) / `staffRole` (role name). Gated by `appconfig.permissions.send_broadcast` (default `"admin"`; lowerable via appconfig without code change). `adminApi.broadcasts.{create,list,get}` is dual-mode (mock/api).
+
+Event reminders fire via `EventReminderWorker` in `Lovecraft.NotificationsWorker` (5-minute tick, env var `NOTIFICATIONS_WORKER_REMINDER_SCAN_INTERVAL_MINUTES`). Reminds attendees of events in `[now+23h, now+25h]`. The worker writes `notifications` + `notificationsoutbox` rows directly (no `INotificationProducer` access — worker is isolated from backend). Dedup via partition scan for existing `SourceEventId == "event-reminder-{eventId}"`. In-process channels (InApp + WebPush) are NOT written by the worker — only Telegram + Email outbox rows.
+
+Per-user invites: `AdminController.CreateEventInvite` accepts an optional `targetUserId` in the request body. When present, routes to `IEventInviteService.IssuePersonalInviteAsync` which writes the invite with `EventInviteEntity.TargetUserId` set and fires `EventInviteReceived` for that user. `TargetUserId` is informational only — the code still works for anyone who knows it. Existing event-level `CreateOrRotateInviteAsync` is unchanged.
+
 ### Admin shell (second Vite entry)
 
 - **HTML entry**: `admin.html` → `src/admin/main.tsx`. Production build emits `dist/admin.html` + `dist/assets/admin-*.js`.

@@ -29,7 +29,7 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 ---
 
-### MCF.4. Notification System *(partial — Phase A–F shipped, Phases G–H pending)*
+### MCF.4. Notification System *(partial — Phases A–G shipped, Phase H pending)*
 **Impact**: No engagement hooks — users are never informed of new activity
 
 **Shipped (2026-05-18)**: Phase A (infrastructure) + Phase B (in-app notifications + producers)
@@ -44,11 +44,18 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 **Shipped (2026-05-18)**: Phase E (Web Push) — WebPushDispatcher in-process, VAPID keypair config, service worker + browser helper, device opt-in UI.
 
-**Shipped (2026-05-18)**: Phase F (email digests) — EmailDispatcher + EmailDigestRenderer via SendGrid, UnsubscribeToken signed links, `POST /api/v1/notifications/unsubscribe` endpoint, required env vars (SENDGRID_API_KEY, FROM_EMAIL, FRONTEND_BASE_URL, JWT_SECRET_KEY).
+**Shipped (2026-05-18)**: Phase F (email digests) — EmailDispatcher + EmailDigestRenderer via SendGrid, UnsubscribeToken signed links, `GET /api/v1/notifications/unsubscribe` endpoint, required env vars (SENDGRID_API_KEY, FROM_EMAIL, FRONTEND_BASE_URL, JWT_SECRET_KEY).
 
-**Pending**: Phases G–H (event reminders/broadcast, rank-up notifications)
+**Shipped (2026-05-19)**: Phase G (event reminders + admin broadcast + 3 remaining producers)
+- `broadcasts` Azure Table; `IBroadcastService` + `BroadcastAudienceResolver` (4 audience types: all / attendingEvent / minRank / staffRole)
+- `AdminNotificationsController`: `POST /api/v1/admin/notifications/broadcast`, `GET /broadcasts`, `GET /broadcasts/{id}` — admin-only (`send_broadcast` permission key, default `"admin"`). Sync response + async `Task.Run` fan-out
+- `EventReminderWorker` in `Lovecraft.NotificationsWorker` — 5-minute tick, reminds attendees of events in `[now+23h, now+25h]`; dedup via `sourceEventId = "event-reminder-{eventId}"`
+- 3 producers wired: `EventPublished` (admin event creation, public only), `EventInviteReceived` (`IssuePersonalInviteAsync` + `EventInviteEntity.TargetUserId` column), `CommunityBroadcast` (admin broadcast endpoint)
+- Frontend: `/admin/broadcasts` page (compose form + history table); `adminApi.broadcasts.{create,list,get}` dual-mode
 
-**Resolution** (remaining phases): Phase G adds event reminders + admin broadcast (EventPublished, EventReminder, CommunityBroadcast types). Phase H adds RankUp producer.
+**Pending**: Phase H (rank-up notifications) — `IncrementCounterAsync` delta hook + `RankUp` producer
+
+**Resolution** (remaining phase): Phase H adds the `RankUp` producer hook into `AzureUserService.IncrementCounterAsync` comparing computed-rank-before to computed-rank-after.
 
 ---
 
@@ -395,6 +402,8 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 ---
 
 ## 📝 Changelog
+
+**May 19, 2026** — Notifications Phase G shipped: admin community broadcast (compose+history UI at `/admin/broadcasts`), `EventReminderWorker` (24h ahead), and the 3 remaining producers (`EventPublished`, `EventInviteReceived`, `CommunityBroadcast`). Added `broadcasts` Azure Table (24th); `send_broadcast` permission key; `EventInviteEntity.TargetUserId` column. MCF.4 updated to "Phases A–G shipped; Phase H pending".
 
 **May 18, 2026** — Notifications Phase B documentation. MCF.4 updated from "missing" to "partial — Phase A + B shipped (in-app + 4 producers); Phases C–F (worker, Telegram, Web Push, email) and G–H pending". Updated FEATURES.md, API_INTEGRATION.md, AGENTS.md, and backend NOTIFICATIONS.md to document the Phase B scope.
 
