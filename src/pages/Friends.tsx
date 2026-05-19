@@ -33,6 +33,7 @@ import { useChatSignalR } from '@/hooks/useChatSignalR';
 import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
 import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 function composePhotos(user: { profileImage: string; images: string[] }): string[] {
   const set = new Set<string>();
@@ -541,6 +542,7 @@ const Friends = () => {
           <h1 className="text-2xl font-bold text-foreground">Друзья</h1>
           <div className="flex items-center gap-1">
             <SearchFilterSheet country={filter.country} region={filter.region} onApply={setFilter} />
+            <NotificationBell />
             <Heart className="w-6 h-6 text-primary" />
           </div>
         </div>

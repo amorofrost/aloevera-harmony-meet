@@ -226,6 +226,12 @@ Props: `{ rank?: UserRank; staffRole?: StaffRole; className?: string }`. Renders
 
 Rendered in: reply headers in `TopicDetail`, display name in `SettingsPage`, swipe card + chat-list items in `Friends`.
 
+### Notification Formatting Helpers
+
+Notification formatting (converting `NotificationDto` enum payloads into user-facing text + action links) is centralized in `src/lib/notificationFormatters.ts`. Each notification type has a formatter function that produces `{ title, message, actionText?, actionHref? }`. The `<NotificationDropdown>` and `/notifications` page consume these helpers to render consistent, translated notification text.
+
+Maintained in: `<NotificationBell>`, `<NotificationDropdown>`, notification list page.
+
 ### Admin shell (second Vite entry)
 
 - **HTML entry**: `admin.html` → `src/admin/main.tsx`. Production build emits `dist/admin.html` + `dist/assets/admin-*.js`.
@@ -306,7 +312,7 @@ const Component = () => {
 ## 🔄 State Management
 
 **Current Approach**:
-- **Global State**: React Context for language/i18n only
+- **Global State**: React Context for language/i18n; **Zustand for notifications** (`useNotificationStore` — Phase B adoption)
 - **Local State**: `useState` in page components
 - **No Global User State**: User is hardcoded as `'current-user'`
 - **Current user**: `useCurrentUser()` from `@/hooks/useCurrentUser` is the canonical way to load the logged-in profile inside a component. It unwraps the `ApiResponse<User | null>` envelope returned by `usersApi.getCurrentUser()` and returns `{ user, loading }`. Components gating UI by rank (`<Talks>`, `<TopicDetail>`) consume this hook rather than re-reading the token or calling the API directly.
@@ -317,6 +323,7 @@ const Component = () => {
 - Keep state close to where it's used
 - Lift state only when needed by multiple components
 - Use `useState` for simple state
+- Use Zustand for cross-page shared client state (see `useNotificationStore` as the first pattern)
 - Prepare for React Query migration (don't over-complicate state logic)
 
 ---

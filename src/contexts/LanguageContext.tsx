@@ -5,7 +5,7 @@ export type Language = 'ru' | 'en';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string>) => string;
 }
 
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -226,6 +226,43 @@ const translations = {
     'settings.prompts.save': 'Сохранить',
     'settings.prompts.saveSuccess': 'Подсказки сохранены',
     'settings.prompts.saveFailed': 'Не удалось сохранить подсказки',
+
+    // Notifications
+    'notifications.bell': 'Уведомления',
+    'notifications.markAllRead': 'Отметить все прочитанными',
+    'notifications.seeAll': 'Все уведомления',
+    'notifications.empty': 'Уведомлений пока нет',
+    'notifications.unread': 'Непрочитанные',
+    'notifications.all': 'Все',
+    'notifications.dismiss': 'Скрыть',
+    'notifications.title.likeReceived': '{actor} лайкнул(а) вас',
+    'notifications.title.likeReceivedAnonymous': 'Кто-то лайкнул вас',
+    'notifications.title.matchCreated': 'Взаимная симпатия с {actor}',
+    'notifications.title.messageReceived': '{actor}: {preview}',
+    'notifications.title.forumReply': '{actor} ответил(а) в обсуждении',
+    'notifications.title.communityBroadcast': '{title}',
+    'notifications.title.eventPublished': 'Новое событие: {title}',
+    'notifications.title.eventReminder': 'Завтра: {title}',
+    'notifications.title.eventInvite': 'Вас пригласили: {title}',
+    'notifications.title.rankUp': 'Новый ранг: {rank}!',
+    'notifications.settings.title': 'Уведомления',
+    'notifications.settings.pauseAll': 'Отключить все уведомления',
+    'notifications.settings.snoozeFor': 'Тишина на',
+    'notifications.settings.snoozeNever': 'Не активна',
+    'notifications.settings.snooze1h': '1 час',
+    'notifications.settings.snooze4h': '4 часа',
+    'notifications.settings.snooze24h': '24 часа',
+    'notifications.settings.dailyHour': 'Ежедневная рассылка (UTC)',
+    'notifications.settings.channel.inApp': 'В приложении',
+    'notifications.settings.channel.telegram': 'Telegram',
+    'notifications.settings.channel.webPush': 'Уведомления браузера',
+    'notifications.settings.channel.email': 'Email',
+    'notifications.settings.frequency.immediate': 'Сразу',
+    'notifications.settings.frequency.hourly': 'Раз в час',
+    'notifications.settings.frequency.daily': 'Раз в день',
+    'notifications.settings.unavailable.telegram': 'Привяжите Telegram, чтобы включить',
+    'notifications.settings.unavailable.webPush': 'Включить на этом устройстве',
+    'notifications.settings.unavailable.email': 'Подтвердите email, чтобы включить',
   },
   en: {
     // Navigation
@@ -434,6 +471,43 @@ const translations = {
     'settings.prompts.save': 'Save',
     'settings.prompts.saveSuccess': 'Prompts saved',
     'settings.prompts.saveFailed': 'Could not save prompts',
+
+    // Notifications
+    'notifications.bell': 'Notifications',
+    'notifications.markAllRead': 'Mark all as read',
+    'notifications.seeAll': 'See all',
+    'notifications.empty': 'No notifications yet',
+    'notifications.unread': 'Unread',
+    'notifications.all': 'All',
+    'notifications.dismiss': 'Dismiss',
+    'notifications.title.likeReceived': '{actor} liked you',
+    'notifications.title.likeReceivedAnonymous': 'Someone liked you',
+    'notifications.title.matchCreated': 'New match with {actor}',
+    'notifications.title.messageReceived': '{actor}: {preview}',
+    'notifications.title.forumReply': '{actor} replied in a thread',
+    'notifications.title.communityBroadcast': '{title}',
+    'notifications.title.eventPublished': 'New event: {title}',
+    'notifications.title.eventReminder': 'Event tomorrow: {title}',
+    'notifications.title.eventInvite': "You're invited: {title}",
+    'notifications.title.rankUp': "You're now {rank}!",
+    'notifications.settings.title': 'Notifications',
+    'notifications.settings.pauseAll': 'Pause all notifications',
+    'notifications.settings.snoozeFor': 'Snooze for',
+    'notifications.settings.snoozeNever': 'Never',
+    'notifications.settings.snooze1h': '1 hour',
+    'notifications.settings.snooze4h': '4 hours',
+    'notifications.settings.snooze24h': '24 hours',
+    'notifications.settings.dailyHour': 'Daily digest hour (UTC)',
+    'notifications.settings.channel.inApp': 'In-app',
+    'notifications.settings.channel.telegram': 'Telegram',
+    'notifications.settings.channel.webPush': 'Browser push',
+    'notifications.settings.channel.email': 'Email',
+    'notifications.settings.frequency.immediate': 'Immediate',
+    'notifications.settings.frequency.hourly': 'Hourly digest',
+    'notifications.settings.frequency.daily': 'Daily digest',
+    'notifications.settings.unavailable.telegram': 'Link your Telegram account to enable',
+    'notifications.settings.unavailable.webPush': 'Enable on this device',
+    'notifications.settings.unavailable.email': 'Verify your email to enable',
   },
 };
 
@@ -444,8 +518,14 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('ru');
 
-  const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations['ru']] || key;
+  const t = (key: string, params?: Record<string, string>): string => {
+    let str = translations[language][key as keyof typeof translations['ru']] || key;
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        str = str.replace(`{${k}}`, v);
+      }
+    }
+    return str;
   };
 
   return (

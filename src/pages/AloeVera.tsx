@@ -13,6 +13,7 @@ import type { StoreItem } from '@/data/mockStoreItems';
 import type { BlogPost } from '@/data/mockBlogPosts';
 import { eventsApi, storeApi, blogApi, getCurrentUserIdFromToken } from '@/services/api';
 import heroBg from '@/assets/hero-bg.jpg';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const AloeVera = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -84,7 +85,10 @@ const AloeVera = () => {
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">{t('nav.aloevera')}</h1>
-          <Music className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Music className="w-6 h-6 text-primary" />
+          </div>
         </div>
       </div>
 

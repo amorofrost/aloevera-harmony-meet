@@ -269,6 +269,43 @@ Product rules (visibility, invites, multiline descriptions, free-text price, for
 
 ---
 
+## Notifications
+
+**Phase B shipped (2026-05-18)**: in-app notifications + producer wiring.
+
+### Services
+
+- `notificationsApi.ts` — `GET /api/v1/notifications/availability` (returns `{ telegramLinked, emailVerified, webPushSubscribed }`)
+- `useNotificationSignalR` hook — subscribes to `NotificationReceived` hub events and pipes them into the Zustand store
+
+### State Management
+
+- `useNotificationStore` (Zustand) — global in-app notification queue with actions: `addNotification`, `markRead`, `markAllRead`, `dismiss`
+
+### Components & Pages
+
+- `<NotificationBell>` — header bell icon with unread count bubble
+- `<NotificationDropdown>` — popover recent notifications (click to navigate)
+- `/notifications` — full paginated list, filters, mark-all-read, dismiss
+- Notification preferences in `/settings` → per-type frequency (immediate/daily); channel toggles (in-app only for now)
+
+### Producers wired
+
+- `LikeReceived` (MatchingService)
+- `MatchCreated` (MatchingService — mutual like detection)
+- `MessageReceived` (ChatsController)
+- `ForumReplyToThread` (ForumService)
+
+### Not yet shipped
+
+- Telegram delivery (Phase D)
+- Web Push delivery (Phase E)
+- Email digests (Phase F)
+- Event reminders + admin broadcast (Phase G)
+- Rank-up notifications (Phase H)
+
+---
+
 ## 🔜 Next Steps
 
 1. **Songs backend endpoint** — implement in `Lovecraft.Backend` and wire frontend `songsApi.ts` to it

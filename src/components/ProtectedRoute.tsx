@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { isMockMode } from '@/config/api.config';
 import { apiClient } from '@/services/api/apiClient';
+import { useNotificationSignalR } from '@/hooks/useNotificationSignalR';
 
 type TokenStatus = 'valid' | 'near-expiry' | 'expired' | 'missing';
 
@@ -29,6 +30,11 @@ function getTokenStatus(): TokenStatus {
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+}
+
+function ProtectedContent({ children }: { children: React.ReactNode }) {
+  useNotificationSignalR();
+  return <>{children}</>;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
@@ -83,7 +89,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to={`/?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
 
-  return <>{children}</>;
+  return <ProtectedContent>{children}</ProtectedContent>;
 };
 
 export default ProtectedRoute;

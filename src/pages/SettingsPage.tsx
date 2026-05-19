@@ -13,7 +13,7 @@ import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
 import BottomNavigation from '@/components/ui/bottom-navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { User, AloeVeraSong, PromptAnswer } from '@/types/user';
-import { usersApi, songsApi, apiClient, authApi } from '@/services/api';
+import { usersApi, songsApi, apiClient, authApi, notificationsApi } from '@/services/api';
 import { PhotoGrid } from '@/components/settings/PhotoGrid';
 import { PromptsEditor } from '@/components/settings/PromptsEditor';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -26,6 +26,9 @@ import { UserBadges } from '@/components/ui/user-badges';
 import { DualLocationPicker } from '@/components/ui/dual-location-picker';
 import { LocationDisplay } from '@/components/ui/location-display';
 import LinkedAccountsCard from '@/components/settings/LinkedAccountsCard';
+import { NotificationPreferences } from '@/components/settings/NotificationPreferences';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import type { NotificationAvailability } from '@/types/notification';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -44,6 +47,11 @@ const SettingsPage = () => {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [availability, setAvailability] = useState<NotificationAvailability>({
+    telegramLinked: false,
+    emailVerified: false,
+    webPushSubscribed: false,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -66,6 +74,9 @@ const SettingsPage = () => {
         });
       }
       if (songsRes.success && songsRes.data) setSongs(songsRes.data);
+      notificationsApi.getAvailability().then((r) => {
+        if (r.success && r.data) setAvailability(r.data);
+      });
       setIsLoading(false);
     };
     load();
@@ -171,7 +182,8 @@ const SettingsPage = () => {
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">Настройки</h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
+            <NotificationBell />
             <Button variant="ghost" size="sm" onClick={() => {
               if (!isEditing) setEditStartUser(user);
               setIsEditing(!isEditing);
@@ -491,6 +503,17 @@ const SettingsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="profile-card">
+              <CardHeader><CardTitle>{t('notifications.settings.title')}</CardTitle></CardHeader>
+              <CardContent>
+                <NotificationPreferences
+                  telegramLinked={availability.telegramLinked}
+                  emailVerified={availability.emailVerified}
+                  pushSubscribed={availability.webPushSubscribed}
+                />
               </CardContent>
             </Card>
 
