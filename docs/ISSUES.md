@@ -40,9 +40,9 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 **Shipped (2026-05-18)**: Phase C (worker scaffold) — Lovecraft.NotificationsWorker with DispatcherWorker (10s), DigestWorker (top-of-hour), JanitorWorker (3am UTC). Channel dispatchers are stubs (log + Delivered). 
 
-**Pending**: Phases D–F (real Telegram, Web Push, email digests) and Phase G (event reminders, admin broadcast) and Phase H (rank-up notifications)
+**Pending**: Phases E–H (Web Push, email digests, event reminders/broadcast, rank-up notifications)
 
-**Resolution** (remaining phases): Phase D adds real Telegram Bot delivery. Phase E adds Web Push (in-process from backend). Phase F adds SendGrid email digest rendering. Phase G adds event reminders + admin broadcast. Phase H adds RankUp producer.
+**Resolution** (remaining phases): Phase D (real Telegram dispatcher + mute callback) shipped 2026-05-18. Phase E adds Web Push (in-process from backend). Phase F adds SendGrid email digest rendering. Phase G adds event reminders + admin broadcast. Phase H adds RankUp producer.
 
 ---
 
