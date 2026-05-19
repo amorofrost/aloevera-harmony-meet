@@ -14,9 +14,14 @@ const mockSubscription = {
   unsubscribe: mockUnsubscribe,
 };
 
+// A real 65-byte uncompressed EC public key in URL-safe base64 (no padding) — valid for atob().
+// Must be inlined inside vi.mock() because the factory is hoisted above variable declarations.
 vi.mock('@/services/api', () => ({
   pushApi: {
-    getVapidPublicKey: vi.fn().mockResolvedValue({ success: true, data: { publicKey: 'BMqSv...' } }),
+    getVapidPublicKey: vi.fn().mockResolvedValue({
+      success: true,
+      data: { publicKey: 'BLqoziPslieSqTaBgNfmWISXsA8JujkJtX8uvp4ARULvNC0a-3U6BGaYKYKBvcEU2rAsrrfMPeVw7LaHjNSZQeY' },
+    }),
     subscribe: vi.fn().mockResolvedValue({ success: true, data: { deviceId: 'dev-1' } }),
     unsubscribe: vi.fn().mockResolvedValue({ success: true }),
   },

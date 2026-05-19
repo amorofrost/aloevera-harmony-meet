@@ -27,8 +27,11 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 export async function enableWebPush(): Promise<{ deviceId: string }> {
   if (!isWebPushSupported()) throw new Error('Web Push not supported in this browser');
 
-  // Register service worker
-  const reg = await navigator.serviceWorker.register('/sw.js');
+  // Register service worker, then wait for an active registration (required for Safari 16.4+
+  // first-install: register() may return a worker in installing/waiting state, and calling
+  // pushManager.subscribe() on a non-active registration throws InvalidStateError).
+  await navigator.serviceWorker.register('/sw.js');
+  const reg = await navigator.serviceWorker.ready;
 
   // Request permission
   const perm = await Notification.requestPermission();
@@ -84,15 +87,10 @@ export async function disableWebPush(): Promise<void> {
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  try {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const raw = atob(base64);
-    const output = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
-    return output;
-  } catch {
-    // Return empty array for invalid/placeholder keys (e.g. in test environments)
-    return new Uint8Array(0);
-  }
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);  // throws InvalidCharacterError on malformed input — let it propagate
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
+  return output;
 }
