@@ -232,6 +232,10 @@ Notification formatting (converting `NotificationDto` enum payloads into user-fa
 
 Maintained in: `<NotificationBell>`, `<NotificationDropdown>`, notification list page.
 
+### Web Push Channel
+
+Web Push channel: opt-in per device via Settings → Notifications → Browser push → "Enable on this device". Helper at `src/lib/webPush.ts`. Backend uses `WebPushDispatcher` (in-process; no worker involvement). Dead subscriptions auto-cleaned on HTTP 404/410.
+
 ### Admin shell (second Vite entry)
 
 - **HTML entry**: `admin.html` → `src/admin/main.tsx`. Production build emits `dist/admin.html` + `dist/assets/admin-*.js`.
