@@ -273,6 +273,8 @@ Unsubscribe from email digests: https://aloeve.club/notifications/unsubscribe?to
 
 Unsubscribe link uses a signed one-time token (24h validity) that flips every email cell to `false` without requiring login.
 
+> **Phase F update:** shipped with 30-day validity (longer than the spec's 24h to balance UX convenience vs. replay window — link still works for users who check email weekly).
+
 ---
 
 ## Digest aggregation

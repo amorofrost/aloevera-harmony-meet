@@ -238,7 +238,7 @@ Web Push channel: opt-in per device via Settings → Notifications → Browser p
 
 ### Email Channel
 
-Email channel: daily digest delivery via SendGrid (Phase F shipped 2026-05-18). Outbox rows aggregated per user at `DailyDigestHourUtc` (default 9am UTC). `EmailDispatcher` renders HTML digest with notifications grouped by type. Unsubscribe via signed token: `POST /api/v1/notifications/unsubscribe` (public endpoint, token validated via HMAC-SHA256). Token format: `{userId}_{timestamp}_{digest}`, valid for 7 days.
+Email channel: daily digest delivery via SendGrid (Phase F shipped 2026-05-18). Outbox rows aggregated per user at `DailyDigestHourUtc` (default 9am UTC). `EmailDispatcher` renders HTML digest with notifications grouped by type. Unsubscribe via signed token: `GET /api/v1/notifications/unsubscribe?token=...` (public endpoint, token validated via HMAC-SHA256). Token format: `{userIdBase64Url}.{expiresAtUnixSeconds}.{base64hmac}` (dot-separated, base64url-encoded), valid for 30 days.
 
 ### Admin shell (second Vite entry)
 
