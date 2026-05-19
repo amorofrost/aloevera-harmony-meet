@@ -4,10 +4,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NotificationPreferences } from '../NotificationPreferences';
 import { renderWithProviders } from '@/test/utils';
 import type { NotificationPreferences as Prefs } from '@/types/notification';
+import { enableWebPush } from '@/lib/webPush';
 
 vi.mock('@/components/ui/sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn() },
   Toaster: () => null,
+}));
+
+vi.mock('@/lib/webPush', () => ({
+  isWebPushSupported: vi.fn().mockReturnValue(true),
+  getSubscriptionStatus: vi.fn().mockResolvedValue('available'),
+  enableWebPush: vi.fn().mockResolvedValue({ deviceId: 'dev-1' }),
+  disableWebPush: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { toast } from '@/components/ui/sonner';
@@ -104,5 +112,17 @@ describe('NotificationPreferences', () => {
 
     expect(toast.error).toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('shows Enable on this device button when not subscribed', async () => {
+    renderWithProviders(<NotificationPreferences telegramLinked={false} pushSubscribed={false} emailVerified={false} />);
+    expect(await screen.findByText(/Enable on this device/i)).toBeInTheDocument();
+  });
+
+  it('clicking Enable on this device calls webPush.enableWebPush', async () => {
+    renderWithProviders(<NotificationPreferences telegramLinked={false} pushSubscribed={false} emailVerified={false} />);
+    const button = await screen.findByText(/Enable on this device/i);
+    await userEvent.click(button);
+    expect(enableWebPush).toHaveBeenCalled();
   });
 });
