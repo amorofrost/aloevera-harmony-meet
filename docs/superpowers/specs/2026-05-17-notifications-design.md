@@ -275,6 +275,8 @@ Unsubscribe link uses a signed one-time token (24h validity) that flips every em
 
 > **Phase F update:** shipped with 30-day validity (longer than the spec's 24h to balance UX convenience vs. replay window — link still works for users who check email weekly).
 
+> **Phase G update (2026-05-19):** shipped with `BroadcastAudienceResolver` covering the 4 audience types; `EventReminderWorker` at 5-minute ticks with `sourceEventId`-based dedup; per-user invites via `EventInviteEntity.TargetUserId` (informational metadata — codes still redeemable by anyone who knows them); `send_broadcast` permission key default `"admin"`. Audience fan-out is bounded by `take: 10_000` on `IUserService.GetUsersAsync` — pagination follow-up documented for scale beyond ~10k active users.
+
 ---
 
 ## Digest aggregation

@@ -13,6 +13,7 @@ import AdminForumSectionTopicsPage from "./pages/AdminForumSectionTopicsPage";
 import AdminStorePage from "./pages/AdminStorePage";
 import AdminBlogPage from "./pages/AdminBlogPage";
 import AdminInfrastructurePage from "./pages/AdminInfrastructurePage";
+import AdminBroadcastsPage from "./pages/AdminBroadcastsPage";
 
 function RequireAdmin() {
   const token = apiClient.getAccessToken();
@@ -39,6 +40,7 @@ export default function AdminApp() {
             <Route path="/forum/:sectionId" element={<AdminForumSectionTopicsPage />} />
             <Route path="/store" element={<AdminStorePage />} />
             <Route path="/blog" element={<AdminBlogPage />} />
+            <Route path="/broadcasts" element={<AdminBroadcastsPage />} />
             <Route path="/infrastructure" element={<AdminInfrastructurePage />} />
             <Route path="/config" element={<AdminConfigPage />} />
           </Route>

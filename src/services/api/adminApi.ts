@@ -293,6 +293,69 @@ export interface AdminInfrastructureStatusDto {
   containers: AdminContainerInfrastructureDto[];
 }
 
+export type BroadcastAudienceType = 'all' | 'attendingEvent' | 'minRank' | 'staffRole';
+
+export interface BroadcastAudienceDto {
+  type: BroadcastAudienceType;
+  value: string | null;
+}
+
+export type BroadcastStatus = 'pending' | 'completed';
+
+export interface BroadcastDto {
+  id: string;
+  title: string;
+  body: string;
+  link?: string | null;
+  audience: BroadcastAudienceDto;
+  issuedByUserId: string;
+  issuedAtUtc: string;
+  estimatedRecipients: number;
+  dispatchedCount: number;
+  status: BroadcastStatus;
+  completedAtUtc?: string | null;
+}
+
+export interface CreateBroadcastPayload {
+  title: string;
+  body: string;
+  link?: string;
+  audience: BroadcastAudienceDto;
+}
+
+function mapBroadcast(x: unknown): BroadcastDto {
+  const o = x as Record<string, unknown>;
+  const audRaw = (o.audience ?? {}) as Record<string, unknown>;
+  const t = String(audRaw.type ?? 'all');
+  const type: BroadcastAudienceType = (
+    ['all', 'attendingEvent', 'minRank', 'staffRole'].includes(t) ? t : 'all'
+  ) as BroadcastAudienceType;
+  const status = String(o.status ?? 'pending');
+  return {
+    id: String(o.id ?? ''),
+    title: String(o.title ?? ''),
+    body: String(o.body ?? ''),
+    link: o.link != null && String(o.link) !== '' ? String(o.link) : null,
+    audience: {
+      type,
+      value: audRaw.value != null && String(audRaw.value) !== '' ? String(audRaw.value) : null,
+    },
+    issuedByUserId: String(o.issuedByUserId ?? ''),
+    issuedAtUtc: String(o.issuedAtUtc ?? ''),
+    estimatedRecipients: Number(o.estimatedRecipients ?? 0),
+    dispatchedCount: Number(o.dispatchedCount ?? 0),
+    status: (status === 'completed' ? 'completed' : 'pending') as BroadcastStatus,
+    completedAtUtc: o.completedAtUtc != null && String(o.completedAtUtc) !== '' ? String(o.completedAtUtc) : null,
+  };
+}
+
+/**
+ * Mock store for admin community broadcasts. Unlike most admin endpoints, broadcasts
+ * support a working mock path so the compose form + history can be exercised locally
+ * (and in unit tests with VITE_API_MODE=mock).
+ */
+const mockBroadcasts: BroadcastDto[] = [];
+
 export const adminApi = {
   async listForumSections(): Promise<ApiResponse<AdminForumSectionDto[]>> {
     if (!isApiMode()) {
@@ -873,5 +936,76 @@ export const adminApi = {
       };
     }
     return apiClient.delete<boolean>(`/api/v1/admin/forum-topics/${topicId}`);
+  },
+
+  broadcasts: {
+    async create(body: CreateBroadcastPayload): Promise<ApiResponse<BroadcastDto>> {
+      if (!isApiMode()) {
+        const link = body.link?.trim();
+        const bc: BroadcastDto = {
+          id: `bc-${Math.random().toString(36).slice(2, 14)}`,
+          title: body.title,
+          body: body.body,
+          link: link ? link : null,
+          audience: {
+            type: body.audience.type,
+            value: body.audience.value && body.audience.value.trim() !== ''
+              ? body.audience.value
+              : null,
+          },
+          issuedByUserId: 'mock-admin',
+          issuedAtUtc: new Date().toISOString(),
+          estimatedRecipients: 0,
+          dispatchedCount: 0,
+          status: 'pending',
+          completedAtUtc: null,
+        };
+        mockBroadcasts.unshift(bc);
+        return { success: true, data: bc, timestamp: new Date().toISOString() };
+      }
+      const res = await apiClient.post<unknown>('/api/v1/admin/notifications/broadcast', body);
+      if (res.success && res.data) {
+        return { ...res, data: mapBroadcast(res.data) };
+      }
+      return res as unknown as ApiResponse<BroadcastDto>;
+    },
+
+    async list(limit = 50): Promise<ApiResponse<BroadcastDto[]>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: mockBroadcasts.slice(0, limit),
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const res = await apiClient.get<unknown[]>(
+        `/api/v1/admin/notifications/broadcasts?limit=${limit}`,
+      );
+      if (res.success && Array.isArray(res.data)) {
+        return { ...res, data: res.data.map(mapBroadcast) };
+      }
+      return res as unknown as ApiResponse<BroadcastDto[]>;
+    },
+
+    async get(broadcastId: string): Promise<ApiResponse<BroadcastDto>> {
+      if (!isApiMode()) {
+        const bc = mockBroadcasts.find((b) => b.id === broadcastId);
+        if (bc) {
+          return { success: true, data: bc, timestamp: new Date().toISOString() };
+        }
+        return {
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Broadcast not found' },
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const res = await apiClient.get<unknown>(
+        `/api/v1/admin/notifications/broadcasts/${encodeURIComponent(broadcastId)}`,
+      );
+      if (res.success && res.data) {
+        return { ...res, data: mapBroadcast(res.data) };
+      }
+      return res as unknown as ApiResponse<BroadcastDto>;
+    },
   },
 };
