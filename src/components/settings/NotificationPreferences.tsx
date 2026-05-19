@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { notificationsApi } from '@/services/api';
 import { showApiError } from '@/lib/apiError';
+import { isWebPushSupported, getSubscriptionStatus, enableWebPush, disableWebPush } from '@/lib/webPush';
+import type { SubscriptionStatus } from '@/lib/webPush';
 import type {
   NotificationPreferences as Prefs,
   NotificationType,
@@ -34,12 +36,41 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
   const { t } = useLanguage();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState(false);
+  const [webPushStatus, setWebPushStatus] = useState<'loading' | SubscriptionStatus>('loading');
 
   useEffect(() => {
     notificationsApi.getPreferences().then((r) => {
       if (r.success && r.data) setPrefs(r.data);
     });
   }, []);
+
+  useEffect(() => {
+    if (isWebPushSupported()) {
+      getSubscriptionStatus().then(setWebPushStatus);
+    } else {
+      setWebPushStatus('unsupported');
+    }
+  }, [pushSubscribed]);
+
+  const handleEnableWebPush = async () => {
+    try {
+      await enableWebPush();
+      toast.success('Web Push enabled');
+      setWebPushStatus('subscribed');
+    } catch (err) {
+      showApiError(err as Error, 'Failed to enable Web Push');
+    }
+  };
+
+  const handleDisableWebPush = async () => {
+    try {
+      await disableWebPush();
+      toast.success('Web Push disabled on this device');
+      setWebPushStatus('available');
+    } catch (err) {
+      showApiError(err as Error, 'Failed to disable Web Push');
+    }
+  };
 
   if (!prefs) return <div>Loading…</div>;
 
@@ -117,6 +148,29 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
               </Select>
             )}
           </div>
+          {channel === 'webPush' && (
+            <div className="text-sm">
+              {webPushStatus === 'loading' && <span>Checking…</span>}
+              {webPushStatus === 'subscribed' && (
+                <Button variant="outline" size="sm" onClick={handleDisableWebPush}>
+                  Disable on this device
+                </Button>
+              )}
+              {webPushStatus === 'available' && (
+                <Button variant="outline" size="sm" onClick={handleEnableWebPush}>
+                  Enable on this device
+                </Button>
+              )}
+              {webPushStatus === 'denied' && (
+                <span className="text-muted-foreground">
+                  Notification permission blocked — enable in browser settings
+                </span>
+              )}
+              {webPushStatus === 'unsupported' && (
+                <span className="text-muted-foreground">Browser doesn&apos;t support Web Push</span>
+              )}
+            </div>
+          )}
           <div className="grid gap-2">
             {TYPES.map((type) => (
               <div key={type} className="flex items-center justify-between">

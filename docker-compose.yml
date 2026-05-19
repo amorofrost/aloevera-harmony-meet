@@ -14,6 +14,9 @@ services:
     # For ad-hoc debugging, temporarily add "5000:8080" and restrict port 5000
     # to your IP in the Azure NSG, then remove it when done.
     env_file:
+      # Picks up: AZURE_STORAGE_CONNECTION_STRING, USE_AZURE_STORAGE,
+      # JWT_SECRET_KEY, GOOGLE_OAUTH_CLIENT_ID, TELEGRAM_BOT_TOKEN,
+      # SENDGRID_API_KEY, INTERNAL_SERVICE_TOKEN, VAPID_*
       - ../lovecraft/Lovecraft/.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
