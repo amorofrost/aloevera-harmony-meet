@@ -38,9 +38,11 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 - Delivery: in-app via SignalR immediately
 - Defaults: conservative (in-app only, no Telegram/email/Web Push)
 
-**Pending**: Phases C–F (worker, Telegram, Web Push, email digests) and Phase G (event reminders, admin broadcast) and Phase H (rank-up notifications)
+**Shipped (2026-05-18)**: Phase C (worker scaffold) — Lovecraft.NotificationsWorker with DispatcherWorker (10s), DigestWorker (top-of-hour), JanitorWorker (3am UTC). Channel dispatchers are stubs (log + Delivered). 
 
-**Resolution** (remaining phases): Implement `Lovecraft.NotificationsWorker` to drain `notificationsoutbox` for Telegram and email. Integrate push service for Web Push delivery. Build email digest scheduler. Add event reminder worker. Wire `RankUp` producer.
+**Pending**: Phases D–F (real Telegram, Web Push, email digests) and Phase G (event reminders, admin broadcast) and Phase H (rank-up notifications)
+
+**Resolution** (remaining phases): Phase D adds real Telegram Bot delivery. Phase E adds Web Push (in-process from backend). Phase F adds SendGrid email digest rendering. Phase G adds event reminders + admin broadcast. Phase H adds RankUp producer.
 
 ---
 
