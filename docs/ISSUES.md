@@ -29,7 +29,7 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 
 ---
 
-### MCF.4. Notification System *(partial — Phases A–G shipped, Phase H pending)*
+### MCF.4. Notification System *(all 8 phases A–H shipped 2026-05-18/19 — see RESOLVED_ISSUES.md)*
 **Impact**: No engagement hooks — users are never informed of new activity
 
 **Shipped (2026-05-18)**: Phase A (infrastructure) + Phase B (in-app notifications + producers)
@@ -53,9 +53,15 @@ Bottom navigation is mobile-only. No navigation element exists on large screens.
 - 3 producers wired: `EventPublished` (admin event creation, public only), `EventInviteReceived` (`IssuePersonalInviteAsync` + `EventInviteEntity.TargetUserId` column), `CommunityBroadcast` (admin broadcast endpoint)
 - Frontend: `/admin/broadcasts` page (compose form + history table); `adminApi.broadcasts.{create,list,get}` dual-mode
 
-**Pending**: Phase H (rank-up notifications) — `IncrementCounterAsync` delta hook + `RankUp` producer
+**Shipped (2026-05-19)**: Phase H — final phase, RankUp producer wired
+- `AzureUserService` + `MockUserService` extended with nullable optional `Lazy<INotificationProducer>?` ctor param (`Lazy<T>` required because `NotificationProducer` depends on `IUserService`, creating a DI cycle)
+- `IncrementCounterAsync` snapshots counter fields + `RankOverride` before increment; computes old + new rank via `RankCalculator.Compute`; fires `RankUp` only on strict `EffectiveLevel` increase
+- `RankOverride` short-circuits via `RankCalculator` → admin-overridden users never get rank notifications
+- Decrement transitions (`UnregisterFromEvent` with delta=-1) explicitly suppressed — only upward transitions fire
+- Payload `{ previousRank, newRank }` (camelCase); renderers currently read only `newRank`
+- `sourceEventId = "rank-up-{userId}-{newRank}"` for 60-second dedup window
 
-**Resolution** (remaining phase): Phase H adds the `RankUp` producer hook into `AzureUserService.IncrementCounterAsync` comparing computed-rank-before to computed-rank-after.
+**MCF.4 closed.** All 9 producers (LikeReceived, MatchCreated, MessageReceived, ForumReplyToThread, CommunityBroadcast, EventPublished, EventReminder, EventInviteReceived, RankUp) and all 4 channels (in-app SignalR, Telegram, Web Push, email digest) are operational.
 
 ---
 
@@ -393,7 +399,7 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 | Section | Count |
 |---|---|
 | 🔴 Production Blockers | 1 |
-| 🟠 Missing Core Features | 14 (4 partials: MCF.4, MCF.12, MCF.16, MCF.17) |
+| 🟠 Missing Core Features | 14 (3 partials: MCF.12, MCF.16, MCF.17 — MCF.4 closed 2026-05-19) |
 | 🟡 Technical Debt & Infrastructure | 8 |
 | 🟢 UX / Polish | 11 |
 | **Total active** | **34** |
@@ -402,6 +408,8 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 ---
 
 ## 📝 Changelog
+
+**May 19, 2026 (later)** — Notifications Phase H shipped: `RankUp` producer wired into `IUserService.IncrementCounterAsync`. `Lazy<INotificationProducer>` injection avoids the producer→IUserService→producer DI cycle. Strict level-increase guard prevents decrement transitions (UnregisterFromEvent) from firing. All 8 phases complete; **MCF.4 fully resolved**.
 
 **May 19, 2026** — Notifications Phase G shipped: admin community broadcast (compose+history UI at `/admin/broadcasts`), `EventReminderWorker` (24h ahead), and the 3 remaining producers (`EventPublished`, `EventInviteReceived`, `CommunityBroadcast`). Added `broadcasts` Azure Table (24th); `send_broadcast` permission key; `EventInviteEntity.TargetUserId` column. MCF.4 updated to "Phases A–G shipped; Phase H pending".
 
