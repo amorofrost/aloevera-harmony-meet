@@ -240,6 +240,12 @@ Web Push channel: opt-in per device via Settings → Notifications → Browser p
 
 Email channel: daily digest delivery via SendGrid (Phase F shipped 2026-05-18). Outbox rows aggregated per user at `DailyDigestHourUtc` (default 9am UTC). `EmailDispatcher` renders HTML digest with notifications grouped by type. Unsubscribe via signed token: `GET /api/v1/notifications/unsubscribe?token=...` (public endpoint, token validated via HMAC-SHA256). Token format: `{userIdBase64Url}.{expiresAtUnixSeconds}.{base64hmac}` (dot-separated, base64url-encoded), valid for 30 days.
 
+### RankUp Notifications (Phase H)
+
+`AzureUserService` + `MockUserService` fire `RankUp` from `IncrementCounterAsync` when a user crosses a rank threshold upward. Implementation snapshots the four counter fields + `RankOverride` before increment, computes old + new rank via `RankCalculator.Compute`, and fires only when `EffectiveLevel.Parse(newRank) > EffectiveLevel.Parse(oldRank)`. Admin-overridden ranks never fire (RankCalculator short-circuits on RankOverride → both calculations return the override). Decrement transitions (e.g., `UnregisterFromEvent` with delta=-1) explicitly suppressed.
+
+Producer is injected as `Lazy<INotificationProducer>?` — **`Lazy<T>` is required** because `NotificationProducer` depends on `IUserService` (for `GetNotificationContactStatusAsync`); direct injection would create a circular DI graph. Container resolves the wrapper eagerly; `.Value` lazy-resolves the producer on first invocation. Payload `{ previousRank, newRank }`; renderers currently read only `newRank`.
+
 ### Admin Broadcasts + Event Reminders (Phase G)
 
 Admin community broadcast UI lives at `/admin/broadcasts` — compose form (title ≤100, body ≤1000, optional link, audience selector) + history table with status badge. Backend endpoint `POST /api/v1/admin/notifications/broadcast` returns `{ broadcastId, estimatedRecipients }` synchronously, then fans out `CommunityBroadcast` producer calls in background `Task.Run`. Audience types: `all` / `attendingEvent` (eventId) / `minRank` (rank name) / `staffRole` (role name). Gated by `appconfig.permissions.send_broadcast` (default `"admin"`; lowerable via appconfig without code change). `adminApi.broadcasts.{create,list,get}` is dual-mode (mock/api).
