@@ -34,6 +34,9 @@ export default function AdminLayout() {
             <Link to="/blog" className="hover:text-foreground">
               Blog
             </Link>
+            <Link to="/broadcasts" className="hover:text-foreground">
+              Broadcasts
+            </Link>
             <Link to="/infrastructure" className="hover:text-foreground">
               Infrastructure
             </Link>
