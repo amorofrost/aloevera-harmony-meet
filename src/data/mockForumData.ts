@@ -15,6 +15,9 @@ export interface ForumReply {
   authorStaffRole?: StaffRole;
   authorEventBadgeImageUrls?: string[];
   authorEventBadgeTotalCount?: number;
+  editedAt?: Date;
+  editedById?: string;
+  editedByName?: string;
 }
 
 export interface ForumTopicDetail {
