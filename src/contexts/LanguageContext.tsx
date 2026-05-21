@@ -98,6 +98,10 @@ const translations = {
     'events.applyCode': 'Показать детали по коду',
     'events.externalLink': 'Сайт и билеты',
     'events.leaveEvent': 'Покинуть событие',
+    'events.upcoming': 'Предстоящие',
+    'events.past': 'Прошедшие',
+    'events.noUpcoming': 'Нет предстоящих событий',
+    'events.noPast': 'Нет прошедших событий',
 
     // Store (merch)
     'store.officialPurchase': 'Купить на официальном сайте',
@@ -359,6 +363,10 @@ const translations = {
     'events.applyCode': 'Apply code',
     'events.externalLink': 'Website & tickets',
     'events.leaveEvent': 'Leave event',
+    'events.upcoming': 'Upcoming',
+    'events.past': 'Past',
+    'events.noUpcoming': 'No upcoming events',
+    'events.noPast': 'No past events',
 
     // Store (merch)
     'store.officialPurchase': 'Buy on official store',
