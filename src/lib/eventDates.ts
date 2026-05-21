@@ -17,6 +17,12 @@ export function formatEventDate(date: Date, locale: string = 'ru-RU'): string {
 }
 
 export function isEventPast(date: Date, endDate?: Date | null, now: Date = new Date()): boolean {
-  const reference = endDate ?? date;
-  return reference.getTime() < now.getTime();
+  // An event is past only once it has fully ended AND its start has already passed.
+  // The start-time check guards against data anomalies where endDate is stored in the
+  // past while the start date is still in the future — a future-start event hasn't
+  // begun yet and can't be over.
+  const nowMs = now.getTime();
+  if (date.getTime() > nowMs) return false;
+  const endMs = (endDate ?? date).getTime();
+  return endMs < nowMs;
 }

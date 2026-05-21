@@ -45,7 +45,7 @@ export function formatNotificationLink(n: Notification): string {
     case 'matchCreated':
       return n.actorId ? `/friends?userId=${n.actorId}` : '/friends';
     case 'messageReceived':
-      return `/talks?chat=${payload.chatId ?? ''}`;
+      return payload.chatId ? `/friends?tab=chats&chat=${payload.chatId}` : '/friends?tab=chats';
     case 'forumReplyToThread':
       return `/talks?topic=${payload.topicId ?? ''}`;
     case 'eventPublished':
