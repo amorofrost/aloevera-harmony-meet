@@ -43,6 +43,9 @@ function mapReplyFromApi(dto: any): ForumReply {
     authorStaffRole: (dto.authorStaffRole ?? 'none') as StaffRole,
     authorEventBadgeImageUrls: dto.authorEventBadgeImageUrls ?? [],
     authorEventBadgeTotalCount: dto.authorEventBadgeTotalCount ?? 0,
+    editedAt: dto.editedAt ? new Date(dto.editedAt) : undefined,
+    editedById: dto.editedById ?? undefined,
+    editedByName: dto.editedByName ?? undefined,
   };
 }
 
@@ -300,6 +303,26 @@ export const forumsApi = {
       mockTopicDetails[topicId].replies.push(reply);
       mockTopicDetails[topicId].replyCount++;
     }
+    return mockSuccess(reply);
+  },
+
+  async updateReply(topicId: string, replyId: string, content: string): Promise<ApiResponse<ForumReply>> {
+    if (isApiMode()) {
+      const res = await apiClient.put<any>(
+        `/api/v1/forum/topics/${encodeURIComponent(topicId)}/replies/${encodeURIComponent(replyId)}`,
+        { content },
+      );
+      return res.success && res.data ? { ...res, data: mapReplyFromApi(res.data) } : res as ApiResponse<ForumReply>;
+    }
+    const detail = mockTopicDetails[topicId];
+    const reply = detail?.replies.find(r => r.id === replyId);
+    if (!detail || !reply) {
+      return { success: false, error: { code: 'NOT_FOUND', message: 'Reply not found' }, timestamp: new Date().toISOString() };
+    }
+    reply.content = content;
+    reply.editedAt = new Date();
+    reply.editedById = 'current-user';
+    reply.editedByName = 'Вы';
     return mockSuccess(reply);
   },
 };

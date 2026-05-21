@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Pin, Send, ThumbsUp, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Pencil, Pin, Send, ThumbsUp, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -34,6 +34,9 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [isSending, setIsSending] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const replyForm = useForm<ReplySchema>({
     resolver: zodResolver(replySchema),
   });
@@ -41,6 +44,9 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const { user } = useCurrentUser();
   const { t } = useLanguage();
   const canReply = (topic?.noviceCanReply ?? true) || (!!user && user.rank !== 'novice');
+  const isModeratorOrAdmin = user?.staffRole === 'moderator' || user?.staffRole === 'admin';
+  const canEditReply = (reply: { authorId?: string }) =>
+    !!user && (reply.authorId === user.id || isModeratorOrAdmin);
 
   useEffect(() => {
     const load = async () => {
@@ -86,6 +92,44 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const handleAuthorClick = (authorId?: string) => {
     if (authorId) {
       navigate(`/friends?userId=${authorId}`);
+    }
+  };
+
+  const startEditing = (replyId: string, content: string) => {
+    setEditingReplyId(replyId);
+    setEditingContent(content);
+  };
+
+  const cancelEditing = () => {
+    setEditingReplyId(null);
+    setEditingContent('');
+  };
+
+  const saveEdit = async (replyId: string) => {
+    if (isSavingEdit) return;
+    const trimmed = editingContent.trim();
+    if (!trimmed) return;
+    setIsSavingEdit(true);
+    try {
+      const res = await forumsApi.updateReply(topicId, replyId, trimmed);
+      if (!res.success || !res.data) {
+        showApiError(res, t('forum.editFailed'));
+        return;
+      }
+      if (topic) {
+        const updated = res.data;
+        setTopic({
+          ...topic,
+          replies: topic.replies.map(r => (r.id === replyId ? { ...r, ...updated } : r)),
+        });
+      }
+      setEditingReplyId(null);
+      setEditingContent('');
+      toast.success(t('forum.saveEdit'));
+    } catch (err) {
+      showApiError(err, t('forum.editFailed'));
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -180,7 +224,10 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
 
       {/* Replies */}
       <div className="space-y-3">
-        {topic.replies.map((reply) => (
+        {topic.replies.map((reply) => {
+          const isEditingThis = editingReplyId === reply.id;
+          const mayEdit = canEditReply(reply);
+          return (
           <Card key={reply.id} className="profile-card">
             <CardContent className="p-4">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
@@ -193,17 +240,59 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
                 <span className="text-xs text-muted-foreground">· {formatDate(reply.createdAt)}</span>
               </div>
               <div className="pl-9">
-                <BbcodeRenderer content={reply.content} />
-                <ImageAttachmentDisplay imageUrls={reply.imageUrls ?? []} />
+                {isEditingThis ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      placeholder={t('forum.editPlaceholder')}
+                      className="min-h-[100px]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={cancelEditing} disabled={isSavingEdit}>
+                        {t('forum.cancelEdit')}
+                      </Button>
+                      <Button size="sm" onClick={() => saveEdit(reply.id)} disabled={isSavingEdit || !editingContent.trim()}>
+                        {isSavingEdit ? t('forum.savingEdit') : t('forum.saveEdit')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <BbcodeRenderer content={reply.content} />
+                    <ImageAttachmentDisplay imageUrls={reply.imageUrls ?? []} />
+                  </>
+                )}
               </div>
-              <div className="flex items-center gap-1 pl-9 mt-2">
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground">
-                  <ThumbsUp className="w-3 h-3 mr-1" /> {reply.likes}
-                </Button>
-              </div>
+              {!isEditingThis && (
+                <div className="flex flex-wrap items-center gap-1 pl-9 mt-2">
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground">
+                    <ThumbsUp className="w-3 h-3 mr-1" /> {reply.likes}
+                  </Button>
+                  {mayEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-muted-foreground"
+                      onClick={() => startEditing(reply.id, reply.content)}
+                    >
+                      <Pencil className="w-3 h-3 mr-1" /> {t('forum.editReply')}
+                    </Button>
+                  )}
+                  {reply.editedAt && (
+                    <span className="text-xs text-muted-foreground italic">
+                      · {t('forum.editedBy', {
+                        name: reply.editedByName ?? reply.authorName,
+                        date: formatDate(reply.editedAt),
+                      })}
+                    </span>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Reply input */}

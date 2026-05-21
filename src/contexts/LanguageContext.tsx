@@ -189,6 +189,13 @@ const translations = {
     'forum.replyRestricted': 'Ответы доступны только активным участникам',
     'forum.noviceVisible': 'Видно новичкам',
     'forum.noviceCanReply': 'Новички могут отвечать',
+    'forum.editReply': 'Изменить',
+    'forum.saveEdit': 'Сохранить',
+    'forum.cancelEdit': 'Отмена',
+    'forum.savingEdit': 'Сохранение...',
+    'forum.editPlaceholder': 'Измените ваш ответ...',
+    'forum.editFailed': 'Не удалось сохранить изменения',
+    'forum.editedBy': 'изменено {name} · {date}',
 
     // Ranks & staff roles
     'rank.novice': 'Новичок',
@@ -434,6 +441,13 @@ const translations = {
     'forum.replyRestricted': 'Replies for Active Members only',
     'forum.noviceVisible': 'Visible to new users',
     'forum.noviceCanReply': 'New users can reply',
+    'forum.editReply': 'Edit',
+    'forum.saveEdit': 'Save',
+    'forum.cancelEdit': 'Cancel',
+    'forum.savingEdit': 'Saving...',
+    'forum.editPlaceholder': 'Edit your reply...',
+    'forum.editFailed': 'Failed to save changes',
+    'forum.editedBy': 'edited by {name} · {date}',
 
     // Ranks & staff roles
     'rank.novice': 'Novice',
