@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext';
 import { notificationsApi } from '@/services/api';
 import { NotificationItem } from './NotificationItem';
 import { Button } from '@/components/ui/button';
@@ -12,8 +13,10 @@ interface NotificationDropdownProps {
 
 export function NotificationDropdown({ onItemClick }: NotificationDropdownProps) {
   const { t } = useLanguage();
+  const { flags } = useFeatureFlags();
   const items = useNotificationStore((s) => s.items);
   const markAllRead = useNotificationStore((s) => s.markAllRead);
+  const seeAllHref = flags.feedEnabled ? '/feed' : '/notifications';
 
   const handleMarkAllRead = async () => {
     markAllRead();
@@ -44,7 +47,7 @@ export function NotificationDropdown({ onItemClick }: NotificationDropdownProps)
       )}
       <div className="border-t p-2">
         <Button variant="ghost" size="sm" asChild className="w-full">
-          <Link to="/notifications" onClick={onItemClick}>{t('notifications.seeAll')}</Link>
+          <Link to={seeAllHref} onClick={onItemClick}>{t('notifications.seeAll')}</Link>
         </Button>
       </div>
     </div>
