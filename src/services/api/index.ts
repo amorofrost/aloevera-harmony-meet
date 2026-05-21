@@ -15,3 +15,4 @@ export { adminApi, type AppConfigDto, type EventInviteAdminDto } from './adminAp
 export type { LoginRequest, RegisterRequest, AuthResponse } from './authApi';
 export { notificationsApi } from './notificationsApi';
 export { pushApi } from './pushApi';
+export { featuresApi, DEFAULT_FEATURE_FLAGS, type FeatureFlags } from './featuresApi';
