@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import type { Event, User } from '@/types/user';
 import { eventsApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
 import { showApiError } from '@/lib/apiError';
+import { formatEventDate } from '@/lib/eventDates';
 import { toast } from '@/components/ui/sonner';
 import heroBg from '@/assets/hero-bg.jpg';
 
@@ -194,8 +195,7 @@ const EventDetails = () => {
     );
   }
 
-  const formatDate = (date: Date) =>
-    new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(date);
+  const formatDate = formatEventDate;
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = { concert: 'Концерт', meetup: 'Встреча', festival: 'Фестиваль', party: 'Вечеринка', yachting: 'Яхтинг', other: 'Другое' };

@@ -12,6 +12,7 @@ import type { Event } from '@/types/user';
 import type { StoreItem } from '@/data/mockStoreItems';
 import type { BlogPost } from '@/data/mockBlogPosts';
 import { eventsApi, storeApi, blogApi, getCurrentUserIdFromToken } from '@/services/api';
+import { formatEventDate, isEventPast } from '@/lib/eventDates';
 import heroBg from '@/assets/hero-bg.jpg';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
@@ -66,8 +67,7 @@ const AloeVera = () => {
     }
   };
 
-  const formatDate = (date: Date) =>
-    new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(date);
+  const formatDate = formatEventDate;
   const formatBlogDate = (date: Date) =>
     new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
 
@@ -75,6 +75,73 @@ const AloeVera = () => {
     ({ concert: 'Концерт', meetup: 'Встреча', festival: 'Фестиваль', party: 'Вечеринка', yachting: 'Яхтинг' }[cat] || 'Событие');
   const getCategoryColor = (cat: string) =>
     ({ concert: 'bg-aloe-flame text-white', meetup: 'bg-aloe-gold text-white', festival: 'bg-aloe-coral text-white', party: 'bg-aloe-lavender text-white', yachting: 'bg-blue-500 text-white' }[cat] || 'bg-gray-500 text-white');
+
+  const upcomingEvents = events
+    .filter(e => !isEventPast(e.date, e.endDate))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  const pastEvents = events
+    .filter(e => isEventPast(e.date, e.endDate))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const renderEventCard = (event: Event) => {
+    const isJoined = joinedEvents.includes(event.id);
+    const isInterested = interestedEvents.includes(event.id);
+    const interestedCount = event.interestedUserIds?.length ?? 0;
+    return (
+      <Card key={event.id} className="profile-card overflow-hidden cursor-pointer"
+        onClick={() => navigate(`/aloevera/events/${event.id}`)}>
+        <div className="h-48 bg-cover bg-center relative" style={{ backgroundImage: `url(${event.imageUrl})` }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute top-4 left-4 flex gap-2">
+            <Badge className={getCategoryColor(event.category)}>{getCategoryLabel(event.category)}</Badge>
+            {event.isSecret && <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">Секретный</Badge>}
+          </div>
+          {event.price?.trim() && (
+            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
+              <span className="text-sm font-semibold">{event.price}</span>
+            </div>
+          )}
+          <div className="absolute bottom-4 right-4">
+            <EventPostmark
+              location={event.location}
+              date={event.date}
+              title={event.title}
+              category={event.category}
+              badgeImageUrl={event.badgeImageUrl}
+            />
+          </div>
+        </div>
+        <CardContent className="p-6 space-y-4">
+          <div>
+            <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+            <p className="text-muted-foreground text-sm whitespace-pre-line">{event.description}</p>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 text-sm"><Calendar className="w-4 h-4 text-primary" /><span>{formatDate(event.date)}</span></div>
+            <div className="flex items-center gap-3 text-sm"><MapPin className="w-4 h-4 text-primary" /><span>{event.location}</span></div>
+            <div className="flex items-center gap-3 text-sm"><Users className="w-4 h-4 text-primary" /><span>{event.attendees.length} {t('events.attendees')}{event.capacity && ` из ${event.capacity}`}</span></div>
+            {interestedCount > 0 && (
+              <p className="text-xs text-muted-foreground">{interestedCount} {t('events.interestedCount')}</p>
+            )}
+          </div>
+          <Button
+            onClick={(e) => handleInterestToggle(event.id, e)}
+            disabled={isJoined}
+            className={`w-full ${isInterested ? 'btn-match' : 'btn-like'}`}
+            variant={isInterested ? 'secondary' : 'default'}
+          >
+            {isJoined ? (
+              <><Check className="w-4 h-4 mr-2" />{t('events.joined')}</>
+            ) : isInterested ? (
+              t('events.notInterested')
+            ) : (
+              t('events.interested')
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20 relative">
@@ -101,68 +168,34 @@ const AloeVera = () => {
           </TabsList>
 
           {/* Events Tab */}
-          <TabsContent value="events" className="mt-6 space-y-6">
+          <TabsContent value="events" className="mt-6 space-y-8">
             {isLoading ? (
               <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
-            ) : events.map((event) => {
-              const isJoined = joinedEvents.includes(event.id);
-              const isInterested = interestedEvents.includes(event.id);
-              const interestedCount = event.interestedUserIds?.length ?? 0;
-              return (
-                <Card key={event.id} className="profile-card overflow-hidden cursor-pointer"
-                  onClick={() => navigate(`/aloevera/events/${event.id}`)}>
-                  <div className="h-48 bg-cover bg-center relative" style={{ backgroundImage: `url(${event.imageUrl})` }}>
-                    <div className="absolute inset-0 bg-black/40" />
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <Badge className={getCategoryColor(event.category)}>{getCategoryLabel(event.category)}</Badge>
-                      {event.isSecret && <Badge className="bg-gray-900/90 text-yellow-400 border border-yellow-400/50">Секретный</Badge>}
-                    </div>
-                    {event.price?.trim() && (
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
-                        <span className="text-sm font-semibold">{event.price}</span>
-                      </div>
-                    )}
-                    <div className="absolute bottom-4 right-4">
-                      <EventPostmark
-                        location={event.location}
-                        date={event.date}
-                        title={event.title}
-                        category={event.category}
-                        badgeImageUrl={event.badgeImageUrl}
-                      />
-                    </div>
-                  </div>
-                  <CardContent className="p-6 space-y-4">
-                    <div>
-                      <h3 className="text-xl font-bold mb-2">{event.title}</h3>
-                      <p className="text-muted-foreground text-sm whitespace-pre-line">{event.description}</p>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-sm"><Calendar className="w-4 h-4 text-primary" /><span>{formatDate(event.date)}</span></div>
-                      <div className="flex items-center gap-3 text-sm"><MapPin className="w-4 h-4 text-primary" /><span>{event.location}</span></div>
-                      <div className="flex items-center gap-3 text-sm"><Users className="w-4 h-4 text-primary" /><span>{event.attendees.length} {t('events.attendees')}{event.capacity && ` из ${event.capacity}`}</span></div>
-                      {interestedCount > 0 && (
-                        <p className="text-xs text-muted-foreground">{interestedCount} {t('events.interestedCount')}</p>
-                      )}
-                    </div>
-                    <Button
-                      onClick={(e) => handleInterestToggle(event.id, e)}
-                      disabled={isJoined}
-                      className={`w-full ${isInterested ? 'btn-match' : 'btn-like'}`}
-                      variant={isInterested ? 'secondary' : 'default'}
-                    >
-                      {isJoined ? (
-                        <><Check className="w-4 h-4 mr-2" />{t('events.joined')}</>
-                      ) : isInterested ? (
-                        t('events.notInterested')
-                      ) : (
-                        t('events.interested')
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            ) : (
+              <>
+                <section className="space-y-4">
+                  <h2 className="text-lg font-semibold text-muted-foreground uppercase tracking-wide">
+                    {t('events.upcoming')}
+                  </h2>
+                  {upcomingEvents.length > 0 ? (
+                    <div className="space-y-6">{upcomingEvents.map(renderEventCard)}</div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">{t('events.noUpcoming')}</p>
+                  )}
+                </section>
+
+                <section className="space-y-4">
+                  <h2 className="text-lg font-semibold text-muted-foreground uppercase tracking-wide">
+                    {t('events.past')}
+                  </h2>
+                  {pastEvents.length > 0 ? (
+                    <div className="space-y-6">{pastEvents.map(renderEventCard)}</div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">{t('events.noPast')}</p>
+                  )}
+                </section>
+              </>
+            )}
           </TabsContent>
 
           {/* Store Tab */}

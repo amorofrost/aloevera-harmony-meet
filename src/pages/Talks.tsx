@@ -10,6 +10,7 @@ import { forumsApi } from '@/services/api/forumsApi';
 import { toast } from '@/components/ui/sonner';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { meetsLevel } from '@/lib/acl';
+import { formatEventDate, isEventPast } from '@/lib/eventDates';
 import type { ForumSection, ForumTopic, ForumTopicDetail } from '@/data/mockForumData';
 import type { EventDiscussionSection } from '@/types/forum';
 import TopicDetail from '@/components/forum/TopicDetail';
@@ -351,46 +352,81 @@ const Talks = () => {
                     ))}
                 </div>
               )
-            ) : (
-              <div className="space-y-4">
-                {eventDiscussionSections.length === 0 && !loadingEventSections && (
-                  <p className="text-sm text-muted-foreground text-center py-6">
-                    Нет доступных обсуждений событий.
-                  </p>
-                )}
-                {eventDiscussionSections.map((ev) => (
-                  <Card
-                    key={ev.eventId}
-                    className="profile-card cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => setSearchParams({ tab: 'events', eventSection: ev.eventId })}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-8 h-8 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{ev.title}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(ev.date).toLocaleDateString('ru-RU')}
-                            {ev.isAttending && (
-                              <span className="ml-2 text-primary">Вы участвуете</span>
-                            )}
-                            {ev.visibility === 'secretTeaser' && (
-                              <span className="ml-2 text-amber-600">Тизер</span>
-                            )}
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-sm">
-                            {ev.topicCount}
-                          </span>
-                          <p className="text-xs text-muted-foreground mt-1">тем</p>
-                        </div>
+            ) : (() => {
+              const renderDiscussionCard = (ev: EventDiscussionSection) => (
+                <Card
+                  key={ev.eventId}
+                  className="profile-card cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setSearchParams({ tab: 'events', eventSection: ev.eventId })}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-8 h-8 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">{ev.title}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {formatEventDate(new Date(ev.date))}
+                          {ev.isAttending && (
+                            <span className="ml-2 text-primary">Вы участвуете</span>
+                          )}
+                          {ev.visibility === 'secretTeaser' && (
+                            <span className="ml-2 text-amber-600">Тизер</span>
+                          )}
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      <div className="text-right shrink-0">
+                        <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-sm">
+                          {ev.topicCount}
+                        </span>
+                        <p className="text-xs text-muted-foreground mt-1">тем</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+
+              const upcomingDiscussions = eventDiscussionSections
+                .filter(ev => !isEventPast(new Date(ev.date)))
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              const pastDiscussions = eventDiscussionSections
+                .filter(ev => isEventPast(new Date(ev.date)))
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+              return (
+                <div className="space-y-8">
+                  {eventDiscussionSections.length === 0 && !loadingEventSections && (
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      Нет доступных обсуждений событий.
+                    </p>
+                  )}
+                  {eventDiscussionSections.length > 0 && (
+                    <>
+                      <section className="space-y-4">
+                        <h2 className="text-lg font-semibold text-muted-foreground uppercase tracking-wide">
+                          {t('events.upcoming')}
+                        </h2>
+                        {upcomingDiscussions.length > 0 ? (
+                          <div className="space-y-4">{upcomingDiscussions.map(renderDiscussionCard)}</div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">{t('events.noUpcoming')}</p>
+                        )}
+                      </section>
+
+                      <section className="space-y-4">
+                        <h2 className="text-lg font-semibold text-muted-foreground uppercase tracking-wide">
+                          {t('events.past')}
+                        </h2>
+                        {pastDiscussions.length > 0 ? (
+                          <div className="space-y-4">{pastDiscussions.map(renderDiscussionCard)}</div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">{t('events.noPast')}</p>
+                        )}
+                      </section>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </div>
