@@ -57,11 +57,18 @@ describe('formatNotificationTitle', () => {
 });
 
 describe('formatNotificationLink', () => {
-  it('message links to /talks (for now — chats UI lives there)', () => {
+  it('message links to /friends?tab=chats (where private chats live)', () => {
     expect(formatNotificationLink(baseNotif({
       type: 'messageReceived',
       payloadJson: JSON.stringify({ chatId: 'c1' }),
-    }))).toBe('/talks?chat=c1');
+    }))).toBe('/friends?tab=chats&chat=c1');
+  });
+
+  it('message without chatId falls back to chats tab', () => {
+    expect(formatNotificationLink(baseNotif({
+      type: 'messageReceived',
+      payloadJson: '{}',
+    }))).toBe('/friends?tab=chats');
   });
 
   it('like links to /friends with userId', () => {
