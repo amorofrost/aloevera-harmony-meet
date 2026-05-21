@@ -1,6 +1,7 @@
 // src/components/ui/bbcode-renderer.tsx
 import React, { useState } from 'react';
 import { BBCODE_CONFIG, BbcodeTag } from '@/config/bbcode.config';
+import { cn } from '@/lib/utils';
 
 // ── Tokenizer ──────────────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ export function BbcodeRenderer({ content, className }: BbcodeRendererProps) {
   const tokens = tokenize(content);
   const [nodes] = renderTokens(tokens, 0);
   return (
-    <span className={className}>
+    <span className={cn('whitespace-pre-wrap', className)}>
       {nodes.map((node, i) => (
         <React.Fragment key={i}>{node}</React.Fragment>
       ))}
