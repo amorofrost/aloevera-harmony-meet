@@ -254,6 +254,16 @@ Event reminders fire via `EventReminderWorker` in `Lovecraft.NotificationsWorker
 
 Per-user invites: `AdminController.CreateEventInvite` accepts an optional `targetUserId` in the request body. When present, routes to `IEventInviteService.IssuePersonalInviteAsync` which writes the invite with `EventInviteEntity.TargetUserId` set and fires `EventInviteReceived` for that user. `TargetUserId` is informational only — the code still works for anyone who knows it. Existing event-level `CreateOrRotateInviteAsync` is unchanged.
 
+### Client-visible Feature Flags
+
+Server-driven flags live in `appconfig` table, `features` partition. Public endpoint `GET /api/v1/features` returns `{ feedEnabled, ... }`. Frontend `FeatureFlagsProvider` (at `src/contexts/FeatureFlagsContext.tsx`) fetches once at mount; `useFeatureFlags()` reads. Falls back to `DEFAULT_FEATURE_FLAGS` if the fetch fails, so a network blip never hides a feature behind an unreachable flag.
+
+Add a new flag in 4 places, all in lockstep: (1) `FeatureFlagsConfig` record + `FeatureFlagsConfig.Defaults` in backend `Services/AppConfig.cs`; (2) `Feat(...)` reader call in `AzureAppConfigService.BuildConfig`; (3) `featureDefaults` field + dto field in `Lovecraft.Common/DTOs/Features/FeatureFlagsDto.cs` and `FeaturesController.GetFlags`; (4) frontend `FeatureFlags` interface + `DEFAULT_FEATURE_FLAGS` in `src/services/api/featuresApi.ts`. Defaults must match between backend and frontend.
+
+### Feed Page (`/feed`)
+
+Fifth bottom-nav button (between Friends and AloeVera) when `flags.feedEnabled === true`. The page itself (`src/pages/Feed.tsx`) reads from the same `notificationStore` as `/notifications` but renders rich cards via `FeedCardForNotification` (dispatcher in `src/components/feed/index.tsx`). Cards lazy-fetch additional context (actor user via `usersApi.getUserById`, event via `eventsApi.getEventById`) through module-level promise caches in `src/components/feed/feedContextCache.ts` — multiple notifications referencing the same user/event share one network round-trip. The bell dropdown's "See all" link routes to `/feed` when the flag is on, falls back to `/notifications` when off.
+
 ### Admin shell (second Vite entry)
 
 - **HTML entry**: `admin.html` → `src/admin/main.tsx`. Production build emits `dist/admin.html` + `dist/assets/admin-*.js`.
