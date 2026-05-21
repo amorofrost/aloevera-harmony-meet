@@ -55,6 +55,20 @@ describe('BbcodeRenderer — disabled tags', () => {
   });
 });
 
+describe('BbcodeRenderer — whitespace', () => {
+  it('preserves newlines via whitespace-pre-wrap on the wrapper', () => {
+    const { container } = render(<BbcodeRenderer content={'line one\nline two'} />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain('whitespace-pre-wrap');
+    expect(container.textContent).toBe('line one\nline two');
+  });
+
+  it('preserves newlines around BB code tags', () => {
+    const { container } = render(<BbcodeRenderer content={'before\n[b]bold[/b]\nafter'} />);
+    expect(container.textContent).toBe('before\nbold\nafter');
+  });
+});
+
 describe('BbcodeRenderer — XSS safety', () => {
   it('does not inject <script> tags', () => {
     const { container } = render(
