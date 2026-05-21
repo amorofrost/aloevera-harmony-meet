@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { FeatureFlagsProvider } from "@/contexts/FeatureFlagsContext";
 import { isMockMode } from "@/config/api.config";
 import { isTelegramMiniApp } from "@/lib/telegramWebApp";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -21,6 +22,7 @@ import BlogPost from "./pages/BlogPost";
 import StoreItem from "./pages/StoreItem";
 import SettingsPage from "./pages/SettingsPage";
 import Notifications from "./pages/Notifications";
+import Feed from "./pages/Feed";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
@@ -35,6 +37,7 @@ const App = () => {
   return (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
+      <FeatureFlagsProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner position="bottom-center" richColors offset="6rem" mobileOffset="6rem" duration={2000} />
@@ -64,6 +67,7 @@ const App = () => {
               <Route path="/aloevera/store/:itemId" element={<ProtectedRoute><StoreItem /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
 
               {/* Legacy redirects */}
               <Route path="/search" element={<Navigate to="/friends" replace />} />
@@ -78,6 +82,7 @@ const App = () => {
           </div>
         </BrowserRouter>
       </TooltipProvider>
+      </FeatureFlagsProvider>
     </LanguageProvider>
   </QueryClientProvider>
   );

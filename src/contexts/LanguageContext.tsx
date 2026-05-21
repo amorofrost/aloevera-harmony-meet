@@ -30,6 +30,7 @@ const translations = {
     'nav.friends': 'Друзья',
     'nav.aloevera': 'АлоэВера',
     'nav.settings': 'Настройки',
+    'nav.feed': 'Лента',
 
     // Common
     'common.like': 'Лайк',
@@ -283,6 +284,19 @@ const translations = {
     'notifications.settings.type.eventReminder': 'Напоминания о событиях',
     'notifications.settings.type.eventInviteReceived': 'Приглашения на события',
     'notifications.settings.type.rankUp': 'Повышение ранга',
+
+    // Feed
+    'notifications.feedTitle': 'Лента',
+    'feed.viewProfile': 'Открыть профиль',
+    'feed.likeBack': 'Лайкнуть в ответ',
+    'feed.startChatting': 'Начать общение',
+    'feed.openChat': 'Открыть чат',
+    'feed.openThread': 'Перейти к теме',
+    'feed.viewEvent': 'К событию',
+    'feed.repliedIn': 'ответил(а) в',
+    'feed.itsAMatch': 'Взаимность!',
+    'feed.rankUpFrom': 'Повышение: {previous} → {new}',
+    'feed.inviteCode': 'Код приглашения',
   },
   en: {
     // Navigation
@@ -295,6 +309,7 @@ const translations = {
     'nav.friends': 'Friends',
     'nav.aloevera': 'AloeVera',
     'nav.settings': 'Settings',
+    'nav.feed': 'Feed',
 
     // Common
     'common.like': 'Like',
@@ -548,6 +563,19 @@ const translations = {
     'notifications.settings.type.eventReminder': 'Event reminders',
     'notifications.settings.type.eventInviteReceived': 'Event invitations',
     'notifications.settings.type.rankUp': 'Rank promotions',
+
+    // Feed
+    'notifications.feedTitle': 'Feed',
+    'feed.viewProfile': 'View profile',
+    'feed.likeBack': 'Like back',
+    'feed.startChatting': 'Start chatting',
+    'feed.openChat': 'Open chat',
+    'feed.openThread': 'Open thread',
+    'feed.viewEvent': 'View event',
+    'feed.repliedIn': 'replied in',
+    'feed.itsAMatch': "It's a match!",
+    'feed.rankUpFrom': 'Promoted: {previous} → {new}',
+    'feed.inviteCode': 'Invite code',
   },
 };
 
