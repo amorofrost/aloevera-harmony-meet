@@ -270,6 +270,15 @@ const translations = {
     'notifications.settings.unavailable.telegram': 'Привяжите Telegram, чтобы включить',
     'notifications.settings.unavailable.webPush': 'Включить на этом устройстве',
     'notifications.settings.unavailable.email': 'Подтвердите email, чтобы включить',
+    'notifications.settings.type.likeReceived': 'Новые лайки',
+    'notifications.settings.type.matchCreated': 'Новые взаимные симпатии',
+    'notifications.settings.type.messageReceived': 'Личные сообщения',
+    'notifications.settings.type.forumReplyToThread': 'Ответы в обсуждениях',
+    'notifications.settings.type.communityBroadcast': 'Объявления сообщества',
+    'notifications.settings.type.eventPublished': 'Новые события',
+    'notifications.settings.type.eventReminder': 'Напоминания о событиях',
+    'notifications.settings.type.eventInviteReceived': 'Приглашения на события',
+    'notifications.settings.type.rankUp': 'Повышение ранга',
   },
   en: {
     // Navigation
@@ -522,6 +531,15 @@ const translations = {
     'notifications.settings.unavailable.telegram': 'Link your Telegram account to enable',
     'notifications.settings.unavailable.webPush': 'Enable on this device',
     'notifications.settings.unavailable.email': 'Verify your email to enable',
+    'notifications.settings.type.likeReceived': 'New likes',
+    'notifications.settings.type.matchCreated': 'New matches',
+    'notifications.settings.type.messageReceived': 'Private messages',
+    'notifications.settings.type.forumReplyToThread': 'Forum replies',
+    'notifications.settings.type.communityBroadcast': 'Community announcements',
+    'notifications.settings.type.eventPublished': 'New events',
+    'notifications.settings.type.eventReminder': 'Event reminders',
+    'notifications.settings.type.eventInviteReceived': 'Event invitations',
+    'notifications.settings.type.rankUp': 'Rank promotions',
   },
 };
 

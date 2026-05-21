@@ -175,11 +175,7 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
             {TYPES.map((type) => (
               <div key={type} className="flex items-center justify-between">
                 <Label className="text-sm">
-                  {t(`notifications.title.${
-                    type === 'forumReplyToThread' ? 'forumReply' :
-                    type === 'eventInviteReceived' ? 'eventInvite' :
-                    type
-                  }`, { actor: '', preview: '', title: '', rank: '' })}
+                  {t(`notifications.settings.type.${type}`)}
                 </Label>
                 <Switch
                   checked={prefs.matrix[type][channel]}
