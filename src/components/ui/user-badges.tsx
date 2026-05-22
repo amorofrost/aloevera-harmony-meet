@@ -6,6 +6,7 @@ import type { UserRank, StaffRole } from '@/types/user';
 export interface UserBadgesProps extends React.HTMLAttributes<HTMLDivElement> {
   rank?: UserRank;
   staffRole?: StaffRole;
+  accountName?: string;
 }
 
 const RANK_DOT: Record<UserRank, string> = {
@@ -23,13 +24,14 @@ const STAFF_PILL: Record<Exclude<StaffRole, 'none'>, string> = {
 export function UserBadges({
   rank = 'novice',
   staffRole = 'none',
+  accountName,
   className,
   ...props
 }: UserBadgesProps) {
   const { t } = useLanguage();
   const showRank = rank !== 'novice';
   const showStaff = staffRole !== 'none';
-  if (!showRank && !showStaff) return null;
+  if (!showRank && !showStaff && !accountName) return null;
 
   return (
     <div className={cn('inline-flex items-center gap-2 text-xs', className)} {...props}>
@@ -38,6 +40,9 @@ export function UserBadges({
           <span className={cn('h-2 w-2 rounded-full', RANK_DOT[rank])} aria-hidden />
           <span>{t(`rank.${rank}`)}</span>
         </span>
+      )}
+      {accountName && (
+        <span className="text-xs text-muted-foreground">@{accountName}</span>
       )}
       {showStaff && (
         <span
