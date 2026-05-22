@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DualLocationPicker } from '@/components/ui/dual-location-picker';
+import { AccountNameInput } from '@/components/ui/account-name-input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authApi, apiClient } from '@/services/api';
@@ -42,6 +43,7 @@ const WelcomeTelegram: React.FC = () => {
   const { ticket, telegram } = state;
   const [mode, setMode] = useState<Mode>('choose');
   const [isLoading, setIsLoading] = useState(false);
+  const [accountNameValid, setAccountNameValid] = useState(false);
 
   // Register-form invite gate, same pattern as Welcome.tsx
   const requireInviteRef = useRef(false);
@@ -58,6 +60,7 @@ const WelcomeTelegram: React.FC = () => {
       return zodResolver(schema)(values, ctx, opts);
     },
     defaultValues: {
+      accountName: '',
       name: [telegram.firstName, telegram.lastName].filter(Boolean).join(' ').trim(),
       bio: '',
       country: '',
@@ -116,6 +119,7 @@ const WelcomeTelegram: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await authApi.telegramRegister({
+        accountName: data.accountName,
         ticket,
         name: data.name,
         age: data.age,
@@ -129,6 +133,14 @@ const WelcomeTelegram: React.FC = () => {
       });
       if (!res.success || !res.data) {
         const err = (res as any).error;
+        if (err?.code === 'ACCOUNT_NAME_TAKEN') {
+          registerForm.setError('accountName', { message: err.message || 'Account name is already taken' });
+          return;
+        }
+        if (err?.code === 'INVALID_ACCOUNT_NAME') {
+          registerForm.setError('accountName', { message: err.message || 'Invalid account name' });
+          return;
+        }
         if (err?.code === 'INVALID_INVITE_CODE') {
           registerForm.setError('inviteCode', { message: err.message || 'Invalid invite code' });
           return;
@@ -150,6 +162,8 @@ const WelcomeTelegram: React.FC = () => {
       setIsLoading(false);
     }
   });
+
+  const tgUsernamePrefill = (telegram?.username ?? '').replace(/[^A-Za-z0-9_]/g, '');
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -284,6 +298,23 @@ const WelcomeTelegram: React.FC = () => {
                   className="space-y-4 text-left"
                   style={configLoading ? { display: 'none' } : undefined}
                 >
+                  <Controller
+                    control={registerForm.control}
+                    name="accountName"
+                    render={({ field }) => (
+                      <AccountNameInput
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        onValidityChange={setAccountNameValid}
+                        disabled={isLoading}
+                        prefillSuggestion={tgUsernamePrefill}
+                      />
+                    )}
+                  />
+                  {registerForm.formState.errors.accountName && (
+                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.accountName.message}</p>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="tg-reg-name" className="text-white font-medium">Display Name *</Label>
                     <Input
@@ -426,7 +457,7 @@ const WelcomeTelegram: React.FC = () => {
                     type="submit"
                     size="lg"
                     className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
-                    disabled={isLoading}
+                    disabled={isLoading || !accountNameValid}
                   >
                     {isLoading ? (
                       <>
