@@ -14,6 +14,7 @@ import { UsersTimeChart } from '@/admin/components/metrics/UsersTimeChart';
 import { RequestVolumeTable } from '@/admin/components/metrics/RequestVolumeTable';
 import { LatencyChart } from '@/admin/components/metrics/LatencyChart';
 import { BiEventsPanel } from '@/admin/components/metrics/BiEventsPanel';
+import { MetricsToggleSheet } from '@/admin/components/metrics/MetricsToggleSheet';
 
 type Range = '1h' | '24h' | '7d' | '30d';
 
@@ -55,6 +56,7 @@ export default function AdminMetricsPage() {
   const [reqTimeseries, setReqTimeseries] = useState<TimeseriesPointDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<Range>('24h');
+  const [toggleOpen, setToggleOpen] = useState(false);
 
   // Keep range in a ref so the visibility handler always sees the latest value
   const rangeRef = useRef(range);
@@ -113,9 +115,8 @@ export default function AdminMetricsPage() {
             Operational dashboard — refreshes every 30 s when visible.
           </p>
         </div>
-        <Button variant="outline" disabled title="Coming in Task 22">
-          Toggle metrics (todo)
-        </Button>
+        <Button variant="outline" onClick={() => setToggleOpen(true)}>Settings</Button>
+        <MetricsToggleSheet open={toggleOpen} onOpenChange={setToggleOpen} />
       </div>
 
       {/* 1. Overview tiles */}
