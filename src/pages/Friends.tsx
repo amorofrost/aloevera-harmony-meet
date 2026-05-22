@@ -7,6 +7,7 @@ import { COUNTRY_BY_CODE } from '@/data/countries';
 import { flagEmoji } from '@/lib/countryFlag';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import SwipeCard from '@/components/ui/swipe-card';
@@ -70,6 +71,7 @@ const Friends = () => {
   const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [handleQuery, setHandleQuery] = useState('');
 
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -204,6 +206,12 @@ const Friends = () => {
   const nextUser = () => {
     setCurrentUserIndex(prev => prev + 1);
     setShowDeckDetails(false);
+  };
+
+  const handleFindByHandle = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = handleQuery.trim().toLowerCase();
+    if (trimmed) navigate(`/u/${trimmed}`);
   };
 
   const formatDateShort = (date: Date) =>
@@ -573,6 +581,18 @@ const Friends = () => {
 
           {/* Search Tab */}
           <TabsContent value="search" className="mt-6">
+            <form onSubmit={handleFindByHandle} className="mb-4 flex gap-2">
+              <Input
+                type="text"
+                placeholder={t('friends.findByHandlePlaceholder')}
+                value={handleQuery}
+                onChange={(e) => setHandleQuery(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" size="icon" aria-label={t('friends.findByHandle')}>
+                <SearchIcon className="w-4 h-4" />
+              </Button>
+            </form>
             {(filter.country || filter.region) && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm">
                 <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1">
