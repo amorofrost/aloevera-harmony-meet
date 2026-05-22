@@ -1,12 +1,25 @@
 import { z } from 'zod';
 import { PROMPT_IDS } from '@/data/prompts';
 
+const ACCOUNT_NAME_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
+export const RESERVED_ACCOUNT_NAMES = new Set<string>([
+  'admin', 'root', 'system', 'support', 'help', 'api', 'auth', 'login', 'logout',
+  'register', 'settings', 'profile', 'user', 'users', 'me', 'you', 'search', 'feed',
+  'friends', 'talks', 'aloevera', 'aloeve', 'aloeband', 'telegram', 'google',
+  'official', 'mod', 'moderator', 'staff', 'undefined', 'null', 'anonymous', 'bot',
+]);
+
+export const accountNameSchema = z.string()
+  .regex(ACCOUNT_NAME_RE, 'Invalid format')
+  .refine((v) => !RESERVED_ACCOUNT_NAMES.has(v.toLowerCase()), 'Reserved name');
+
 export const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
 });
 
 export const registerSchema = z.object({
+  accountName: accountNameSchema,
   email: z.string().email('Enter a valid email'),
   password: z
     .string()
@@ -91,6 +104,7 @@ export const registerSchemaWithInvite = registerSchema.extend({
 
 /** Registration via Telegram pending ticket — no email/password fields (those come later via attach). */
 export const telegramRegisterSchema = z.object({
+  accountName: accountNameSchema,
   name: z.string().min(1, 'Name is required'),
   age: z.preprocess(
     (val) => (Number.isNaN(val) ? undefined : val),
