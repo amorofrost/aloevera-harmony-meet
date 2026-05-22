@@ -23,6 +23,7 @@ import StoreItem from "./pages/StoreItem";
 import SettingsPage from "./pages/SettingsPage";
 import Notifications from "./pages/Notifications";
 import Feed from "./pages/Feed";
+import UserProfile from "@/pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
@@ -68,6 +69,7 @@ const App = () => {
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
               <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
+              <Route path="/u/:accountName" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
 
               {/* Legacy redirects */}
               <Route path="/search" element={<Navigate to="/friends" replace />} />

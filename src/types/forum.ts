@@ -50,4 +50,5 @@ export interface ForumReply {
   imageUrls: string[];
   authorRank: UserRank;
   authorStaffRole: StaffRole;
+  authorAccountName?: string;
 }

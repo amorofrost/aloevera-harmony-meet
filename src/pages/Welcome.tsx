@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/components/ui/sonner';
 import { loginSchema, registerSchema, registerSchemaWithInvite, type LoginSchema, type RegisterSchema } from '@/lib/validators';
 import { DualLocationPicker } from '@/components/ui/dual-location-picker';
+import { AccountNameInput } from '@/components/ui/account-name-input';
 import { showApiError } from '@/lib/apiError';
 import { navigateAfterAuth } from '@/lib/authNavigation';
 import { safeRedirectFrom, inviteCodeFrom } from '@/lib/inviteRedirect';
@@ -45,9 +46,10 @@ const Welcome = () => {
       return zodResolver(schema)(values, context, options);
     },
     mode: 'onBlur',
-    defaultValues: { inviteCode: pendingInviteCode, country: '', region: '', secondaryCountry: '', secondaryRegion: '' },
+    defaultValues: { accountName: '', inviteCode: pendingInviteCode, country: '', region: '', secondaryCountry: '', secondaryRegion: '' },
   });
   const [showRegister, setShowRegister] = useState(false);
+  const [accountNameValid, setAccountNameValid] = useState(false);
   const [requireEventInvite, setRequireEventInvite] = useState(false);
   const [configLoading, setConfigLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +100,7 @@ const Welcome = () => {
     setIsLoading(true);
     try {
       const response = await authApi.register({
+        accountName: data.accountName,
         email: data.email,
         password: data.password,
         name: data.name,
@@ -112,6 +115,14 @@ const Welcome = () => {
       });
       if (!response.success) {
         const apiErr = (response as any).error;
+        if (apiErr?.code === 'ACCOUNT_NAME_TAKEN') {
+          registerForm.setError('accountName', { message: apiErr.message || 'Account name is already taken' });
+          return;
+        }
+        if (apiErr?.code === 'INVALID_ACCOUNT_NAME') {
+          registerForm.setError('accountName', { message: apiErr.message || 'Invalid account name' });
+          return;
+        }
         if (apiErr?.code === 'EMAIL_TAKEN') {
           registerForm.setError('email', { message: apiErr.message || 'Email is already taken' });
           return;
@@ -252,6 +263,22 @@ const Welcome = () => {
                 </div>
               ) : null}
               <form onSubmit={handleRegister} className="space-y-4" style={configLoading ? { display: 'none' } : undefined}>
+                <Controller
+                  control={registerForm.control}
+                  name="accountName"
+                  render={({ field }) => (
+                    <AccountNameInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onValidityChange={setAccountNameValid}
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+                {registerForm.formState.errors.accountName && (
+                  <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.accountName.message}</p>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="reg-email" className="text-white font-medium">
                     {t('auth.email')} *
@@ -447,7 +474,7 @@ const Welcome = () => {
                   type="submit"
                   size="lg"
                   className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
-                  disabled={isLoading}
+                  disabled={isLoading || !accountNameValid}
                 >
                   {isLoading ? (
                     <>

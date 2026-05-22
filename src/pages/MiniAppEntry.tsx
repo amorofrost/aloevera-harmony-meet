@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DualLocationPicker } from '@/components/ui/dual-location-picker';
+import { AccountNameInput } from '@/components/ui/account-name-input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authApi, apiClient } from '@/services/api';
@@ -49,6 +50,7 @@ const MiniAppEntry: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [telegram, setTelegram] = useState<TelegramUserInfo | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accountNameValid, setAccountNameValid] = useState(false);
   const initDataRef = useRef<string>('');
 
   const requireInviteRef = useRef(false);
@@ -66,6 +68,7 @@ const MiniAppEntry: React.FC = () => {
       return zodResolver(schema)(values, ctx, opts);
     },
     defaultValues: {
+      accountName: '',
       name: [hint?.firstName, hint?.lastName].filter(Boolean).join(' ').trim(),
       bio: '',
       country: '',
@@ -168,6 +171,7 @@ const MiniAppEntry: React.FC = () => {
     setIsSubmitting(true);
     try {
       const res = await authApi.miniAppRegister({
+        accountName: data.accountName,
         initData: initDataRef.current,
         name: data.name,
         age: data.age,
@@ -181,6 +185,14 @@ const MiniAppEntry: React.FC = () => {
       });
       if (!res.success || !res.data) {
         const err = (res as any).error;
+        if (err?.code === 'ACCOUNT_NAME_TAKEN') {
+          registerForm.setError('accountName', { message: err.message || 'Account name is already taken' });
+          return;
+        }
+        if (err?.code === 'INVALID_ACCOUNT_NAME') {
+          registerForm.setError('accountName', { message: err.message || 'Invalid account name' });
+          return;
+        }
         if (err?.code === 'INVALID_INVITE_CODE') {
           registerForm.setError('inviteCode', { message: err.message || 'Invalid invite code' });
           return;
@@ -221,6 +233,8 @@ const MiniAppEntry: React.FC = () => {
       </div>
     );
   }
+
+  const tgUsernamePrefill = (telegram?.username ?? '').replace(/[^A-Za-z0-9_]/g, '');
 
   const greeting = telegram?.firstName ? `Welcome, ${telegram.firstName}!` : 'Welcome!';
 
@@ -320,6 +334,23 @@ const MiniAppEntry: React.FC = () => {
               </div>
             )}
             <form onSubmit={handleCreate} className="space-y-4" style={configLoading ? { display: 'none' } : undefined}>
+              <Controller
+                control={registerForm.control}
+                name="accountName"
+                render={({ field }) => (
+                  <AccountNameInput
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onValidityChange={setAccountNameValid}
+                    disabled={isSubmitting}
+                    prefillSuggestion={tgUsernamePrefill}
+                  />
+                )}
+              />
+              {registerForm.formState.errors.accountName && (
+                <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.accountName.message}</p>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="mini-reg-name">Display Name *</Label>
                 <Input
@@ -455,7 +486,7 @@ const MiniAppEntry: React.FC = () => {
                 You can add an email and password later in Settings.
               </p>
 
-              <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !accountNameValid}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

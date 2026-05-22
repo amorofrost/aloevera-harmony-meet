@@ -41,6 +41,7 @@ function mapReplyFromApi(dto: any): ForumReply {
     imageUrls: dto.imageUrls ?? [],
     authorRank: (dto.authorRank ?? 'novice') as UserRank,
     authorStaffRole: (dto.authorStaffRole ?? 'none') as StaffRole,
+    authorAccountName: dto.authorAccountName ?? undefined,
     authorEventBadgeImageUrls: dto.authorEventBadgeImageUrls ?? [],
     authorEventBadgeTotalCount: dto.authorEventBadgeTotalCount ?? 0,
     editedAt: dto.editedAt ? new Date(dto.editedAt) : undefined,

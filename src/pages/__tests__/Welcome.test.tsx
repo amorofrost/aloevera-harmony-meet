@@ -28,6 +28,33 @@ vi.mock('@/components/ui/sonner', () => ({
   Toaster: () => null,
 }));
 
+// Mock AccountNameInput — bypasses async availability check (debounce + authApi call).
+// Renders a plain textbox labelled "Account name" that immediately signals validity
+// so the submit button (disabled until accountNameValid===true) becomes enabled.
+vi.mock('@/components/ui/account-name-input', () => ({
+  AccountNameInput: ({ value, onChange, onValidityChange, disabled }: any) => {
+    // Signal valid whenever the value is non-empty (format already enforced in real component).
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(e.target.value);
+      onValidityChange?.(e.target.value.length > 0);
+    };
+    return (
+      <div>
+        <label htmlFor="accountName">Account name *</label>
+        <input
+          id="accountName"
+          type="text"
+          role="textbox"
+          aria-label="Account name"
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+        />
+      </div>
+    );
+  },
+}));
+
 // Mock DualLocationPicker — cmdk + Radix Popover require pointer events / ResizeObserver
 // not available in jsdom. Replace with a plain text input that calls onChange directly.
 vi.mock('@/components/ui/dual-location-picker', () => ({
@@ -212,9 +239,12 @@ describe('Welcome — register form', () => {
 
   // Helper: fill all valid fields (bio is optional and omitted)
   async function fillValidRegisterForm(user: ReturnType<typeof userEvent.setup>) {
+    // Fill account name first — mocked component signals validity immediately on non-empty input.
+    await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
     // Labels use t() — mock returns key. Queries match substrings case-insensitively.
-    // 'Display Name *' label → matches /name/i
-    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    // 'Display Name *' label is hardcoded (not i18n-keyed) → use getByLabelText to avoid
+    // ambiguity with the account-name field (also contains "name" in its key).
+    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
     // 'auth.email *' label → matches /email/i
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     // 'auth.password *' label → matches /password/i
@@ -409,7 +439,8 @@ describe('Welcome — register form — invite code', () => {
       expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
     // Fill all fields except invite code
-    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
+    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
@@ -435,7 +466,8 @@ describe('Welcome — register form — invite code', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
-    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
+    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
@@ -466,7 +498,8 @@ describe('Welcome — register form — invite code', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
-    await user.type(screen.getByRole('textbox', { name: /name/i }), 'Alice');
+    await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
+    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');

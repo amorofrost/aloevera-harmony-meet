@@ -27,4 +27,14 @@ describe('<UserBadges />', () => {
     expect(screen.queryByText('rank.novice')).not.toBeInTheDocument();
     expect(screen.getByText('staffRole.moderator')).toBeInTheDocument();
   });
+
+  it('renders @accountName when provided', () => {
+    renderWithProviders(<UserBadges accountName="alice_99" />);
+    expect(screen.getByText('@alice_99')).toBeInTheDocument();
+  });
+
+  it('omits @ when accountName is empty/undefined', () => {
+    renderWithProviders(<UserBadges />);
+    expect(screen.queryByText(/^@/)).not.toBeInTheDocument();
+  });
 });
