@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSmartBack } from '@/hooks/useSmartBack';
 import type { Event, User } from '@/types/user';
 import { eventsApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
 import { showApiError } from '@/lib/apiError';
@@ -21,6 +22,8 @@ const EventDetails = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
+
+  const goBack = useSmartBack('/aloevera');
 
   const [event, setEvent] = useState<Event | null>(null);
   const [attendeeUsers, setAttendeeUsers] = useState<User[]>([]);
@@ -217,7 +220,7 @@ const EventDetails = () => {
 
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b relative">
         <div className="flex items-center gap-4 p-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/aloevera')} className="p-2">
+          <Button variant="ghost" size="sm" onClick={goBack} className="p-2">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-xl font-bold text-foreground flex-1">Детали события</h1>
