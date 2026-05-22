@@ -277,6 +277,52 @@ function mapBlogPostRow(x: unknown): AdminBlogPostDto {
   };
 }
 
+export interface MetricsOverviewDto {
+  registered: number;
+  dau: number;
+  mau: number;
+  currentlyActive: number;
+  requestsLastHour: number;
+  p95LastHourMs: number | null;
+}
+
+export interface ContainerStatusDto {
+  name: string;
+  status: 'green' | 'amber' | 'red';
+  heartbeatAgeSeconds: number | null;
+  gcHeapMb: number | null;
+  workingSetMb: number | null;
+  threadCount: number | null;
+  note: string | null;
+  startedAtUtc: string | null;
+  version: string | null;
+}
+
+export interface TimeseriesPointDto {
+  ts: string;
+  count: number;
+  p50: number | null;
+  p95: number | null;
+  p99: number | null;
+}
+
+export interface BiTimeseriesDto {
+  days: string[];
+  registered: number[];
+  dau: number[];
+  mau: number[];
+}
+
+export interface MetricsAdminConfigDto {
+  requestTiming: boolean;
+  biEvents: boolean;
+  containerStats: boolean;
+  frontendPerf: boolean;
+  retentionMinuteHours: number;
+  retentionHourDays: number;
+  retentionDauDays: number;
+}
+
 export interface AdminContainerInfrastructureDto {
   name: string;
   startedAtUtc: string;
@@ -1006,6 +1052,95 @@ export const adminApi = {
         return { ...res, data: mapBroadcast(res.data) };
       }
       return res as unknown as ApiResponse<BroadcastDto>;
+    },
+  },
+
+  metrics: {
+    async getOverview(): Promise<ApiResponse<MetricsOverviewDto>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: {
+            registered: 12, dau: 4, mau: 12, currentlyActive: 1,
+            requestsLastHour: 240, p95LastHourMs: 180,
+          },
+          timestamp: new Date().toISOString(),
+        };
+      }
+      return apiClient.get<MetricsOverviewDto>('/api/v1/admin/metrics/overview');
+    },
+
+    async getContainers(): Promise<ApiResponse<ContainerStatusDto[]>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: [
+            { name: 'backend', status: 'green', heartbeatAgeSeconds: 12, gcHeapMb: 38, workingSetMb: 142, threadCount: 24, note: null, startedAtUtc: null, version: '1.0' },
+            { name: 'telegram-bot', status: 'green', heartbeatAgeSeconds: 18, gcHeapMb: 12, workingSetMb: 38, threadCount: 12, note: null, startedAtUtc: null, version: '1.0' },
+            { name: 'notifications-worker', status: 'green', heartbeatAgeSeconds: 22, gcHeapMb: 19, workingSetMb: 62, threadCount: 18, note: null, startedAtUtc: null, version: '1.0' },
+            { name: 'frontend', status: 'green', heartbeatAgeSeconds: null, gcHeapMb: null, workingSetMb: null, threadCount: null, note: 'HTTP 200', startedAtUtc: null, version: null },
+          ] as ContainerStatusDto[],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      return apiClient.get<ContainerStatusDto[]>('/api/v1/admin/metrics/containers');
+    },
+
+    async getTimeseries(params: {
+      category: string;
+      dimensionKey?: string;
+      from: string;
+      to: string;
+      resolution: 'minute' | 'hour';
+    }): Promise<ApiResponse<TimeseriesPointDto[]>> {
+      if (!isApiMode()) {
+        return { success: true, data: [] as TimeseriesPointDto[], timestamp: new Date().toISOString() };
+      }
+      const q = new URLSearchParams({
+        category: params.category,
+        from: params.from,
+        to: params.to,
+        resolution: params.resolution,
+      });
+      if (params.dimensionKey) q.set('dimensionKey', params.dimensionKey);
+      return apiClient.get<TimeseriesPointDto[]>(`/api/v1/admin/metrics/timeseries?${q}`);
+    },
+
+    async getBi(range: '24h' | '7d' | '30d'): Promise<ApiResponse<BiTimeseriesDto>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: {
+            days: ['2026-05-19', '2026-05-20', '2026-05-21'],
+            registered: [10, 11, 12],
+            dau: [3, 4, 4],
+            mau: [10, 11, 12],
+          } as BiTimeseriesDto,
+          timestamp: new Date().toISOString(),
+        };
+      }
+      return apiClient.get<BiTimeseriesDto>(`/api/v1/admin/metrics/bi?range=${range}`);
+    },
+
+    async getConfig(): Promise<ApiResponse<MetricsAdminConfigDto>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: {
+            requestTiming: true, biEvents: true, containerStats: true, frontendPerf: true,
+            retentionMinuteHours: 24, retentionHourDays: 90, retentionDauDays: 30,
+          } as MetricsAdminConfigDto,
+          timestamp: new Date().toISOString(),
+        };
+      }
+      return apiClient.get<MetricsAdminConfigDto>('/api/v1/admin/metrics/config');
+    },
+
+    async putConfig(updates: Partial<MetricsAdminConfigDto>): Promise<ApiResponse<undefined>> {
+      if (!isApiMode()) {
+        return { success: true, data: undefined, timestamp: new Date().toISOString() };
+      }
+      return apiClient.put('/api/v1/admin/metrics/config', updates);
     },
   },
 };
