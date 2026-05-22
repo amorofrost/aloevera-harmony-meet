@@ -23,6 +23,7 @@ import { CommonGroundLine } from '@/components/profile/CommonGroundLine';
 import { PromptCard } from '@/components/profile/PromptCard';
 import { commonGround } from '@/lib/commonGround';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useSmartBack } from '@/hooks/useSmartBack';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
@@ -59,6 +60,7 @@ const Friends = () => {
   const activeTab = searchParams.get('tab') || 'search';
   const likesTab = searchParams.get('sub') || 'matches';
   const selectedChat = searchParams.get('chat');
+  const goBackFromChat = useSmartBack('/friends?tab=chats');
 
   const [filter, setFilter] = useState<{ country: string; region: string }>({ country: '', region: '' });
   const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
@@ -270,7 +272,7 @@ const Friends = () => {
         </div>
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b">
           <div className="flex items-center gap-3 p-4 max-w-3xl mx-auto w-full">
-            <Button variant="ghost" size="sm" onClick={() => setSearchParams({ tab: 'chats' })}><ArrowLeft className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="sm" onClick={goBackFromChat}><ArrowLeft className="w-5 h-5" /></Button>
             <div className="flex items-center gap-3 flex-1">
               <div className="relative">
                 <img src={chat.otherUser.profileImage} alt={chat.otherUser.name} className="w-10 h-10 rounded-full object-cover" />
