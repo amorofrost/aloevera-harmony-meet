@@ -325,4 +325,38 @@ export const forumsApi = {
     reply.editedByName = 'Вы';
     return mockSuccess(reply);
   },
+
+  // ----- Subscriptions ----------------------------------------------------
+  async getSubscription(topicId: string): Promise<ApiResponse<{ topicId: string; subscribed: boolean }>> {
+    if (isApiMode()) {
+      return apiClient.get<{ topicId: string; subscribed: boolean }>(
+        `/api/v1/forum/topics/${encodeURIComponent(topicId)}/subscription`,
+      );
+    }
+    return mockSuccess({ topicId, subscribed: mockTopicSubscriptions.has(topicId) });
+  },
+
+  async subscribeToTopic(topicId: string): Promise<ApiResponse<{ topicId: string; subscribed: boolean }>> {
+    if (isApiMode()) {
+      return apiClient.post<{ topicId: string; subscribed: boolean }>(
+        `/api/v1/forum/topics/${encodeURIComponent(topicId)}/subscribe`,
+        {},
+      );
+    }
+    mockTopicSubscriptions.add(topicId);
+    return mockSuccess({ topicId, subscribed: true });
+  },
+
+  async unsubscribeFromTopic(topicId: string): Promise<ApiResponse<{ topicId: string; subscribed: boolean }>> {
+    if (isApiMode()) {
+      return apiClient.delete<{ topicId: string; subscribed: boolean }>(
+        `/api/v1/forum/topics/${encodeURIComponent(topicId)}/subscribe`,
+      );
+    }
+    mockTopicSubscriptions.delete(topicId);
+    return mockSuccess({ topicId, subscribed: false });
+  },
 };
+
+// Mock-mode subscription state — persists within the browser session.
+const mockTopicSubscriptions = new Set<string>();

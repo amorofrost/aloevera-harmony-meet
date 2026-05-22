@@ -201,6 +201,10 @@ const translations = {
     'forum.editPlaceholder': 'Измените ваш ответ...',
     'forum.editFailed': 'Не удалось сохранить изменения',
     'forum.editedBy': 'изменено {name} · {date}',
+    'forum.subscribe': 'Подписаться',
+    'forum.unsubscribe': 'Отписаться',
+    'forum.subscribed': 'Вы подписаны',
+    'forum.subscribeFailed': 'Не удалось изменить подписку',
 
     // Ranks & staff roles
     'rank.novice': 'Новичок',
@@ -278,7 +282,7 @@ const translations = {
     'notifications.settings.type.likeReceived': 'Новые лайки',
     'notifications.settings.type.matchCreated': 'Новые взаимные симпатии',
     'notifications.settings.type.messageReceived': 'Личные сообщения',
-    'notifications.settings.type.forumReplyToThread': 'Ответы в обсуждениях',
+    'notifications.settings.type.forumReplyToThread': 'Ответы в темах, на которые подписан',
     'notifications.settings.type.communityBroadcast': 'Объявления сообщества',
     'notifications.settings.type.eventPublished': 'Новые события',
     'notifications.settings.type.eventReminder': 'Напоминания о событиях',
@@ -480,6 +484,10 @@ const translations = {
     'forum.editPlaceholder': 'Edit your reply...',
     'forum.editFailed': 'Failed to save changes',
     'forum.editedBy': 'edited by {name} · {date}',
+    'forum.subscribe': 'Subscribe',
+    'forum.unsubscribe': 'Unsubscribe',
+    'forum.subscribed': 'Subscribed',
+    'forum.subscribeFailed': 'Could not update subscription',
 
     // Ranks & staff roles
     'rank.novice': 'Novice',
@@ -557,7 +565,7 @@ const translations = {
     'notifications.settings.type.likeReceived': 'New likes',
     'notifications.settings.type.matchCreated': 'New matches',
     'notifications.settings.type.messageReceived': 'Private messages',
-    'notifications.settings.type.forumReplyToThread': 'Forum replies',
+    'notifications.settings.type.forumReplyToThread': 'Replies in topics you follow',
     'notifications.settings.type.communityBroadcast': 'Community announcements',
     'notifications.settings.type.eventPublished': 'New events',
     'notifications.settings.type.eventReminder': 'Event reminders',
