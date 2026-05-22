@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Pencil, Pin, Send, ThumbsUp, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Pencil, Pin, Send, ThumbsUp, MessageSquare, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -37,6 +37,8 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const replyForm = useForm<ReplySchema>({
     resolver: zodResolver(replySchema),
   });
@@ -57,6 +59,38 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     };
     load();
   }, [topicId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    forumsApi.getSubscription(topicId).then((r) => {
+      if (cancelled) return;
+      if (r.success && r.data) setIsSubscribed(r.data.subscribed);
+    });
+    return () => { cancelled = true; };
+  }, [topicId]);
+
+  const toggleSubscription = async () => {
+    if (isSubscribing || isSubscribed === null) return;
+    setIsSubscribing(true);
+    const previous = isSubscribed;
+    setIsSubscribed(!previous); // optimistic
+    try {
+      const r = previous
+        ? await forumsApi.unsubscribeFromTopic(topicId)
+        : await forumsApi.subscribeToTopic(topicId);
+      if (!r.success) {
+        setIsSubscribed(previous);
+        showApiError(r, t('forum.subscribeFailed'));
+      } else if (r.data) {
+        setIsSubscribed(r.data.subscribed);
+      }
+    } catch (err) {
+      setIsSubscribed(previous);
+      showApiError(err, t('forum.subscribeFailed'));
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   const handleSendReply = replyForm.handleSubmit(async (data) => {
     if (isSending) return;
@@ -206,7 +240,21 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             {topic.isPinned && <Pin className="w-3.5 h-3.5 text-primary" />}
-            <h2 className="text-lg font-bold">{topic.title}</h2>
+            <h2 className="text-lg font-bold flex-1">{topic.title}</h2>
+            {isSubscribed !== null && (
+              <Button
+                variant={isSubscribed ? 'default' : 'outline'}
+                size="sm"
+                onClick={toggleSubscription}
+                disabled={isSubscribing}
+                className="shrink-0"
+                aria-pressed={isSubscribed}
+                aria-label={isSubscribed ? t('forum.unsubscribe') : t('forum.subscribe')}
+              >
+                {isSubscribed ? <Bell className="w-4 h-4 mr-1" /> : <BellOff className="w-4 h-4 mr-1" />}
+                {isSubscribed ? t('forum.subscribed') : t('forum.subscribe')}
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2 mb-4">
             <AuthorBadge authorId={topic.authorId} authorName={topic.authorName} authorAvatar={topic.authorAvatar} size="md" />
