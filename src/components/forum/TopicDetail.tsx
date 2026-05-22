@@ -284,7 +284,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
                   imageUrls={reply.authorEventBadgeImageUrls ?? []}
                   totalCount={reply.authorEventBadgeTotalCount ?? 0}
                 />
-                <UserBadges rank={reply.authorRank} staffRole={reply.authorStaffRole} />
+                <UserBadges rank={reply.authorRank} staffRole={reply.authorStaffRole} accountName={reply.authorAccountName} />
                 <span className="text-xs text-muted-foreground">· {formatDate(reply.createdAt)}</span>
               </div>
               <div className="pl-9">

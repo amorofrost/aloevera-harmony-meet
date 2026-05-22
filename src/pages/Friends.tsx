@@ -401,7 +401,7 @@ const Friends = () => {
             <h2 className="text-2xl font-bold mb-1">
               {target.name}{target.age ? `, ${target.age}` : ''}
             </h2>
-            <UserBadges rank={target.rank} staffRole={target.staffRole} />
+            <UserBadges rank={target.rank} staffRole={target.staffRole} accountName={target.accountName} />
             {(target.country || target.secondaryCountry || target.location || (target.eventsAttended && target.eventsAttended.length > 0)) && (
               <div className="flex items-center gap-3 text-sm opacity-90 mb-2 flex-wrap">
                 {(target.country || target.secondaryCountry || target.location) && <LocationDisplay country={target.country} region={target.region} secondaryCountry={target.secondaryCountry} secondaryRegion={target.secondaryRegion} location={target.location} />}
@@ -663,7 +663,7 @@ const Friends = () => {
                             <h3 className="font-semibold truncate">{chat.otherUser.name}</h3>
                             {chat.lastMessage && <span className="text-xs text-muted-foreground">{formatChatDate(chat.lastMessage.timestamp)}</span>}
                           </div>
-                          <UserBadges rank={chat.otherUser.rank} staffRole={chat.otherUser.staffRole} />
+                          <UserBadges rank={chat.otherUser.rank} staffRole={chat.otherUser.staffRole} accountName={chat.otherUser.accountName} />
                           {chat.lastMessage && (
                             <div className="flex items-center justify-between">
                               <p className="text-sm text-muted-foreground truncate">{chat.lastMessage.content}</p>
