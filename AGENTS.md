@@ -827,6 +827,7 @@ The full stack is deployed and operational at `https://aloeve.club`. All API ser
 - Profile photo upload + BB code + image attachments
 - Roles/ACL: backend `[RequireStaffRole]` + `[RequirePermission]`; frontend mirror via `src/lib/acl.ts` + `<UserBadges>`
 - Notifications Phase B + Phase D: in-app notifications via SignalR + real Telegram dispatch. Telegram channel: opt-in per notification type in Settings → Notifications. When enabled, the worker dispatches via Telegram.Bot SDK to the user's linked chat. "Mute these" inline button flips the type's Telegram toggle off via service-token internal endpoint.
+- **Monitoring & instrumentation** (shipped 2026-05-22). Admin dashboard at `/admin/metrics` with KPI tiles (registered/DAU/MAU/online/req-per-hour), container status grid (heartbeat freshness), request volume + latency charts (p50/p95/p99), BI counters, and a toggle sheet for the 4 collection categories (`request_timing`, `bi_events`, `container_stats`, `frontend_perf`). Backend `IMetricsCollector` writes to 4 Azure Tables (`metricsminute`/`metricshour`/`dailyactiveusers`/`containerstatus`); `MetricsRollupWorker` rolls up hourly; `JanitorWorker` does daily retention sweeps. Frontend `apiClient` interceptor batches and ships its own samples. All 3 .NET containers log structured JSON to stdout via Serilog with `traceId` correlation. Full operator guide: **[docs/MONITORING.md](./docs/MONITORING.md)**.
 
 ### Open
 

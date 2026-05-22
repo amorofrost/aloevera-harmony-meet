@@ -246,14 +246,15 @@ There are no `ErrorBoundary` components anywhere in the React tree. A runtime er
 
 ---
 
-### TD.5. No Structured Logging or Monitoring in Production
-**Impact**: Impossible to diagnose issues after deployment; no alerting
+### TD.5. No Structured Logging or Monitoring in Production *(backend resolved 2026-05-22; frontend Sentry deferred)*
+**Impact**: Frontend errors still untracked; alerting and log shipping not in place
 
-The backend has no Serilog output configured for production and no Application Insights integration. There is no frontend error tracking (Sentry or equivalent).
+**Backend half resolved 2026-05-22** — see [MONITORING.md](./MONITORING.md). Shipped: Serilog structured JSON to stdout in `Lovecraft.Backend` + `Lovecraft.TelegramBot` + `Lovecraft.NotificationsWorker` (enriched with `service`, `version`, `traceId`); `UseSerilogRequestLogging` for request summary lines; admin dashboard at `/admin/metrics` with container status, request volume + latency, DAU/MAU, BI counts; 4 toggleable collection categories; 30-day retention defaults.
 
-**Resolution**:
-- Backend: Add Serilog with structured JSON output to stdout (captured by Docker). Add Azure Application Insights SDK
-- Frontend: Add Sentry SDK (`@sentry/react`). Capture unhandled exceptions and API errors
+**Open items in TD.5 scope:**
+- **Frontend error tracking (Sentry).** No `@sentry/react` integration yet. `X-Request-Id` response header is emitted so future Sentry → backend log correlation is one wire-up away.
+- **Log shipping.** Stdout JSON only; no Application Insights / Loki / Seq sink. One-line `Serilog.WriteTo.*` config change when wanted.
+- **Alerting.** Dashboard is pull-only; no threshold-based push alerts.
 
 ---
 

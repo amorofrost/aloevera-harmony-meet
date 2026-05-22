@@ -393,8 +393,35 @@ See `aloevera-harmony-meet/docs/FRONTEND_AUTH_GUIDE.md` and `lovecraft/Lovecraft
 
 ---
 
+## ~~TD.5 (backend half). Monitoring & Instrumentation~~ ✅ RESOLVED
+**Resolved**: May 22, 2026
+
+Admin dashboard at `/admin/metrics` shipped end-to-end. See **[MONITORING.md](./MONITORING.md)** for the operator guide, **[specs/2026-05-21-monitoring-design.md](./superpowers/specs/2026-05-21-monitoring-design.md)** for the design, and **[plans/2026-05-21-monitoring.md](./superpowers/plans/2026-05-21-monitoring.md)** for the 25-task implementation log.
+
+**Shipped:**
+
+- **`IMetricsCollector`** singleton in every .NET container — `AzureMetricsCollector` (Azure mode, bounded channel + 10s flush) / `MockMetricsCollector` (in-memory) / `NoOpMetricsCollector`. Per-category toggle via `MetricsConfigPoller` (60s refresh from appconfig).
+- **4 categories:** `request_timing`, `bi_events`, `container_stats`, `frontend_perf` — all default on, individually flippable at runtime via admin UI.
+- **4 new Azure Tables** (28 → 32 total): `metricsminute` (24h retention), `metricshour` (90d retention), `dailyactiveusers` (31d), `containerstatus` (constant).
+- **Producers:** `RequestMetricsMiddleware` on every backend HTTP request (skips `/health`, `/swagger`, `/api/v1/metrics/*`, OPTIONS), 14 BI event call sites (auth/chats/events/matching/forum), `ContainerHeartbeatWorker` in all 3 .NET containers (30s tick), `FrontendProbeWorker` HTTPing the frontend container (60s), `apiClient` interceptor in the browser (30s batch flush to `POST /api/v1/metrics/frontend`).
+- **Workers in `Lovecraft.NotificationsWorker`:** new `MetricsRollupWorker` (hourly at `:05`, 6h idempotent lookback), extended `JanitorWorker` with 3 retention passes (`metricsminute`, `metricshour`, `dailyactiveusers`).
+- **`MauCalculator`** — 30-partition union with 5-min `IMemoryCache`.
+- **6 admin endpoints** under `/api/v1/admin/metrics/*` (`overview`, `containers`, `timeseries`, `bi`, `config` read+write) — all gated `[RequireStaffRole("admin")]`. Plus public `/api/v1/metrics/config` (used by frontend interceptor) and `/api/v1/metrics/frontend` (per-user 10/min rate limit).
+- **Dashboard page** at `/admin/metrics` — 5 KPI tiles + container grid + 3 chart panels + BI summary + toggle sheet. Auto-refresh every 30s, paused on hidden tab. Uses `recharts`.
+- **Serilog → stdout JSON** in all 3 .NET containers (`backend`, `telegram-bot`, `notifications-worker`) with `service` + `version` + `traceId` enrichers. Backend also uses `UseSerilogRequestLogging` for per-request summary lines. `X-Request-Id` echoed on responses for future frontend-to-backend correlation.
+
+**Production hotfix during initial deploy:** Azure Table Storage forbids `#`, `/`, `\`, `?` in PartitionKey/RowKey. Original PK format `{yyyy-MM-ddTHH}#{category}` and RK format embedding raw URL paths failed validation. Fixed by switching `#` → `_` and `/` → `~` (commit `dd4c13d`). Container heartbeats and DAU writes were unaffected (their keys had no forbidden chars), masking the bug until production logs surfaced it. Documented in [MONITORING.md](./MONITORING.md) "Critical Azure Table constraint" section.
+
+**Deferred under TD.5 frontend half (still open in [ISSUES.md](./ISSUES.md)):**
+- Frontend error tracking (Sentry / `@sentry/react`).
+- Log shipping to App Insights / Loki / Seq.
+- Threshold-based alerting.
+
+---
+
 ## 📝 Changelog
 
+- **May 22, 2026** — TD.5 backend half (monitoring + structured logging) resolved. 25-task implementation across both repos. See MONITORING.md.
 - **May 15, 2026** — Documented Google OAuth + Telegram auth as resolved in the audit pass. Deleted obsolete planning docs (AUTH_DECISIONS.md, AUTH_FLOWS.md, AUTH_IMPLEMENTATION.md, AUTH_SIMPLIFICATION.md, frontend BACKEND_PLAN.md, frontend DOCUMENTATION_SUMMARY.md, frontend API_INTEGRATION_SUMMARY.md, frontend docs/README.md).
 - **April 27, 2026** — Event badges/Instagram missing on search page, redundant user fetches, and search take=10 cap resolved.
 - **April 26, 2026** — External profile photo download (Telegram/Google → Azure Blob), Instagram handle field, unified swipe card profile view, optional age at registration.
