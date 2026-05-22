@@ -8,19 +8,22 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { notificationsApi } from '@/services/api';
 import { showApiError } from '@/lib/apiError';
-import { isWebPushSupported, getSubscriptionStatus, enableWebPush, disableWebPush } from '@/lib/webPush';
-import type { SubscriptionStatus } from '@/lib/webPush';
 import type {
   NotificationPreferences as Prefs,
   NotificationType,
-  NotificationChannel,
   NotificationFrequency,
 } from '@/types/notification';
 
 interface Props {
   telegramLinked: boolean;
-  pushSubscribed: boolean;
-  emailVerified: boolean;
+  /**
+   * Kept for API compatibility with the SettingsPage caller, but unused for now —
+   * Web Push and Email channels are hidden from this UI until the user-facing
+   * stories around them are firmed up. The backend still honours the matrix
+   * cells for these channels if they're set; we just don't expose toggles yet.
+   */
+  pushSubscribed?: boolean;
+  emailVerified?: boolean;
 }
 
 const TYPES: NotificationType[] = [
@@ -28,15 +31,10 @@ const TYPES: NotificationType[] = [
   'communityBroadcast', 'eventPublished', 'eventReminder', 'eventInviteReceived', 'rankUp',
 ];
 
-const CHANNELS: NotificationChannel[] = ['inApp', 'telegram', 'webPush', 'email'];
-
-const LOCKED_IMMEDIATE: NotificationChannel[] = ['inApp', 'webPush'];
-
-export function NotificationPreferences({ telegramLinked, pushSubscribed, emailVerified }: Props) {
+export function NotificationPreferences({ telegramLinked }: Props) {
   const { t } = useLanguage();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState(false);
-  const [webPushStatus, setWebPushStatus] = useState<'loading' | SubscriptionStatus>('loading');
 
   useEffect(() => {
     notificationsApi.getPreferences().then((r) => {
@@ -44,56 +42,20 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
     });
   }, []);
 
-  useEffect(() => {
-    if (isWebPushSupported()) {
-      getSubscriptionStatus().then(setWebPushStatus);
-    } else {
-      setWebPushStatus('unsupported');
-    }
-  }, [pushSubscribed]);
+  if (!prefs) return <div>{t('common.loading')}</div>;
 
-  const handleEnableWebPush = async () => {
-    try {
-      await enableWebPush();
-      toast.success('Web Push enabled');
-      setWebPushStatus('subscribed');
-    } catch (err) {
-      showApiError(err as Error, 'Failed to enable Web Push');
-    }
-  };
-
-  const handleDisableWebPush = async () => {
-    try {
-      await disableWebPush();
-      toast.success('Web Push disabled on this device');
-      setWebPushStatus('available');
-    } catch (err) {
-      showApiError(err as Error, 'Failed to disable Web Push');
-    }
-  };
-
-  if (!prefs) return <div>Loading…</div>;
-
-  const channelAvailable: Record<NotificationChannel, boolean> = {
-    inApp: true,
-    telegram: telegramLinked,
-    webPush: pushSubscribed,
-    email: emailVerified,
-  };
-
-  const handleMatrixToggle = (type: NotificationType, channel: NotificationChannel) => {
-    if (channel === 'inApp') return; // in-app is locked on
+  const handleTelegramToggle = (type: NotificationType) => {
     setPrefs({
       ...prefs,
       matrix: {
         ...prefs.matrix,
-        [type]: { ...prefs.matrix[type], [channel]: !prefs.matrix[type][channel] },
+        [type]: { ...prefs.matrix[type], telegram: !prefs.matrix[type].telegram },
       },
     });
   };
 
-  const handleFrequencyChange = (channel: NotificationChannel, frequency: NotificationFrequency) => {
-    setPrefs({ ...prefs, frequency: { ...prefs.frequency, [channel]: frequency } });
+  const handleTelegramFrequencyChange = (frequency: NotificationFrequency) => {
+    setPrefs({ ...prefs, frequency: { ...prefs.frequency, telegram: frequency } });
   };
 
   const handleSave = async () => {
@@ -112,7 +74,10 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
     }
   };
 
-  const anyDaily = Object.values(prefs.frequency).includes('daily');
+  const telegramDaily = prefs.frequency.telegram === 'daily';
+
+  // Grid: type label | in-app toggle | telegram toggle
+  const rowGrid = 'grid grid-cols-[1fr_5rem_5rem] items-center gap-2';
 
   return (
     <div className="space-y-6">
@@ -125,70 +90,86 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
         />
       </div>
 
-      {CHANNELS.map((channel) => (
-        <div
-          key={channel}
-          data-channel={channel}
-          data-disabled={!channelAvailable[channel]}
-          className={cn('border rounded-lg p-4 space-y-3', !channelAvailable[channel] && 'opacity-50 pointer-events-none')}
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">{t(`notifications.settings.channel.${channel}`)}</h3>
-            {!LOCKED_IMMEDIATE.includes(channel) && (
-              <Select
-                value={prefs.frequency[channel]}
-                onValueChange={(v) => handleFrequencyChange(channel, v as NotificationFrequency)}
-              >
-                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediate">{t('notifications.settings.frequency.immediate')}</SelectItem>
-                  <SelectItem value="hourly">{t('notifications.settings.frequency.hourly')}</SelectItem>
-                  <SelectItem value="daily">{t('notifications.settings.frequency.daily')}</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          {channel === 'webPush' && (
-            <div className="text-sm">
-              {webPushStatus === 'loading' && <span>Checking…</span>}
-              {webPushStatus === 'subscribed' && (
-                <Button variant="outline" size="sm" onClick={handleDisableWebPush}>
-                  Disable on this device
-                </Button>
-              )}
-              {webPushStatus === 'available' && (
-                <Button variant="outline" size="sm" onClick={handleEnableWebPush}>
-                  Enable on this device
-                </Button>
-              )}
-              {webPushStatus === 'denied' && (
-                <span className="text-muted-foreground">
-                  Notification permission blocked — enable in browser settings
-                </span>
-              )}
-              {webPushStatus === 'unsupported' && (
-                <span className="text-muted-foreground">Browser doesn&apos;t support Web Push</span>
-              )}
-            </div>
+      {/* Telegram channel status — linked? frequency picker. Not linked? CTA. */}
+      <div
+        data-channel="telegram"
+        data-disabled={!telegramLinked}
+        className="flex items-center justify-between border rounded-lg px-4 py-3"
+      >
+        <div className="text-sm">
+          <span className="font-medium">{t('notifications.settings.channel.telegram')}</span>
+          {!telegramLinked && (
+            <span className="ml-2 text-muted-foreground">
+              · {t('notifications.settings.unavailable.telegram')}
+            </span>
           )}
-          <div className="grid gap-2">
-            {TYPES.map((type) => (
-              <div key={type} className="flex items-center justify-between">
-                <Label className="text-sm">
-                  {t(`notifications.settings.type.${type}`)}
-                </Label>
-                <Switch
-                  checked={prefs.matrix[type][channel]}
-                  disabled={channel === 'inApp'}
-                  onCheckedChange={() => handleMatrixToggle(type, channel)}
-                />
-              </div>
-            ))}
+        </div>
+        {telegramLinked && (
+          <Select
+            value={prefs.frequency.telegram}
+            onValueChange={(v) => handleTelegramFrequencyChange(v as NotificationFrequency)}
+          >
+            <SelectTrigger className="w-40 h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="immediate">{t('notifications.settings.frequency.immediate')}</SelectItem>
+              <SelectItem value="hourly">{t('notifications.settings.frequency.hourly')}</SelectItem>
+              <SelectItem value="daily">{t('notifications.settings.frequency.daily')}</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {/* Matrix card: type rows × (in-app, telegram) columns */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className={cn(rowGrid, 'px-4 py-2 border-b bg-muted/30')}>
+          <div />
+          <div className="text-center text-xs font-semibold text-muted-foreground">
+            {t('notifications.settings.channel.inApp')}
+          </div>
+          <div
+            className={cn(
+              'text-center text-xs font-semibold text-muted-foreground',
+              !telegramLinked && 'opacity-50'
+            )}
+          >
+            {t('notifications.settings.channel.telegram')}
           </div>
         </div>
-      ))}
 
-      {anyDaily && (
+        {TYPES.map((type) => {
+          const typeLabel = t(`notifications.settings.type.${type}`);
+          return (
+            <div
+              key={type}
+              className={cn(rowGrid, 'px-4 py-3 border-b last:border-b-0')}
+            >
+              <Label className="text-sm">{typeLabel}</Label>
+              <div className="flex justify-center">
+                <Switch
+                  checked={prefs.matrix[type].inApp}
+                  disabled
+                  aria-label={`${typeLabel} — ${t('notifications.settings.channel.inApp')}`}
+                />
+              </div>
+              <div
+                className="flex justify-center"
+                data-channel="telegram"
+                data-type={type}
+                data-disabled={!telegramLinked}
+              >
+                <Switch
+                  checked={prefs.matrix[type].telegram}
+                  disabled={!telegramLinked}
+                  onCheckedChange={() => handleTelegramToggle(type)}
+                  aria-label={`${typeLabel} — ${t('notifications.settings.channel.telegram')}`}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {telegramDaily && (
         <div className="flex items-center justify-between">
           <Label>{t('notifications.settings.dailyHour')}</Label>
           <Select
@@ -205,7 +186,9 @@ export function NotificationPreferences({ telegramLinked, pushSubscribed, emailV
         </div>
       )}
 
-      <Button onClick={handleSave} disabled={saving} className="w-full">Save</Button>
+      <Button onClick={handleSave} disabled={saving} className="w-full">
+        {t('common.save')}
+      </Button>
     </div>
   );
 }
