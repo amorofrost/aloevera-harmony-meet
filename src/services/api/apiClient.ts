@@ -1,5 +1,17 @@
 // src/services/api/apiClient.ts
 import { API_CONFIG, isApiMode } from '@/config/api.config';
+import { frontendMetrics } from './metricsCollector';
+
+// Endpoints excluded from metrics recording to avoid infinite loops
+const METRICS_EXCLUDED_PATHS = ['/api/v1/metrics/frontend', '/api/v1/metrics/config'];
+
+function stripOrigin(url: string): string {
+  try {
+    return new URL(url, window.location.origin).pathname;
+  } catch {
+    return url;
+  }
+}
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -110,6 +122,11 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const isAuthEndpoint = AUTH_ENDPOINTS.some(e => endpoint.includes(e));
+    const method = (options.method ?? 'GET').toUpperCase();
+    const path = stripOrigin(url);
+    const isMetricsEndpoint = METRICS_EXCLUDED_PATHS.includes(path);
+    const startedAt = performance.now();
+    let finalStatus = 0;
 
     const config: RequestInit = {
       ...options,
@@ -119,6 +136,7 @@ class ApiClient {
 
     try {
       const response = await this.fetchWithTimeout(url, config);
+      finalStatus = response.status;
 
       if (response.status === 401 && !isAuthEndpoint) {
         const newToken = await this.handleUnauthorized();
@@ -134,6 +152,7 @@ class ApiClient {
           };
           try {
             const retryResponse = await this.fetchWithTimeout(url, retryConfig);
+            finalStatus = retryResponse.status;
             if (!retryResponse.ok) {
               const errBody = await retryResponse.json().catch(() => ({}));
               return {
@@ -188,6 +207,20 @@ class ApiClient {
         error: { code: 'NETWORK_ERROR', message: error.message || 'Network request failed' },
         timestamp: new Date().toISOString(),
       };
+    } finally {
+      if (!isMetricsEndpoint) {
+        try {
+          frontendMetrics.record({
+            endpoint: path,
+            method,
+            status: finalStatus,
+            durationMs: performance.now() - startedAt,
+            timestamp: Date.now(),
+          });
+        } catch {
+          /* metrics must never break a real request */
+        }
+      }
     }
   }
 

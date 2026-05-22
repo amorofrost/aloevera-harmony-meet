@@ -40,6 +40,9 @@ export default function AdminLayout() {
             <Link to="/infrastructure" className="hover:text-foreground">
               Infrastructure
             </Link>
+            <Link to="/metrics" className="hover:text-foreground">
+              Metrics
+            </Link>
             <Link to="/config" className="hover:text-foreground">
               App config
             </Link>
