@@ -4,7 +4,7 @@ import { mockEvents } from './mockEvents';
 
 export const mockSearchProfiles: User[] = [
   {
-    id: '1', name: 'Анна', age: 25,
+    id: '1', accountName: 'anna_moscow', name: 'Анна', age: 25,
     bio: 'Обожаю музыку AloeVera и концерты под открытым небом ❤️',
     country: 'RU', region: 'Москва', secondaryCountry: 'TH', secondaryRegion: 'Пхукет', location: 'Москва', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
@@ -30,7 +30,7 @@ export const mockSearchProfiles: User[] = [
     ] as PromptAnswer[],
   },
   {
-    id: '2', name: 'Дмитрий', age: 28,
+    id: '2', accountName: 'dmitry_spb', name: 'Дмитрий', age: 28,
     bio: 'Музыкант, фанат AloeVera с первого альбома 🎸',
     country: 'RU', region: 'Санкт-Петербург', location: 'Санкт-Петербург', gender: 'male',
     profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
@@ -54,7 +54,7 @@ export const mockSearchProfiles: User[] = [
     ] as PromptAnswer[],
   },
   {
-    id: '3', name: 'Елена', age: 22,
+    id: '3', accountName: 'elena_dance', name: 'Елена', age: 22,
     bio: 'Танцую под AloeVera 💃',
     country: 'RU', region: 'Новосибирск', location: 'Новосибирск', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
@@ -66,7 +66,7 @@ export const mockSearchProfiles: User[] = [
     rank: 'novice', staffRole: 'none',
   },
   {
-    id: '4', name: 'Мария', age: 23,
+    id: '4', accountName: 'maria_poet', name: 'Мария', age: 23,
     bio: 'Поэтесса и меломан',
     country: 'RU', region: 'Москва', location: 'Москва', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
@@ -76,7 +76,7 @@ export const mockSearchProfiles: User[] = [
     rank: 'novice', staffRole: 'none',
   },
   {
-    id: 'mock-user-by', name: 'Аліна', age: 26,
+    id: 'mock-user-by', accountName: 'alina_minsk', name: 'Аліна', age: 26,
     bio: 'Слухаю AloeVera і мрію потрапити на живий концерт',
     country: 'BY', region: 'Минск', location: 'Минск', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
@@ -92,7 +92,7 @@ export const mockSearchProfiles: User[] = [
     ] as PromptAnswer[],
   },
   {
-    id: 'mock-user-us', name: 'Sarah', age: 28,
+    id: 'mock-user-us', accountName: 'sarah_sf', name: 'Sarah', age: 28,
     bio: 'Discovered AloeVera through a friend and fell in love with their sound',
     country: 'US', region: 'California', secondaryCountry: 'RU', secondaryRegion: 'Москва', location: 'San Francisco, USA', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
@@ -108,7 +108,7 @@ export const mockSearchProfiles: User[] = [
     ] as PromptAnswer[],
   },
   {
-    id: 'mock-user-de', name: 'Hannah', age: 30,
+    id: 'mock-user-de', accountName: 'hannah_berlin', name: 'Hannah', age: 30,
     bio: 'Musikliebhaberin und begeisterte AloeVera-Hörerin aus Berlin',
     country: 'DE', region: 'Berlin', location: 'Berlin', gender: 'female',
     profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
@@ -133,7 +133,7 @@ export const mockMatches: MatchWithUser[] = [
   {
     id: 'm1', users: ['current-user', '1'], createdAt: new Date('2024-02-20'), isRead: false,
     otherUser: {
-      id: '1', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', country: 'RU', region: 'Москва', secondaryCountry: 'TH', secondaryRegion: 'Пхукет', location: 'Москва', gender: 'female',
+      id: '1', accountName: 'anna_moscow', name: 'Анна', age: 25, bio: 'Обожаю музыку AloeVera', country: 'RU', region: 'Москва', secondaryCountry: 'TH', secondaryRegion: 'Пхукет', location: 'Москва', gender: 'female',
       profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=600&fit=crop&crop=face',
       images: [], lastSeen: new Date(), isOnline: true,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
@@ -147,7 +147,7 @@ export const mockSentLikes: SentLikeWithUser[] = [
   {
     id: 'l2', fromUserId: 'current-user', toUserId: '2', createdAt: new Date('2024-02-21'), isMatch: false,
     toUser: {
-      id: '2', name: 'Дмитрий', age: 28, bio: 'Музыкант', country: 'RU', region: 'Санкт-Петербург', location: 'Санкт-Петербург', gender: 'male',
+      id: '2', accountName: 'dmitry_spb', name: 'Дмитрий', age: 28, bio: 'Музыкант', country: 'RU', region: 'Санкт-Петербург', location: 'Санкт-Петербург', gender: 'male',
       profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face',
       images: [], lastSeen: new Date(), isOnline: false,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },
@@ -161,7 +161,7 @@ export const mockReceivedLikes: ReceivedLikeWithUser[] = [
   {
     id: 'l3', fromUserId: '3', toUserId: 'current-user', createdAt: new Date('2024-02-19'), isMatch: false, isRead: false,
     fromUser: {
-      id: '3', name: 'Елена', age: 22, bio: 'Танцую под AloeVera', country: 'RU', region: 'Новосибирск', location: 'Новосибирск', gender: 'female',
+      id: '3', accountName: 'elena_dance', name: 'Елена', age: 22, bio: 'Танцую под AloeVera', country: 'RU', region: 'Новосибирск', location: 'Новосибирск', gender: 'female',
       profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop&crop=face',
       images: [], lastSeen: new Date(), isOnline: true,
       preferences: { ageRange: [22, 35], maxDistance: 50, showMe: 'everyone' },

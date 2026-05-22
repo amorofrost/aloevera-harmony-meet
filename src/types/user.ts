@@ -19,6 +19,7 @@ export interface PromptAnswer {
 
 export interface User {
   id: string;
+  accountName?: string;
   name: string;
   email?: string;
   age: number;
