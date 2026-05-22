@@ -226,11 +226,21 @@ Props: `{ rank?: UserRank; staffRole?: StaffRole; className?: string }`. Renders
 
 Rendered in: reply headers in `TopicDetail`, display name in `SettingsPage`, swipe card + chat-list items in `Friends`.
 
+### Notifications + Feed (overview)
+
+For a current-state architecture index spanning backend + frontend (storage, services, producers, channels, follow-ups, deploy triage), see [`docs/NOTIFICATIONS_AND_FEED.md`](./docs/NOTIFICATIONS_AND_FEED.md). The per-section blurbs below cover frontend-specific conventions only.
+
 ### Notification Formatting Helpers
 
-Notification formatting (converting `NotificationDto` enum payloads into user-facing text + action links) is centralized in `src/lib/notificationFormatters.ts`. Each notification type has a formatter function that produces `{ title, message, actionText?, actionHref? }`. The `<NotificationDropdown>` and `/notifications` page consume these helpers to render consistent, translated notification text.
+Notification formatting (converting `NotificationDto` enum payloads into user-facing text + action links) is centralized in `src/lib/notificationFormatting.ts`. `formatNotificationTitle(n, t)` renders the title (i18n key per type, with `{actor}` / `{title}` / `{preview}` / `{rank}` placeholders). `formatNotificationLink(n)` maps each type to its destination route — note `messageReceived` goes to `/friends?tab=chats&chat={chatId}` (private chats live on Friends.tsx, not Talks.tsx).
 
-Maintained in: `<NotificationBell>`, `<NotificationDropdown>`, notification list page.
+Backend resolves `ActorName` + `ActorAvatar` at read time via `IUserService.GetUserByIdAsync` (UserCache-backed in Azure mode, O(1) lookup; batched by unique actorId in `ListAsync`). Existing rows benefit retroactively — no migration. Trade-off: renames are reflected in old notifications.
+
+Used by `<NotificationBell>`, `<NotificationDropdown>`, `/notifications` page, and every Feed card.
+
+### Conversation Supersede
+
+When a `MessageReceived` or `ForumReplyToThread` notification is produced, the backend hard-deletes prior notifications for the same `(recipient, chatId)` / `(recipient, topicId)` so the feed only shows the latest one. Other types are unaffected. Implemented server-side in `NotificationProducer.SupersedeOlderAsync`; nothing to do on the frontend — `ListAsync` naturally returns only the surviving rows.
 
 ### Web Push Channel
 
@@ -262,7 +272,19 @@ Add a new flag in 4 places, all in lockstep: (1) `FeatureFlagsConfig` record + `
 
 ### Feed Page (`/feed`)
 
-Fifth bottom-nav button (between Friends and AloeVera) when `flags.feedEnabled === true`. The page itself (`src/pages/Feed.tsx`) reads from the same `notificationStore` as `/notifications` but renders rich cards via `FeedCardForNotification` (dispatcher in `src/components/feed/index.tsx`). Cards lazy-fetch additional context (actor user via `usersApi.getUserById`, event via `eventsApi.getEventById`) through module-level promise caches in `src/components/feed/feedContextCache.ts` — multiple notifications referencing the same user/event share one network round-trip. The bell dropdown's "See all" link routes to `/feed` when the flag is on, falls back to `/notifications` when off.
+Fifth bottom-nav button (between Friends and AloeVera) when `flags.feedEnabled === true`. The page itself (`src/pages/Feed.tsx`) reads from the same `notificationStore` as `/notifications` but renders rich cards via `FeedCardForNotification` (dispatcher in `src/components/feed/index.tsx`). Cards lazy-fetch additional context (actor user via `usersApi.getUserById`, event via `eventsApi.getEventById`) through module-level promise caches in `src/components/feed/feedContextCache.ts` — multiple notifications referencing the same user/event share one network round-trip. The bell dropdown's "See all" link routes to `/feed` when the flag is on, falls back to `/notifications` when off. Header matches the AloeVera/Friends/etc. primary-page pattern (title + `<NotificationBell />` + page icon — no back arrow).
+
+### Forum Topic Subscriptions
+
+Users explicitly subscribe to forum topics to receive `ForumReplyToThread` notifications. Creating a topic auto-subscribes the creator. Replying auto-subscribes the replier. `TopicDetail.tsx` renders a Bell/BellOff toggle button next to the topic title; click = optimistic update via `forumsApi.subscribeToTopic` / `unsubscribeFromTopic`, reverts + `showApiError` on failure. Backend producer fanout = current subscribers minus the replier themselves (replaces the old "topic author + every prior replier" fanout). Pre-existing forum participation is NOT backfilled — users who once replied but never re-engaged won't keep getting notifications.
+
+The Settings page type label for `forumReplyToThread` reads "Replies in topics you follow" / "Ответы в темах, на которые подписан" to reflect the subscription-driven semantics.
+
+### Smart Back Navigation (`useSmartBack`)
+
+Helper at `src/hooks/useSmartBack.ts`. `useSmartBack(fallbackPath)` returns a click handler that calls `navigate(-1)` when there's a previous history entry, falls back to `fallbackPath` when `location.key === 'default'` (fresh tab / deep link — `navigate(-1)` would exit the SPA).
+
+Used by `EventDetails.tsx` and `Friends.tsx` private-chat header so the back button returns to whichever page the user came from: Feed → event/chat → back = Feed; events list → event → back = events list; deep link → event → back = `/aloevera` (fallback). Talks.tsx forum back logic is NOT wired through this yet (more intermediate states — apply if forum-reply notifications surface complaints).
 
 ### Admin shell (second Vite entry)
 
