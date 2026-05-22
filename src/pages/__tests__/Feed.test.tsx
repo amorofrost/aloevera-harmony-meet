@@ -11,6 +11,13 @@ vi.mock('@/components/ui/sonner', () => ({
   Toaster: () => null,
 }));
 
+// NotificationBell is exercised by its own test suite; stub it out here so
+// these tests stay focused on Feed behavior and don't have to mock the bell's
+// internal list/unreadCount fetches or its mobile-detection hook.
+vi.mock('@/components/notifications/NotificationBell', () => ({
+  NotificationBell: () => null,
+}));
+
 // Use `vi.hoisted` so the mock fns can be referenced inside `vi.mock` factories
 // (those factories are hoisted to the top of the file).
 const {
