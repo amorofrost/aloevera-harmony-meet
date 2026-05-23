@@ -306,6 +306,14 @@ export interface TimeseriesPointDto {
   p99: number | null;
 }
 
+export interface DimensionRowDto {
+  dimensionKey: string;
+  count: number;
+  p50: number | null;
+  p95: number | null;
+  p99: number | null;
+}
+
 export interface BiTimeseriesDto {
   days: string[];
   registered: number[];
@@ -1104,6 +1112,39 @@ export const adminApi = {
       });
       if (params.dimensionKey) q.set('dimensionKey', params.dimensionKey);
       return apiClient.get<TimeseriesPointDto[]>(`/api/v1/admin/metrics/timeseries?${q}`);
+    },
+
+    // Lists distinct dimension keys for a category within a time window, ranked by
+    // total count. Backend endpoint is pending — until it ships, the call 404s and
+    // this method returns an empty list so the UI can degrade to a manual-key input.
+    async getDimensions(params: {
+      category: string;
+      from: string;
+      to: string;
+      limit?: number;
+    }): Promise<ApiResponse<DimensionRowDto[]>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: [
+            { dimensionKey: 'backend|GET|~api~v1~users~me|200', count: 412, p50: 38, p95: 142, p99: 410 },
+            { dimensionKey: 'backend|POST|~api~v1~messages|200', count: 187, p50: 64, p95: 220, p99: 612 },
+            { dimensionKey: 'backend|GET|~api~v1~events|200', count: 96, p50: 22, p95: 88, p99: 190 },
+          ] as DimensionRowDto[],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const q = new URLSearchParams({
+        category: params.category,
+        from: params.from,
+        to: params.to,
+      });
+      if (params.limit !== undefined) q.set('limit', String(params.limit));
+      const res = await apiClient.get<DimensionRowDto[]>(`/api/v1/admin/metrics/dimensions?${q}`);
+      if (!res.success && res.error?.code === 'HTTP_404') {
+        return { success: true, data: [], timestamp: new Date().toISOString() };
+      }
+      return res;
     },
 
     async getBi(range: '24h' | '7d' | '30d'): Promise<ApiResponse<BiTimeseriesDto>> {

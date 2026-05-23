@@ -57,6 +57,7 @@ vi.mock('@/services/api/adminApi', () => ({
         ],
       }),
       getTimeseries: vi.fn().mockResolvedValue({ success: true, data: [] }),
+      getDimensions: vi.fn().mockResolvedValue({ success: true, data: [] }),
       getBi: vi.fn().mockResolvedValue({
         success: true,
         data: {

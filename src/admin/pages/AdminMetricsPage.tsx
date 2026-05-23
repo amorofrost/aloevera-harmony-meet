@@ -13,6 +13,7 @@ import { ContainerStatusTable } from '@/admin/components/metrics/ContainerStatus
 import { UsersTimeChart } from '@/admin/components/metrics/UsersTimeChart';
 import { RequestVolumeTable } from '@/admin/components/metrics/RequestVolumeTable';
 import { LatencyChart } from '@/admin/components/metrics/LatencyChart';
+import { PerEndpointMetricsPanel } from '@/admin/components/metrics/PerEndpointMetricsPanel';
 import { BiEventsPanel } from '@/admin/components/metrics/BiEventsPanel';
 import { MetricsToggleSheet } from '@/admin/components/metrics/MetricsToggleSheet';
 
@@ -54,6 +55,7 @@ export default function AdminMetricsPage() {
   const [containers, setContainers] = useState<ContainerStatusDto[]>([]);
   const [bi, setBi] = useState<BiTimeseriesDto | null>(null);
   const [reqTimeseries, setReqTimeseries] = useState<TimeseriesPointDto[]>([]);
+  const [reqWindow, setReqWindow] = useState<{ from: string; to: string; resolution: 'minute' | 'hour' } | null>(null);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<Range>('24h');
   const [toggleOpen, setToggleOpen] = useState(false);
@@ -80,6 +82,7 @@ export default function AdminMetricsPage() {
     if (ct.success && ct.data) setContainers(ct.data);
     if (biData.success && biData.data) setBi(biData.data);
     if (ts.success && ts.data) setReqTimeseries(ts.data);
+    setReqWindow({ from, to, resolution });
 
     setLoading(false);
   }, []);
@@ -161,6 +164,25 @@ export default function AdminMetricsPage() {
               <LatencyChart points={reqTimeseries} />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* 4b. Per-endpoint breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">Request volume by endpoint</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reqWindow ? (
+            <PerEndpointMetricsPanel
+              category="request_timing"
+              from={reqWindow.from}
+              to={reqWindow.to}
+              resolution={reqWindow.resolution}
+            />
+          ) : (
+            <div className="text-sm text-muted-foreground">Loading…</div>
+          )}
         </CardContent>
       </Card>
 
