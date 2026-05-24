@@ -3,6 +3,7 @@ import type { User, PromptAnswer } from '@/types/user';
 export const mockUsers: (User & { email: string; password: string })[] = [
   {
     id: 'user-1',
+    accountName: 'alice99',
     name: 'Алиса Иванова',
     email: 'alice@example.com',
     password: 'Test123!@#',
@@ -46,6 +47,7 @@ export const mockUsers: (User & { email: string; password: string })[] = [
   },
   {
     id: 'user-2',
+    accountName: 'boris_p',
     name: 'Борис Петров',
     email: 'boris@example.com',
     password: 'Test123!@#',
@@ -89,6 +91,7 @@ export const mockUsers: (User & { email: string; password: string })[] = [
   },
   {
     id: 'mock-user-by',
+    accountName: 'alina_minsk',
     name: 'Аліна',
     email: 'alina@example.com',
     password: 'Test123!@#',
@@ -126,6 +129,7 @@ export const mockUsers: (User & { email: string; password: string })[] = [
   },
   {
     id: 'mock-user-us',
+    accountName: 'sarah_sf',
     name: 'Sarah',
     email: 'sarah@example.com',
     password: 'Test123!@#',
@@ -165,6 +169,7 @@ export const mockUsers: (User & { email: string; password: string })[] = [
   },
   {
     id: 'mock-user-de',
+    accountName: 'hannah_berlin',
     name: 'Hannah',
     email: 'hannah@example.com',
     password: 'Test123!@#',

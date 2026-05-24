@@ -8,6 +8,7 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  accountName: string;
   email: string;
   password: string;
   name: string;
@@ -28,6 +29,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
+    accountName?: string;
     emailVerified: boolean;
     authMethods: string[];
     profileImage: string;
@@ -65,6 +67,7 @@ export interface TelegramLoginResult {
 
 export interface TelegramRegisterRequest {
   ticket: string;
+  accountName: string;
   name: string;
   age: number;
   country: string;
@@ -91,6 +94,7 @@ export interface TelegramMiniAppLoginResult {
 
 export interface TelegramMiniAppRegisterRequest {
   initData: string;
+  accountName: string;
   name: string;
   age: number;
   country: string;
@@ -127,6 +131,7 @@ export interface GoogleLoginResult {
 
 export interface GoogleRegisterRequest {
   ticket: string;
+  accountName: string;
   name: string;
   age: number;
   country: string;
@@ -427,6 +432,28 @@ export const authApi = {
       return apiClient.get<{ requireEventInvite: boolean }>('/api/v1/auth/registration-config');
     }
     return { success: true, data: { requireEventInvite: false }, timestamp: new Date().toISOString() };
+  },
+
+  async checkAccountNameAvailability(name: string): Promise<{ available: boolean; reason?: 'invalidFormat' | 'reserved' | 'taken' }> {
+    if (isApiMode()) {
+      const resp = await apiClient.get<{ available: boolean; reason?: 'invalidFormat' | 'reserved' | 'taken' }>(
+        `/api/v1/auth/account-name-availability?name=${encodeURIComponent(name)}`
+      );
+      if (resp.success && resp.data) return resp.data;
+      return { available: false, reason: 'invalidFormat' };
+    }
+
+    // Mock implementation: format check, reserved check, then mockUsers collision check.
+    await new Promise((r) => setTimeout(r, 150));
+    const RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
+    if (!RE.test(name)) return { available: false, reason: 'invalidFormat' };
+    const reserved = new Set(['admin', 'root', 'system', 'support', 'help', 'api', 'auth', 'login', 'logout',
+      'register', 'settings', 'profile', 'user', 'users', 'me', 'you', 'search', 'feed',
+      'friends', 'talks', 'aloevera', 'aloeve', 'aloeband', 'telegram', 'google',
+      'official', 'mod', 'moderator', 'staff', 'undefined', 'null', 'anonymous', 'bot']);
+    if (reserved.has(name.toLowerCase())) return { available: false, reason: 'reserved' };
+    const taken = mockUsers.some(u => (u.accountName ?? '').toLowerCase() === name.toLowerCase());
+    return taken ? { available: false, reason: 'taken' } : { available: true };
   },
 
   // Reset password — data.password (form field) maps to newPassword in the API body

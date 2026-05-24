@@ -7,6 +7,7 @@ import { COUNTRY_BY_CODE } from '@/data/countries';
 import { flagEmoji } from '@/lib/countryFlag';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import SwipeCard from '@/components/ui/swipe-card';
@@ -70,6 +71,7 @@ const Friends = () => {
   const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [handleQuery, setHandleQuery] = useState('');
 
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -204,6 +206,12 @@ const Friends = () => {
   const nextUser = () => {
     setCurrentUserIndex(prev => prev + 1);
     setShowDeckDetails(false);
+  };
+
+  const handleFindByHandle = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = handleQuery.trim().toLowerCase();
+    if (trimmed) navigate(`/u/${trimmed}`);
   };
 
   const formatDateShort = (date: Date) =>
@@ -401,7 +409,7 @@ const Friends = () => {
             <h2 className="text-2xl font-bold mb-1">
               {target.name}{target.age ? `, ${target.age}` : ''}
             </h2>
-            <UserBadges rank={target.rank} staffRole={target.staffRole} />
+            <UserBadges rank={target.rank} staffRole={target.staffRole} accountName={target.accountName} />
             {(target.country || target.secondaryCountry || target.location || (target.eventsAttended && target.eventsAttended.length > 0)) && (
               <div className="flex items-center gap-3 text-sm opacity-90 mb-2 flex-wrap">
                 {(target.country || target.secondaryCountry || target.location) && <LocationDisplay country={target.country} region={target.region} secondaryCountry={target.secondaryCountry} secondaryRegion={target.secondaryRegion} location={target.location} />}
@@ -573,6 +581,18 @@ const Friends = () => {
 
           {/* Search Tab */}
           <TabsContent value="search" className="mt-6">
+            <form onSubmit={handleFindByHandle} className="mb-4 flex gap-2">
+              <Input
+                type="text"
+                placeholder={t('friends.findByHandlePlaceholder')}
+                value={handleQuery}
+                onChange={(e) => setHandleQuery(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" size="icon" aria-label={t('friends.findByHandle')}>
+                <SearchIcon className="w-4 h-4" />
+              </Button>
+            </form>
             {(filter.country || filter.region) && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm">
                 <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1">
@@ -663,7 +683,7 @@ const Friends = () => {
                             <h3 className="font-semibold truncate">{chat.otherUser.name}</h3>
                             {chat.lastMessage && <span className="text-xs text-muted-foreground">{formatChatDate(chat.lastMessage.timestamp)}</span>}
                           </div>
-                          <UserBadges rank={chat.otherUser.rank} staffRole={chat.otherUser.staffRole} />
+                          <UserBadges rank={chat.otherUser.rank} staffRole={chat.otherUser.staffRole} accountName={chat.otherUser.accountName} />
                           {chat.lastMessage && (
                             <div className="flex items-center justify-between">
                               <p className="text-sm text-muted-foreground truncate">{chat.lastMessage.content}</p>

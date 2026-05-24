@@ -9,6 +9,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   promptsSchema,
+  accountNameSchema,
 } from '../validators';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,7 @@ describe('loginSchema', () => {
 // registerSchema
 // ---------------------------------------------------------------------------
 const validRegister = {
+  accountName: 'alice_test',
   email: 'user@example.com',
   password: 'Password1!',
   name: 'Alice',
@@ -328,6 +330,7 @@ describe('promptsSchema', () => {
 // ---------------------------------------------------------------------------
 describe('country/region in registerSchema', () => {
   const base = {
+    accountName: 'alice_test',
     email: 'a@b.co',
     password: 'Aa1!aaaa',
     name: 'X',
@@ -373,7 +376,7 @@ describe('country/region in profileEditSchema', () => {
 describe('country/region in telegramRegisterSchema', () => {
   it('accepts ISO country', () => {
     expect(telegramRegisterSchema.safeParse({
-      name: 'X', age: 25, country: 'RU', region: 'Москва', gender: 'male',
+      accountName: 'alice_test', name: 'X', age: 25, country: 'RU', region: 'Москва', gender: 'male',
     }).success).toBe(true);
   });
 });
@@ -383,6 +386,7 @@ describe('country/region in telegramRegisterSchema', () => {
 // ---------------------------------------------------------------------------
 describe('secondary country/region in registerSchema', () => {
   const base = {
+    accountName: 'alice_test',
     email: 'a@b.co',
     password: 'Aa1!aaaa',
     name: 'X',
@@ -407,4 +411,25 @@ describe('secondary country/region in registerSchema', () => {
   it('rejects secondaryRegion longer than 80 chars', () => {
     expect(registerSchema.safeParse({ ...base, secondaryRegion: 'a'.repeat(81) }).success).toBe(false);
   });
+});
+
+// ---------------------------------------------------------------------------
+// accountNameSchema
+// ---------------------------------------------------------------------------
+
+describe('accountNameSchema', () => {
+  it.each(['alice', 'alice99', 'Alice_Doe', 'a1234', 'abcdefghijklmnopqrstuvwxyz012345'])(
+    'accepts valid name %s', (name) => {
+      expect(accountNameSchema.safeParse(name).success).toBe(true);
+    });
+
+  it.each(['', 'ab', 'abcd', '1alice', '_alice', 'alice-doe', 'alice.doe', 'alice doe', 'a'.repeat(33)])(
+    'rejects invalid format %s', (name) => {
+      expect(accountNameSchema.safeParse(name).success).toBe(false);
+    });
+
+  it.each(['admin', 'ADMIN', 'aloevera', 'telegram', 'system'])(
+    'rejects reserved name %s', (name) => {
+      expect(accountNameSchema.safeParse(name).success).toBe(false);
+    });
 });

@@ -159,6 +159,19 @@ export const usersApi = {
     return mockSuccess(user);
   },
 
+  async getUserByAccountName(accountName: string): Promise<ApiResponse<User | null>> {
+    if (isApiMode()) {
+      const res = await apiClient.get<any>(`/api/v1/users/by-account-name/${encodeURIComponent(accountName)}`);
+      if (res.success && res.data) {
+        return { ...res, data: mapUserFromApi(res.data) };
+      }
+      return res as ApiResponse<User | null>;
+    }
+    await new Promise((r) => setTimeout(r, 150));
+    const user = mockSearchProfiles.find(u => (u.accountName ?? '').toLowerCase() === accountName.toLowerCase()) ?? null;
+    return mockSuccess(user);
+  },
+
   async getCurrentUser(): Promise<ApiResponse<User | null>> {
     if (isApiMode()) {
       const meRes = await apiClient.get<any>('/api/v1/auth/me');

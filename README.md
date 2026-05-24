@@ -31,13 +31,14 @@ AloeVera Harmony Meet is a comprehensive fan community platform that combines da
 | Forms | ✅ react-hook-form + Zod on all wired forms (`src/lib/validators.ts`) |
 | Error handling | ✅ sonner toasts via `showApiError` (`src/lib/apiError.ts`) |
 | Forum | ✅ Sections, topics, replies, topic creation, per-topic event visibility; **event discussions** via `event-discussions/*` |
-| Backend persistence | ✅ Azure Table Storage (23 tables, `Lovecraft.Tools.Seeder`) |
+| Backend persistence | ✅ Azure Table Storage (32 tables, `Lovecraft.Tools.Seeder`) |
 | Telegram bot worker | ✅ `Lovecraft.TelegramBot` separate hosted-service container |
 | HTTPS | ✅ Cloudflare proxy + Origin Cert on nginx; HTTP→HTTPS redirect |
 | Rate limiting | ✅ Sliding window 20 req/min/IP on auth endpoints |
 | Roles & ACL | ✅ `appconfig`-driven rank thresholds + permissions; `[RequireStaffRole]` + `[RequirePermission]`; `staffRole` JWT claim |
+| Monitoring & metrics | ✅ Admin dashboard at `/admin/metrics` (container status, req volume + latency, DAU/MAU, BI counts); Serilog structured JSON to stdout in all .NET containers; 4 toggleable collection categories; see **[/docs/MONITORING.md](/docs/MONITORING.md)** |
 
-See [/docs/ISSUES.md](/docs/ISSUES.md) for open issues, [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for the service layer, [/docs/FRONTEND_AUTH_GUIDE.md](/docs/FRONTEND_AUTH_GUIDE.md) for auth integration, and [/docs/EVENTS.md](/docs/EVENTS.md) for event behavior.
+See [/docs/ISSUES.md](/docs/ISSUES.md) for open issues, [/docs/API_INTEGRATION.md](/docs/API_INTEGRATION.md) for the service layer, [/docs/FRONTEND_AUTH_GUIDE.md](/docs/FRONTEND_AUTH_GUIDE.md) for auth integration, [/docs/EVENTS.md](/docs/EVENTS.md) for event behavior, and [/docs/MONITORING.md](/docs/MONITORING.md) for the operator's monitoring guide.
 
 ## 🚀 Quick Start
 
