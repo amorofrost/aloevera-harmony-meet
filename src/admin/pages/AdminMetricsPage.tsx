@@ -5,6 +5,7 @@ import {
   type ContainerStatusDto,
   type TimeseriesPointDto,
   type BiTimeseriesDto,
+  type EndpointStatDto,
 } from '@/services/api/adminApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ export default function AdminMetricsPage() {
   const [containers, setContainers] = useState<ContainerStatusDto[]>([]);
   const [bi, setBi] = useState<BiTimeseriesDto | null>(null);
   const [reqTimeseries, setReqTimeseries] = useState<TimeseriesPointDto[]>([]);
+  const [endpointStats, setEndpointStats] = useState<EndpointStatDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<Range>('24h');
   const [toggleOpen, setToggleOpen] = useState(false);
@@ -69,17 +71,19 @@ export default function AdminMetricsPage() {
     const resolution: 'minute' | 'hour' =
       currentRange === '1h' || currentRange === '24h' ? 'minute' : 'hour';
 
-    const [ov, ct, biData, ts] = await Promise.all([
+    const [ov, ct, biData, ts, epStats] = await Promise.all([
       adminApi.metrics.getOverview(),
       adminApi.metrics.getContainers(),
       adminApi.metrics.getBi(biRange),
       adminApi.metrics.getTimeseries({ category: 'request_timing', from, to, resolution }),
+      adminApi.metrics.getEndpointStats({ from, to, resolution }),
     ]);
 
     if (ov.success && ov.data) setOverview(ov.data);
     if (ct.success && ct.data) setContainers(ct.data);
     if (biData.success && biData.data) setBi(biData.data);
     if (ts.success && ts.data) setReqTimeseries(ts.data);
+    if (epStats.success && epStats.data) setEndpointStats(epStats.data);
 
     setLoading(false);
   }, []);
@@ -153,8 +157,8 @@ export default function AdminMetricsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Recent buckets (top 10)</p>
-              <RequestVolumeTable points={reqTimeseries} />
+              <p className="text-xs text-muted-foreground mb-2">Top endpoints by count</p>
+              <RequestVolumeTable endpoints={endpointStats} loading={loading} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-2">Latency percentiles</p>
