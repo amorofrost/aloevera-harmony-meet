@@ -139,6 +139,8 @@ class ApiClient {
       finalStatus = response.status;
 
       if (response.status === 401 && !isAuthEndpoint) {
+        // Capture *before* the refresh attempt — handleUnauthorized may clear the tokens.
+        const hadSession = !!this.getRefreshToken();
         const newToken = await this.handleUnauthorized();
 
         if (newToken) {
@@ -171,15 +173,18 @@ class ApiClient {
           }
         }
 
-        // Refresh failed — redirect to login (main app vs admin shell)
-        if (typeof window !== 'undefined') {
+        // Only redirect when there was actually a session to lose. Anonymous callers
+        // hitting an [Authorize] endpoint just get the 401 back — reloading them to
+        // `/` from `/` would be an infinite document reload (and is what caused the
+        // welcome-page metrics 401 to lock users out).
+        if (hadSession && typeof window !== 'undefined') {
           const p = window.location.pathname;
           window.location.href =
             p.startsWith('/admin') || p.endsWith('admin.html') ? '/admin/login' : '/';
         }
         return {
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Session expired. Please log in again.' },
+          error: { code: 'UNAUTHORIZED', message: hadSession ? 'Session expired. Please log in again.' : 'Authentication required.' },
           timestamp: new Date().toISOString(),
         };
       }
