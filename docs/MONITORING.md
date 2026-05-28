@@ -158,6 +158,7 @@ Daily 3am UTC: `JanitorWorker` deletes `metricsminute` partitions older than `re
 | `GET` | `/api/v1/admin/metrics/overview` | `[RequireStaffRole("admin")]` | KPI tiles |
 | `GET` | `/api/v1/admin/metrics/containers` | admin | Container status grid |
 | `GET` | `/api/v1/admin/metrics/timeseries` | admin | Charts (`?category=&from=&to=&resolution=minute\|hour`) |
+| `GET` | `/api/v1/admin/metrics/endpoint-timeseries` | admin | Per-endpoint count+latency (`?method=&route=&from=&to=&resolution=`) |
 | `GET` | `/api/v1/admin/metrics/bi` | admin | Users-over-time series (`?range=24h\|7d\|30d`) |
 | `GET` | `/api/v1/admin/metrics/config` | admin | Read toggle config (full incl. retention) |
 | `PUT` | `/api/v1/admin/metrics/config` | admin | Update + invalidate cache |
@@ -196,6 +197,7 @@ Rows are seeded by `Lovecraft.Tools.Seeder` on initial deploy. Missing rows fall
 
 - **Admin shell doesn't init the frontend collector.** `src/admin/main.tsx` doesn't call `frontendMetrics.init()` — admin-page API traffic is not in `frontend_perf` samples. Trivial fix when needed.
 - **No source toggle on the request-volume panel.** Dashboard always shows `request_timing` (backend perspective). `frontend_perf` data is collected but not surfaced.
+- **Per-endpoint drill-down (shipped 2026-05-27).** Resource IDs in request-timing/frontend-perf dimension keys are normalized to `{id}` via `MetricsRouteNormalizer` (backend), so the endpoint list is per-API not per-resource. The endpoint table has a search box + GET/POST/PUT/DELETE filter pills (client-side). Clicking a row replaces the right panel with that endpoint's call-count and p50/p95/p99 charts over time, fed by `GET /api/v1/admin/metrics/endpoint-timeseries?method=&route=&from=&to=&resolution=`. `endpoint-stats` now returns one row per `(method, route)` summed across status codes (no `statusCode` field; new `routeKey` identifier).
 - **No `bi|event_registered|{eventId}` breakdown.** Intentionally bounded — eventId is user-controllable string, putting it in RowKey was a cardinality + injection risk. If per-event breakdown is needed, query `eventattendees` instead.
 - **No alerting.** Pull-based dashboard only. Threshold-based push alerts (Slack / email) would be a separate spec.
 - **No log shipping.** Serilog writes JSON to stdout; `docker compose logs` is the access path. Adding a sink (App Insights / Loki / Seq) is a one-line config change in each container's `Program.cs`.
