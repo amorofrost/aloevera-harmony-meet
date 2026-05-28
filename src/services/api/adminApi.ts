@@ -324,10 +324,9 @@ export interface MetricsAdminConfigDto {
 }
 
 export interface EndpointStatDto {
-  dimensionKey: string;
+  routeKey: string;
   method: string;
   route: string;
-  statusCode: number | null;
   count: number;
   p50: number | null;
   p95: number | null;
@@ -1137,22 +1136,20 @@ export const adminApi = {
       from: string;
       to: string;
       resolution: 'minute' | 'hour';
-      limit?: number;
     }): Promise<ApiResponse<EndpointStatDto[]>> {
       if (!isApiMode()) {
         return {
           success: true,
           data: [
-            { dimensionKey: 'backend|GET|api~v1~users|200',                         method: 'GET',    route: '/api/v1/users',                         statusCode: 200, count: 842, p50: 34,  p95: 142, p99: 310 },
-            { dimensionKey: 'backend|POST|api~v1~forum~topics~{topicId}~replies|201', method: 'POST', route: '/api/v1/forum/topics/{topicId}/replies', statusCode: 201, count: 312, p50: 89,  p95: 280, p99: 490 },
-            { dimensionKey: 'backend|GET|api~v1~events|200',                          method: 'GET',  route: '/api/v1/events',                        statusCode: 200, count: 289, p50: 41,  p95: 160, p99: 280 },
-            { dimensionKey: 'backend|POST|api~v1~chats~{id}~messages|201',            method: 'POST', route: '/api/v1/chats/{id}/messages',           statusCode: 201, count: 241, p50: 62,  p95: 195, p99: 380 },
-            { dimensionKey: 'backend|GET|api~v1~matching~likes~received|200',         method: 'GET',  route: '/api/v1/matching/likes/received',       statusCode: 200, count: 198, p50: 28,  p95: 110, p99: 210 },
-            { dimensionKey: 'backend|POST|api~v1~matching~likes|200',                 method: 'POST', route: '/api/v1/matching/likes',                statusCode: 200, count: 174, p50: 55,  p95: 220, p99: 410 },
-            { dimensionKey: 'backend|GET|api~v1~forum~topics~{topicId}~replies|200',  method: 'GET',  route: '/api/v1/forum/topics/{topicId}/replies', statusCode: 200, count: 143, p50: 48,  p95: 175, p99: 320 },
-            { dimensionKey: 'backend|GET|api~v1~users~me|200',                        method: 'GET',  route: '/api/v1/users/me',                      statusCode: 200, count: 138, p50: 22,  p95: 89,  p99: 160 },
-            { dimensionKey: 'backend|POST|api~v1~auth~refresh|200',                   method: 'POST', route: '/api/v1/auth/refresh',                  statusCode: 200, count: 112, p50: 18,  p95: 72,  p99: 130 },
-            { dimensionKey: 'backend|GET|api~v1~users|401',                           method: 'GET',  route: '/api/v1/users',                         statusCode: 401, count: 23,  p50: 8,   p95: 28,  p99: 55  },
+            { routeKey: 'GET|/api/v1/users',                           method: 'GET',  route: '/api/v1/users',                          count: 865, p50: 33, p95: 138, p99: 300 },
+            { routeKey: 'POST|/api/v1/forum/topics/{topicId}/replies',  method: 'POST', route: '/api/v1/forum/topics/{topicId}/replies',  count: 312, p50: 89, p95: 280, p99: 490 },
+            { routeKey: 'GET|/api/v1/events',                           method: 'GET',  route: '/api/v1/events',                          count: 289, p50: 41, p95: 160, p99: 280 },
+            { routeKey: 'POST|/api/v1/chats/{id}/messages',            method: 'POST', route: '/api/v1/chats/{id}/messages',            count: 241, p50: 62, p95: 195, p99: 380 },
+            { routeKey: 'GET|/api/v1/matching/likes/received',         method: 'GET',  route: '/api/v1/matching/likes/received',        count: 198, p50: 28, p95: 110, p99: 210 },
+            { routeKey: 'POST|/api/v1/matching/likes',                 method: 'POST', route: '/api/v1/matching/likes',                 count: 174, p50: 55, p95: 220, p99: 410 },
+            { routeKey: 'GET|/api/v1/forum/topics/{topicId}/replies',  method: 'GET',  route: '/api/v1/forum/topics/{topicId}/replies', count: 143, p50: 48, p95: 175, p99: 320 },
+            { routeKey: 'GET|/api/v1/users/me',                        method: 'GET',  route: '/api/v1/users/me',                       count: 138, p50: 22, p95: 89,  p99: 160 },
+            { routeKey: 'POST|/api/v1/auth/refresh',                   method: 'POST', route: '/api/v1/auth/refresh',                   count: 112, p50: 18, p95: 72,  p99: 130 },
           ] as EndpointStatDto[],
           timestamp: new Date().toISOString(),
         };
@@ -1162,8 +1159,27 @@ export const adminApi = {
         to: params.to,
         resolution: params.resolution,
       });
-      if (params.limit !== undefined) q.set('limit', String(params.limit));
       return apiClient.get<EndpointStatDto[]>(`/api/v1/admin/metrics/endpoint-stats?${q}`);
+    },
+
+    async getEndpointTimeseries(params: {
+      method: string;
+      route: string;
+      from: string;
+      to: string;
+      resolution: 'minute' | 'hour';
+    }): Promise<ApiResponse<TimeseriesPointDto[]>> {
+      if (!isApiMode()) {
+        return { success: true, data: [] as TimeseriesPointDto[], timestamp: new Date().toISOString() };
+      }
+      const q = new URLSearchParams({
+        method: params.method,
+        route: params.route,
+        from: params.from,
+        to: params.to,
+        resolution: params.resolution,
+      });
+      return apiClient.get<TimeseriesPointDto[]>(`/api/v1/admin/metrics/endpoint-timeseries?${q}`);
     },
 
     async getConfig(): Promise<ApiResponse<MetricsAdminConfigDto>> {
