@@ -138,7 +138,9 @@ export const usersApi = {
     }
     // mock-mode filter (mirrors backend GetUsersAsync)
     const ci = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-    let list = mockSearchProfiles as User[];
+    // Never show the current user in their own deck. In API mode the backend also
+    // drops already-liked users from the JWT caller; mock mode has no such store.
+    let list = (mockSearchProfiles as User[]).filter(u => u.id !== mockCurrentUser.id);
     if (country && region) {
       list = list.filter(u =>
         (ci(u.country, country) && ci(u.region, region)) ||
