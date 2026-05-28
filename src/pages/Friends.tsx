@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar } from 'lucide-react';
-import { SearchFilterSheet } from '@/components/SearchFilterSheet';
+import { SearchFilterSheet, EMPTY_FILTERS, type SearchFilters } from '@/components/SearchFilterSheet';
 import { LocationDisplay } from '@/components/ui/location-display';
 import { COUNTRY_BY_CODE } from '@/data/countries';
 import { flagEmoji } from '@/lib/countryFlag';
@@ -63,7 +63,7 @@ const Friends = () => {
   const selectedChat = searchParams.get('chat');
   const goBackFromChat = useSmartBack('/friends?tab=chats');
 
-  const [filter, setFilter] = useState<{ country: string; region: string }>({ country: '', region: '' });
+  const [filter, setFilter] = useState<SearchFilters>(EMPTY_FILTERS);
   const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
   const [matches, setMatches] = useState<MatchWithUser[]>([]);
   const [sentLikes, setSentLikes] = useState<SentLikeWithUser[]>([]);
@@ -71,7 +71,6 @@ const Friends = () => {
   const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
-  const [handleQuery, setHandleQuery] = useState('');
 
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -150,6 +149,11 @@ const Friends = () => {
           take: 100,
           country: filter.country || undefined,
           region: filter.region || undefined,
+          accountName: filter.accountName || undefined,
+          name: filter.name || undefined,
+          minAge: filter.minAge ?? undefined,
+          maxAge: filter.maxAge ?? undefined,
+          gender: filter.gender || undefined,
         });
         if (result.success && result.data) setSearchProfiles(result.data);
       } finally {
@@ -157,7 +161,10 @@ const Friends = () => {
       }
     };
     load();
-  }, [filter.country, filter.region]);
+  }, [
+    filter.country, filter.region, filter.accountName, filter.name,
+    filter.minAge, filter.maxAge, filter.gender,
+  ]);
 
   // Sync activeChatId with URL and load messages when selectedChat changes
   useEffect(() => {
@@ -208,11 +215,64 @@ const Friends = () => {
     setShowDeckDetails(false);
   };
 
-  const handleFindByHandle = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = handleQuery.trim().toLowerCase();
-    if (trimmed) navigate(`/u/${trimmed}`);
+  const genderLabel = (g: SearchFilters['gender']): string => {
+    switch (g) {
+      case 'male': return t('search.genderMale');
+      case 'female': return t('search.genderFemale');
+      case 'non-binary': return t('search.genderNonBinary');
+      default: return '';
+    }
   };
+
+  const activeChips = useMemo(() => {
+    const chips: { key: string; label: React.ReactNode; clear: () => void }[] = [];
+    const patch = (next: Partial<SearchFilters>) => setFilter(prev => ({ ...prev, ...next }));
+    if (filter.accountName) {
+      chips.push({
+        key: 'accountName',
+        label: <>@{filter.accountName}</>,
+        clear: () => patch({ accountName: '' }),
+      });
+    }
+    if (filter.name) {
+      chips.push({
+        key: 'name',
+        label: <>{filter.name}</>,
+        clear: () => patch({ name: '' }),
+      });
+    }
+    if (filter.country || filter.region) {
+      chips.push({
+        key: 'location',
+        label: (
+          <>
+            {filter.country && (
+              <>{flagEmoji(filter.country) || '📍'} {COUNTRY_BY_CODE[filter.country]?.nameRu ?? filter.country}</>
+            )}
+            {filter.region && <> · {filter.region}</>}
+          </>
+        ),
+        clear: () => patch({ country: '', region: '' }),
+      });
+    }
+    if (filter.minAge != null || filter.maxAge != null) {
+      const lo = filter.minAge ?? '';
+      const hi = filter.maxAge ?? '';
+      chips.push({
+        key: 'age',
+        label: <>{t('search.ageRange')}: {lo}–{hi}</>,
+        clear: () => patch({ minAge: null, maxAge: null }),
+      });
+    }
+    if (filter.gender) {
+      chips.push({
+        key: 'gender',
+        label: <>{genderLabel(filter.gender)}</>,
+        clear: () => patch({ gender: '' }),
+      });
+    }
+    return chips;
+  }, [filter, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatDateShort = (date: Date) =>
     new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
@@ -551,7 +611,7 @@ const Friends = () => {
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">Друзья</h1>
           <div className="flex items-center gap-1">
-            <SearchFilterSheet country={filter.country} region={filter.region} onApply={setFilter} />
+            <SearchFilterSheet value={filter} onApply={setFilter} />
             <NotificationBell />
             <Heart className="w-6 h-6 text-primary" />
           </div>
@@ -581,36 +641,28 @@ const Friends = () => {
 
           {/* Search Tab */}
           <TabsContent value="search" className="mt-6">
-            <form onSubmit={handleFindByHandle} className="mb-4 flex gap-2">
-              <Input
-                type="text"
-                placeholder={t('friends.findByHandlePlaceholder')}
-                value={handleQuery}
-                onChange={(e) => setHandleQuery(e.target.value)}
-                className="flex-1"
-              />
-              <Button type="submit" size="icon" aria-label={t('friends.findByHandle')}>
-                <SearchIcon className="w-4 h-4" />
-              </Button>
-            </form>
-            {(filter.country || filter.region) && (
-              <div className="flex items-center gap-2 px-4 py-2 text-sm">
-                <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1">
-                  {filter.country && (
-                    <>
-                      {flagEmoji(filter.country) || '📍'}{' '}
-                      {COUNTRY_BY_CODE[filter.country]?.nameRu ?? filter.country}
-                    </>
-                  )}
-                  {filter.region && <> · {filter.region}</>}
+            {activeChips.length > 0 && (
+              <div className="flex items-center flex-wrap gap-2 px-1 py-2 text-sm">
+                {activeChips.map(chip => (
+                  <span key={chip.key} className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1">
+                    {chip.label}
+                    <button
+                      onClick={chip.clear}
+                      aria-label={t('search.clearFilter')}
+                      className="ml-1"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                {activeChips.length > 1 && (
                   <button
-                    onClick={() => setFilter({ country: '', region: '' })}
-                    aria-label={t('search.clearFilter')}
-                    className="ml-1"
+                    onClick={() => setFilter(EMPTY_FILTERS)}
+                    className="text-xs text-muted-foreground underline"
                   >
-                    ✕
+                    {t('search.clearFilter')}
                   </button>
-                </span>
+                )}
               </div>
             )}
             {isLoading ? (

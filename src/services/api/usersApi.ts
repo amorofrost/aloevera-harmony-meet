@@ -15,6 +15,7 @@ function mapGender(g: string): User['gender'] {
 export function mapUserFromApi(dto: any): User {
   return {
     id: dto.id,
+    accountName: dto.accountName || undefined,
     name: dto.name,
     age: dto.age,
     bio: dto.bio ?? '',
@@ -91,22 +92,53 @@ function mockSuccess<T>(data: T): ApiResponse<T> {
   return { success: true, data, timestamp: new Date().toISOString() };
 }
 
+export interface GetUsersOptions {
+  skip?: number;
+  take?: number;
+  country?: string;
+  region?: string;
+  /** Exact, case-insensitive match on the user's account name (handle). */
+  accountName?: string;
+  /** Case-insensitive substring match on display name. */
+  name?: string;
+  minAge?: number;
+  maxAge?: number;
+  /** Gender filter; uses the frontend User['gender'] hyphenated values. */
+  gender?: User['gender'];
+}
+
+// Hyphenated frontend gender → backend camelCase enum string.
+const genderToApiQuery: Record<User['gender'], string> = {
+  male: 'male',
+  female: 'female',
+  'non-binary': 'nonBinary',
+  'prefer-not-to-say': 'preferNotToSay',
+};
+
 export const usersApi = {
-  async getUsers(opts: { skip?: number; take?: number; country?: string; region?: string } = {}): Promise<ApiResponse<User[]>> {
-    const { skip = 0, take = 100, country, region } = opts;
+  async getUsers(opts: GetUsersOptions = {}): Promise<ApiResponse<User[]>> {
+    const {
+      skip = 0, take = 100,
+      country, region, accountName, name, minAge, maxAge, gender,
+    } = opts;
     if (isApiMode()) {
       const params = new URLSearchParams({ skip: String(skip), take: String(take) });
       if (country) params.set('country', country);
       if (region) params.set('region', region);
+      if (accountName) params.set('accountName', accountName);
+      if (name) params.set('name', name);
+      if (typeof minAge === 'number') params.set('minAge', String(minAge));
+      if (typeof maxAge === 'number') params.set('maxAge', String(maxAge));
+      if (gender) params.set('gender', genderToApiQuery[gender]);
       const res = await apiClient.get<any[]>(`/api/v1/users?${params.toString()}`);
       if (res.success && res.data) {
         return { ...res, data: res.data.map(mapUserFromApi) };
       }
       return res as ApiResponse<User[]>;
     }
-    // mock-mode OR-match filter (mirrors backend Task 3)
+    // mock-mode filter (mirrors backend GetUsersAsync)
     const ci = (a?: string, b?: string) => Boolean(a && b && a.toLowerCase() === b.toLowerCase());
-    let list = mockSearchProfiles;
+    let list = mockSearchProfiles as User[];
     if (country && region) {
       list = list.filter(u =>
         (ci(u.country, country) && ci(u.region, region)) ||
@@ -117,6 +149,17 @@ export const usersApi = {
     } else if (region) {
       list = list.filter(u => ci(u.region, region) || ci(u.secondaryRegion, region));
     }
+    if (accountName) {
+      const lc = accountName.toLowerCase();
+      list = list.filter(u => (u.accountName ?? '').toLowerCase() === lc);
+    }
+    if (name) {
+      const lc = name.toLowerCase();
+      list = list.filter(u => (u.name ?? '').toLowerCase().includes(lc));
+    }
+    if (typeof minAge === 'number') list = list.filter(u => u.age >= minAge);
+    if (typeof maxAge === 'number') list = list.filter(u => u.age <= maxAge);
+    if (gender) list = list.filter(u => u.gender === gender);
     return mockSuccess(list.slice(skip, skip + take));
   },
 

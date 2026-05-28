@@ -482,31 +482,6 @@ const SettingsPage = () => {
             </Card>
 
             <Card className="profile-card">
-              <CardHeader><CardTitle>Предпочтения поиска</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Возрастной диапазон</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input type="number" value={user.preferences.ageRange[0]} onChange={(e) => setUser({...user, preferences: {...user.preferences, ageRange: [parseInt(e.target.value), user.preferences.ageRange[1]]}})} className="w-20" />
-                    <span className="self-center">—</span>
-                    <Input type="number" value={user.preferences.ageRange[1]} onChange={(e) => setUser({...user, preferences: {...user.preferences, ageRange: [user.preferences.ageRange[0], parseInt(e.target.value)]}})} className="w-20" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Показывать</Label>
-                  <Select value={user.preferences.showMe} onValueChange={(v) => setUser({...user, preferences: {...user.preferences, showMe: v as User['preferences']['showMe']}})}>
-                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="everyone">Всех</SelectItem>
-                      <SelectItem value="men">Мужчин</SelectItem>
-                      <SelectItem value="female">Женщин</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="profile-card">
               <CardHeader><CardTitle>{t('notifications.settings.title')}</CardTitle></CardHeader>
               <CardContent>
                 <NotificationPreferences

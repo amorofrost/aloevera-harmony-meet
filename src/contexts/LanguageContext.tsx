@@ -84,6 +84,19 @@ const translations = {
     'search.clearFilter': 'Сбросить фильтры',
     'search.allCountries': 'Все страны',
     'search.allRegions': 'Все регионы',
+    'search.handle': 'Логин (@handle)',
+    'search.handlePlaceholder': 'например, alice_99',
+    'search.name': 'Имя',
+    'search.namePlaceholder': 'например, Анна',
+    'search.location': 'Локация',
+    'search.ageRange': 'Возраст',
+    'search.minAge': 'От',
+    'search.maxAge': 'До',
+    'search.gender': 'Пол',
+    'search.genderAll': 'Любой',
+    'search.genderMale': 'Мужчины',
+    'search.genderFemale': 'Женщины',
+    'search.genderNonBinary': 'Небинарные',
 
     // Events
     'events.applyCode': 'Показать детали по коду',
@@ -105,10 +118,6 @@ const translations = {
     'events.past': 'Прошедшие',
     'events.title': 'События АлоэВера',
     'events.upcoming': 'Предстоящие',
-
-    // Friends
-    'friends.findByHandle': 'Найти по @логину',
-    'friends.findByHandlePlaceholder': 'например, alice_99',
 
     // Store (merch)
     'store.officialPurchase': 'Купить на официальном сайте',
@@ -381,6 +390,19 @@ const translations = {
     'search.clearFilter': 'Clear filters',
     'search.allCountries': 'All countries',
     'search.allRegions': 'All regions',
+    'search.handle': 'Handle (@username)',
+    'search.handlePlaceholder': 'e.g. alice_99',
+    'search.name': 'Name',
+    'search.namePlaceholder': 'e.g. Anna',
+    'search.location': 'Location',
+    'search.ageRange': 'Age',
+    'search.minAge': 'Min',
+    'search.maxAge': 'Max',
+    'search.gender': 'Gender',
+    'search.genderAll': 'Any',
+    'search.genderMale': 'Men',
+    'search.genderFemale': 'Women',
+    'search.genderNonBinary': 'Non-binary',
 
     // Events
     'events.applyCode': 'Apply code',
@@ -402,10 +424,6 @@ const translations = {
     'events.past': 'Past',
     'events.title': 'AloeVera Events',
     'events.upcoming': 'Upcoming',
-
-    // Friends
-    'friends.findByHandle': 'Find by @handle',
-    'friends.findByHandlePlaceholder': 'e.g. alice_99',
 
     // Store (merch)
     'store.officialPurchase': 'Buy on official store',
