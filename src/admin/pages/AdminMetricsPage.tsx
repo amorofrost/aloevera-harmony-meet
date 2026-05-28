@@ -14,6 +14,7 @@ import { ContainerStatusTable } from '@/admin/components/metrics/ContainerStatus
 import { UsersTimeChart } from '@/admin/components/metrics/UsersTimeChart';
 import { RequestVolumeTable } from '@/admin/components/metrics/RequestVolumeTable';
 import { LatencyChart } from '@/admin/components/metrics/LatencyChart';
+import { RequestCountChart } from '@/admin/components/metrics/RequestCountChart';
 import { BiEventsPanel } from '@/admin/components/metrics/BiEventsPanel';
 import { MetricsToggleSheet } from '@/admin/components/metrics/MetricsToggleSheet';
 
@@ -26,6 +27,10 @@ function rangeMs(r: Range): number {
     case '7d':  return 7 * 24 * 60 * 60 * 1000;
     case '30d': return 30 * 24 * 60 * 60 * 1000;
   }
+}
+
+function resolutionFor(r: Range): 'minute' | 'hour' {
+  return r === '1h' || r === '24h' ? 'minute' : 'hour';
 }
 
 function RangeSelector({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
@@ -54,44 +59,60 @@ export default function AdminMetricsPage() {
   const [overview, setOverview] = useState<MetricsOverviewDto | null>(null);
   const [containers, setContainers] = useState<ContainerStatusDto[]>([]);
   const [bi, setBi] = useState<BiTimeseriesDto | null>(null);
-  const [reqTimeseries, setReqTimeseries] = useState<TimeseriesPointDto[]>([]);
   const [endpointStats, setEndpointStats] = useState<EndpointStatDto[]>([]);
+  const [selected, setSelected] = useState<EndpointStatDto | null>(null);
+  const [endpointSeries, setEndpointSeries] = useState<TimeseriesPointDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<Range>('24h');
   const [toggleOpen, setToggleOpen] = useState(false);
-  const [selectedEndpointKey, setSelectedEndpointKey] = useState<string | null>(null);
 
-  // Keep range in a ref so the visibility handler always sees the latest value
   const rangeRef = useRef(range);
   rangeRef.current = range;
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+
+  const fetchEndpointSeries = useCallback(async (ep: EndpointStatDto, currentRange: Range) => {
+    const from = new Date(Date.now() - rangeMs(currentRange)).toISOString();
+    const to = new Date().toISOString();
+    const res = await adminApi.metrics.getEndpointTimeseries({
+      method: ep.method,
+      route: ep.route,
+      from,
+      to,
+      resolution: resolutionFor(currentRange),
+    });
+    if (res.success && res.data) setEndpointSeries(res.data);
+  }, []);
 
   const fetchAll = useCallback(async (currentRange: Range) => {
     const biRange: '24h' | '7d' | '30d' = currentRange === '1h' ? '24h' : currentRange;
     const from = new Date(Date.now() - rangeMs(currentRange)).toISOString();
     const to = new Date().toISOString();
-    const resolution: 'minute' | 'hour' =
-      currentRange === '1h' || currentRange === '24h' ? 'minute' : 'hour';
+    const resolution = resolutionFor(currentRange);
 
-    const [ov, ct, biData, ts, epStats] = await Promise.all([
+    const [ov, ct, biData, epStats] = await Promise.all([
       adminApi.metrics.getOverview(),
       adminApi.metrics.getContainers(),
       adminApi.metrics.getBi(biRange),
-      adminApi.metrics.getTimeseries({ category: 'request_timing', from, to, resolution }),
       adminApi.metrics.getEndpointStats({ from, to, resolution }),
     ]);
 
     if (ov.success && ov.data) setOverview(ov.data);
     if (ct.success && ct.data) setContainers(ct.data);
     if (biData.success && biData.data) setBi(biData.data);
-    if (ts.success && ts.data) setReqTimeseries(ts.data);
     if (epStats.success && epStats.data) setEndpointStats(epStats.data);
 
-    setLoading(false);
-  }, []);
+    const sel = selectedRef.current;
+    if (sel) await fetchEndpointSeries(sel, currentRange);
 
-  // Fetch when range changes
+    setLoading(false);
+  }, [fetchEndpointSeries]);
+
+  // Fetch when range changes; reset any active drill-down selection
   useEffect(() => {
     setLoading(true);
+    setSelected(null);
+    setEndpointSeries([]);
     void fetchAll(range);
   }, [range, fetchAll]);
 
@@ -109,6 +130,12 @@ export default function AdminMetricsPage() {
       document.removeEventListener('visibilitychange', refresh);
     };
   }, [fetchAll]);
+
+  const handleSelect = useCallback((ep: EndpointStatDto) => {
+    setSelected(ep);
+    setEndpointSeries([]);
+    void fetchEndpointSeries(ep, rangeRef.current);
+  }, [fetchEndpointSeries]);
 
   return (
     <div className="space-y-6">
@@ -150,7 +177,7 @@ export default function AdminMetricsPage() {
         </CardContent>
       </Card>
 
-      {/* 4. Request volume + latency side-by-side */}
+      {/* 4. Request volume + per-endpoint drill-down */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-semibold">Request volume &amp; latency</CardTitle>
@@ -158,17 +185,40 @@ export default function AdminMetricsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Top endpoints by count</p>
+              <p className="text-xs text-muted-foreground mb-2">Endpoints by count</p>
               <RequestVolumeTable
                 endpoints={endpointStats}
                 loading={loading}
-                selectedKey={selectedEndpointKey}
-                onSelect={(ep) => setSelectedEndpointKey(ep.routeKey)}
+                selectedKey={selected?.routeKey ?? null}
+                onSelect={handleSelect}
               />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Latency percentiles</p>
-              <LatencyChart points={reqTimeseries} />
+              {selected ? (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-mono break-all">
+                      <span className="font-semibold">{selected.method}</span> {selected.route}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setSelected(null); setEndpointSeries([]); }}
+                      aria-label="Clear endpoint selection"
+                      className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground hover:text-foreground"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-1">Calls over time</p>
+                  <RequestCountChart points={endpointSeries} />
+                  <p className="text-xs text-muted-foreground mt-3 mb-1">Latency percentiles</p>
+                  <LatencyChart points={endpointSeries} />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full min-h-[200px] text-sm text-muted-foreground text-center px-4">
+                  Select an endpoint to see its calls and latency over time.
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
