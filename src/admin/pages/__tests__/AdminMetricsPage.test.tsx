@@ -56,7 +56,6 @@ vi.mock('@/services/api/adminApi', () => ({
           },
         ],
       }),
-      getTimeseries: vi.fn().mockResolvedValue({ success: true, data: [] }),
       getEndpointStats: vi.fn().mockResolvedValue({
         success: true,
         data: [
@@ -172,5 +171,17 @@ describe('AdminMetricsPage', () => {
       ),
     );
     expect(screen.getByText('Calls over time')).toBeInTheDocument();
+  });
+
+  it('clears the drill-down when the ✕ button is clicked', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('/api/v1/users')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('/api/v1/users'));
+    await waitFor(() => expect(screen.getByText('Calls over time')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Clear endpoint selection/i }));
+
+    expect(screen.queryByText('Calls over time')).not.toBeInTheDocument();
+    expect(screen.getByText(/Select an endpoint/i)).toBeInTheDocument();
   });
 });

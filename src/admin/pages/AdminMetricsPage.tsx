@@ -81,7 +81,9 @@ export default function AdminMetricsPage() {
       to,
       resolution: resolutionFor(currentRange),
     });
-    if (res.success && res.data) setEndpointSeries(res.data);
+    if (res.success && res.data && selectedRef.current?.routeKey === ep.routeKey) {
+      setEndpointSeries(res.data);
+    }
   }, []);
 
   const fetchAll = useCallback(async (currentRange: Range) => {
@@ -102,10 +104,10 @@ export default function AdminMetricsPage() {
     if (biData.success && biData.data) setBi(biData.data);
     if (epStats.success && epStats.data) setEndpointStats(epStats.data);
 
-    const sel = selectedRef.current;
-    if (sel) await fetchEndpointSeries(sel, currentRange);
-
     setLoading(false);
+
+    const sel = selectedRef.current;
+    if (sel) void fetchEndpointSeries(sel, currentRange);
   }, [fetchEndpointSeries]);
 
   // Fetch when range changes; reset any active drill-down selection
