@@ -59,6 +59,7 @@ export default function AdminMetricsPage() {
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<Range>('24h');
   const [toggleOpen, setToggleOpen] = useState(false);
+  const [selectedEndpointKey, setSelectedEndpointKey] = useState<string | null>(null);
 
   // Keep range in a ref so the visibility handler always sees the latest value
   const rangeRef = useRef(range);
@@ -158,7 +159,12 @@ export default function AdminMetricsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs text-muted-foreground mb-2">Top endpoints by count</p>
-              <RequestVolumeTable endpoints={endpointStats} loading={loading} />
+              <RequestVolumeTable
+                endpoints={endpointStats}
+                loading={loading}
+                selectedKey={selectedEndpointKey}
+                onSelect={(ep) => setSelectedEndpointKey(ep.routeKey)}
+              />
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-2">Latency percentiles</p>
