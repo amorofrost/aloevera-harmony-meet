@@ -119,6 +119,9 @@ const translations = {
     'events.title': 'События АлоэВера',
     'events.upcoming': 'Предстоящие',
 
+    // Friends
+    'friends.viewProfile': 'Открыть профиль',
+
     // Store (merch)
     'store.officialPurchase': 'Купить на официальном сайте',
     'store.officialPurchaseHint': 'Откроется страница товара в официальном магазине',
@@ -424,6 +427,9 @@ const translations = {
     'events.past': 'Past',
     'events.title': 'AloeVera Events',
     'events.upcoming': 'Upcoming',
+
+    // Friends
+    'friends.viewProfile': 'View profile',
 
     // Store (merch)
     'store.officialPurchase': 'Buy on official store',

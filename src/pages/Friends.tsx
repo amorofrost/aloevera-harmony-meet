@@ -318,6 +318,21 @@ const Friends = () => {
     setSearchParams({ tab: 'chats', chat: chatId });
   };
 
+  // Open the in-app profile view (/friends?userId=...). Pushes a history entry so the
+  // profile view's back button returns to wherever it was opened from.
+  const openProfile = (userId: string) => {
+    if (userId) setSearchParams({ userId });
+  };
+  const profileAvatarProps = (userId: string) => ({
+    role: 'button' as const,
+    tabIndex: 0,
+    'aria-label': t('friends.viewProfile'),
+    onClick: () => openProfile(userId),
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfile(userId); }
+    },
+  });
+
   const handleSendMessage = async () => {
     if (!messageText.trim() || !activeChatId) return;
     const imageUrls: string[] = [];
@@ -355,7 +370,7 @@ const Friends = () => {
           <div className="flex items-center gap-3 p-4 max-w-3xl mx-auto w-full">
             <Button variant="ghost" size="sm" onClick={goBackFromChat}><ArrowLeft className="w-5 h-5" /></Button>
             <div className="flex items-center gap-3 flex-1">
-              <div className="relative">
+              <div className="relative cursor-pointer" {...profileAvatarProps(chat.otherUser.id)}>
                 <img src={chat.otherUser.profileImage} alt={chat.otherUser.name} className="w-10 h-10 rounded-full object-cover" />
                 <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${chat.otherUser.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
               </div>
@@ -445,7 +460,7 @@ const Friends = () => {
     <Card className="profile-card mb-4">
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          <div className="relative">
+          <div className="relative cursor-pointer" {...profileAvatarProps(user.id)}>
             <img src={user.profileImage} alt={user.name} className="w-16 h-16 rounded-full object-cover" />
             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${user.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
           </div>
