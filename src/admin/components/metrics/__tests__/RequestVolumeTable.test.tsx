@@ -35,4 +35,13 @@ describe('RequestVolumeTable', () => {
     fireEvent.click(screen.getByText('/api/v1/users'));
     expect(onSelect).toHaveBeenCalledWith(eps[0]);
   });
+
+  it('calls onSelect when a row is activated via keyboard', () => {
+    const onSelect = vi.fn();
+    render(<RequestVolumeTable endpoints={eps} loading={false} selectedKey={null} onSelect={onSelect} />);
+    const cell = screen.getByText('/api/v1/users');
+    const row = cell.closest('tr')!;
+    fireEvent.keyDown(row, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith(eps[0]);
+  });
 });

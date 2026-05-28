@@ -106,6 +106,14 @@ export function RequestVolumeTable({ endpoints, loading, selectedKey, onSelect }
                 <tr
                   key={ep.routeKey}
                   onClick={() => onSelect(ep)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelect(ep);
+                    }
+                  }}
+                  tabIndex={0}
+                  aria-selected={ep.routeKey === selectedKey}
                   className={`border-t border-border cursor-pointer hover:bg-muted/50 ${
                     ep.routeKey === selectedKey ? 'bg-muted' : ''
                   }`}
