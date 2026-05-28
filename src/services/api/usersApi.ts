@@ -1,8 +1,26 @@
 import { apiClient, isApiMode, type ApiResponse } from './apiClient';
 import type { User, UserRank, StaffRole } from '@/types/user';
-import { mockSearchProfiles } from '@/data/mockProfiles';
+import {
+  mockSearchProfiles,
+  mockMatches, mockSentLikes, mockReceivedLikes,
+} from '@/data/mockProfiles';
 import { mockCurrentUser } from '@/data/mockCurrentUser';
+import { mockChatUsers } from '@/data/mockChats';
 import { mapEventFromApi } from './eventsApi';
+
+// Index every user the mock dataset knows about (search deck, matches, likes, chat
+// partners, current user) so getUsersByIds can resolve any referenced id in mock mode.
+const mockUserById = (() => {
+  const map = new Map<string, User>();
+  const add = (u?: User) => { if (u) map.set(u.id, u); };
+  mockSearchProfiles.forEach(add);
+  add(mockCurrentUser);
+  mockMatches.forEach(m => add(m.otherUser));
+  mockSentLikes.forEach(l => add(l.toUser));
+  mockReceivedLikes.forEach(l => add(l.fromUser));
+  Object.values(mockChatUsers).forEach(add);
+  return map;
+})();
 
 function mapGender(g: string): User['gender'] {
   const map: Record<string, User['gender']> = {
@@ -202,6 +220,28 @@ export const usersApi = {
     }
     const user = mockSearchProfiles.find(u => u.id === id) ?? null;
     return mockSuccess(user);
+  },
+
+  /**
+   * Resolve a specific set of users by id — for the likes / matches / chats views,
+   * which reference exact users (including liked/matched ones that the search deck
+   * deliberately excludes). Deduplicates ids; returns only the users that exist.
+   */
+  async getUsersByIds(ids: string[]): Promise<ApiResponse<User[]>> {
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    if (unique.length === 0) return mockSuccess([]);
+    if (isApiMode()) {
+      const params = new URLSearchParams({ ids: unique.join(',') });
+      const res = await apiClient.get<any[]>(`/api/v1/users/by-ids?${params.toString()}`);
+      if (res.success && res.data) {
+        return { ...res, data: res.data.map(mapUserFromApi) };
+      }
+      return res as ApiResponse<User[]>;
+    }
+    const found = unique
+      .map(id => mockUserById.get(id))
+      .filter((u): u is User => Boolean(u));
+    return mockSuccess(found);
   },
 
   async getUserByAccountName(accountName: string): Promise<ApiResponse<User | null>> {

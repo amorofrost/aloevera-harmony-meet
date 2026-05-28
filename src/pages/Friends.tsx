@@ -110,12 +110,25 @@ const Friends = () => {
       if (sentRes.success && sentRes.data) setSentLikes(sentRes.data);
       if (receivedRes.success && receivedRes.data) setReceivedLikes(receivedRes.data);
       if (chatsRes.success && chatsRes.data) {
-        const allMatches = matchesRes.success && matchesRes.data ? matchesRes.data : [];
-        const enriched: PrivateChatWithUser[] = (chatsRes.data as any[]).map((chat: any) => {
+        const chatList = chatsRes.data as any[];
+        const myId = getCurrentUserIdFromToken();
+        const partnerIdOf = (chat: any): string => {
           const participants: string[] = chat.participants ?? [];
+          return participants.find(id => id !== myId) ?? participants[0] ?? '';
+        };
+        // Mock chats already embed otherUser; API chats carry only participant ids,
+        // so resolve those partners explicitly (they may be matches the deck excludes).
+        const needIds = chatList.filter(c => !c.otherUser).map(partnerIdOf);
+        const partnersRes = needIds.length ? await usersApi.getUsersByIds(needIds) : null;
+        const partnerById = new Map(
+          (partnersRes?.success && partnersRes.data ? partnersRes.data : []).map(u => [u.id, u])
+        );
+        const enriched: PrivateChatWithUser[] = chatList.map((chat: any) => {
+          const otherUserId = partnerIdOf(chat);
           const otherUser =
-            allMatches.find(m => participants.includes(m.otherUser.id))?.otherUser ??
-            { id: participants[0] ?? '', name: 'Пользователь', age: 0, bio: '', location: '',
+            chat.otherUser ??
+            partnerById.get(otherUserId) ??
+            { id: otherUserId, name: 'Пользователь', age: 0, bio: '', location: '',
               gender: 'prefer-not-to-say' as const, profileImage: '', images: [],
               lastSeen: new Date(), isOnline: false,
               preferences: { ageRange: [18, 65] as [number, number], maxDistance: 50, showMe: 'everyone' as const },
