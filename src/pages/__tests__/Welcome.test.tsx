@@ -242,9 +242,9 @@ describe('Welcome — register form', () => {
     // Fill account name first — mocked component signals validity immediately on non-empty input.
     await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
     // Labels use t() — mock returns key. Queries match substrings case-insensitively.
-    // 'Display Name *' label is hardcoded (not i18n-keyed) → use getByLabelText to avoid
-    // ambiguity with the account-name field (also contains "name" in its key).
-    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
+    // 'Display Name' label uses t('register.displayName') → mock returns the key. Use
+    // getByLabelText to avoid ambiguity with the account-name field (also contains "name").
+    await user.type(screen.getByLabelText(/register\.displayName/i), 'Alice');
     // 'auth.email *' label → matches /email/i
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     // 'auth.password *' label → matches /password/i
@@ -440,7 +440,7 @@ describe('Welcome — register form — invite code', () => {
     });
     // Fill all fields except invite code
     await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
-    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
+    await user.type(screen.getByLabelText(/register\.displayName/i), 'Alice');
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
@@ -467,7 +467,7 @@ describe('Welcome — register form — invite code', () => {
       expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
     await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
-    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
+    await user.type(screen.getByLabelText(/register\.displayName/i), 'Alice');
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');
@@ -499,7 +499,7 @@ describe('Welcome — register form — invite code', () => {
       expect(screen.getByPlaceholderText(/inviteCodePlaceholder/i)).toBeInTheDocument();
     });
     await user.type(screen.getByLabelText(/Account name/i), 'alice_test99');
-    await user.type(screen.getByLabelText(/Display Name/i), 'Alice');
+    await user.type(screen.getByLabelText(/register\.displayName/i), 'Alice');
     await user.type(screen.getByRole('textbox', { name: /email/i }), 'alice@example.com');
     await user.type(screen.getByLabelText(/password/i), 'Secure1!');
     await user.type(screen.getByRole('spinbutton', { name: /age/i }), '25');

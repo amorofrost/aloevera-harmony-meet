@@ -348,7 +348,7 @@ const MiniAppEntry: React.FC = () => {
                 )}
               />
               {registerForm.formState.errors.accountName && (
-                <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.accountName.message}</p>
+                <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.accountName.message)}</p>
               )}
 
               <div className="space-y-2">

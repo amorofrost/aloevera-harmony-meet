@@ -77,7 +77,7 @@ const Welcome = () => {
     try {
       const response = await authApi.login(data as { email: string; password: string });
       if (!response.success) {
-        const message = (response as any).error?.message || 'Login failed';
+        const message = (response as any).error?.message || t('auth.loginFailed');
         loginForm.setError('root', { message });
         return;
       }
@@ -86,11 +86,11 @@ const Welcome = () => {
         if (response.data.refreshToken) {
           apiClient.setRefreshToken(response.data.refreshToken);
         }
-        toast.success('Welcome back!');
+        toast.success(t('auth.welcomeBack'));
         navigateAfterAuth(navigate, response.data.user, safeRedirect || undefined);
       }
     } catch (err) {
-      showApiError(err, 'Login failed');
+      showApiError(err, t('auth.loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -116,28 +116,28 @@ const Welcome = () => {
       if (!response.success) {
         const apiErr = (response as any).error;
         if (apiErr?.code === 'ACCOUNT_NAME_TAKEN') {
-          registerForm.setError('accountName', { message: apiErr.message || 'Account name is already taken' });
+          registerForm.setError('accountName', { message: apiErr.message || t('auth.accountNameTaken') });
           return;
         }
         if (apiErr?.code === 'INVALID_ACCOUNT_NAME') {
-          registerForm.setError('accountName', { message: apiErr.message || 'Invalid account name' });
+          registerForm.setError('accountName', { message: apiErr.message || t('auth.accountNameInvalid') });
           return;
         }
         if (apiErr?.code === 'EMAIL_TAKEN') {
-          registerForm.setError('email', { message: apiErr.message || 'Email is already taken' });
+          registerForm.setError('email', { message: apiErr.message || t('auth.emailTaken') });
           return;
         }
         if (apiErr?.code === 'INVALID_INVITE_CODE') {
-          registerForm.setError('inviteCode', { message: apiErr.message || 'Invalid invite code' });
+          registerForm.setError('inviteCode', { message: apiErr.message || t('register.inviteCodeInvalid') });
           return;
         }
-        showApiError(response, 'Registration failed');
+        showApiError(response, t('auth.registrationFailed'));
         return;
       }
-      toast.success('Account created! Check your email to verify.');
+      toast.success(t('auth.accountCreated'));
       setShowRegister(false);
     } catch (err) {
-      showApiError(err, 'Registration failed');
+      showApiError(err, t('auth.registrationFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +189,7 @@ const Welcome = () => {
           {!showRegister ? (
             // Login Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-              <h2 className="text-2xl font-bold text-white mb-4">Sign In</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{t('auth.signIn')}</h2>
 
               {loginForm.formState.errors.root && (
                 <div role="alert" className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-xl backdrop-blur-md">
@@ -208,7 +208,7 @@ const Welcome = () => {
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading} />
                   {loginForm.formState.errors.email && (
-                    <p role="alert" className="text-xs text-red-300">{loginForm.formState.errors.email.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(loginForm.formState.errors.email.message)}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -218,7 +218,7 @@ const Welcome = () => {
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading} />
                   {loginForm.formState.errors.password && (
-                    <p role="alert" className="text-xs text-red-300">{loginForm.formState.errors.password.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(loginForm.formState.errors.password.message)}</p>
                   )}
                 </div>
 
@@ -226,7 +226,7 @@ const Welcome = () => {
                   className="w-full btn-like text-lg py-4 rounded-2xl font-semibold shadow-2xl"
                   disabled={isLoading}>
                   {isLoading ? (
-                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Signing in...</>
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" />{t('auth.signingIn')}</>
                   ) : (
                     t('auth.signIn')
                   )}
@@ -255,7 +255,7 @@ const Welcome = () => {
           ) : (
             // Registration Form
             <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
-              <h2 className="text-2xl font-bold text-white mb-4">Create Account</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">{t('auth.createAccount')}</h2>
 
               {configLoading ? (
                 <div className="flex justify-center py-8">
@@ -276,7 +276,7 @@ const Welcome = () => {
                   )}
                 />
                 {registerForm.formState.errors.accountName && (
-                  <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.accountName.message}</p>
+                  <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.accountName.message)}</p>
                 )}
 
                 <div className="space-y-2">
@@ -291,26 +291,26 @@ const Welcome = () => {
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
-                  <p className="text-xs text-white/60">Your email will be used as your login</p>
+                  <p className="text-xs text-white/60">{t('register.emailIsLogin')}</p>
                   {registerForm.formState.errors.email && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.email.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.email.message)}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="reg-name" className="text-white font-medium">
-                    Display Name *
+                    {t('register.displayName')} *
                   </Label>
                   <Input
                     id="reg-name"
                     type="text"
-                    placeholder="Your name"
+                    placeholder={t('register.displayNamePlaceholder')}
                     {...registerForm.register('name')}
                     className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
                     disabled={isLoading}
                   />
                   {registerForm.formState.errors.name && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.name.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.name.message)}</p>
                   )}
                 </div>
 
@@ -330,11 +330,11 @@ const Welcome = () => {
                     const pw = registerForm.watch('password') || '';
                     if (!pw) return null;
                     const rules = [
-                      { test: pw.length >= 8, label: 'At least 8 characters' },
-                      { test: /[A-Z]/.test(pw), label: 'One uppercase letter' },
-                      { test: /[a-z]/.test(pw), label: 'One lowercase letter' },
-                      { test: /[0-9]/.test(pw), label: 'One number' },
-                      { test: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(pw), label: 'One special character' },
+                      { test: pw.length >= 8, label: t('auth.passwordMin8') },
+                      { test: /[A-Z]/.test(pw), label: t('auth.passwordUppercase') },
+                      { test: /[a-z]/.test(pw), label: t('auth.passwordLowercase') },
+                      { test: /[0-9]/.test(pw), label: t('auth.passwordNumber') },
+                      { test: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(pw), label: t('auth.passwordSpecial') },
                     ];
                     return (
                       <div className="text-xs text-white/70 space-y-1 mt-2">
@@ -347,14 +347,14 @@ const Welcome = () => {
                         )}
                         {rules.every(r => r.test) && (
                           <div className="flex items-center gap-1 text-green-300">
-                            <span>✓</span> Password meets requirements
+                            <span>✓</span> {t('auth.passwordValid')}
                           </div>
                         )}
                       </div>
                     );
                   })()}
                   {registerForm.formState.errors.password && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.password.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.password.message)}</p>
                   )}
                 </div>
 
@@ -372,7 +372,7 @@ const Welcome = () => {
                       disabled={isLoading}
                     />
                     {registerForm.formState.errors.age && (
-                      <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.age.message}</p>
+                      <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.age.message)}</p>
                     )}
                   </div>
 
@@ -386,7 +386,7 @@ const Welcome = () => {
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange} disabled={isLoading}>
                           <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t('common.select')} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="male">{t('auth.male')}</SelectItem>
@@ -397,7 +397,7 @@ const Welcome = () => {
                       )}
                     />
                     {registerForm.formState.errors.gender && (
-                      <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.gender.message}</p>
+                      <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.gender.message)}</p>
                     )}
                   </div>
                 </div>
@@ -422,16 +422,16 @@ const Welcome = () => {
                     )}
                   />
                   {registerForm.formState.errors.country && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.country.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.country.message)}</p>
                   )}
                   {registerForm.formState.errors.region && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.region.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.region.message)}</p>
                   )}
                   {registerForm.formState.errors.secondaryCountry && (
-                    <p className="text-xs text-destructive mt-1">{registerForm.formState.errors.secondaryCountry.message}</p>
+                    <p className="text-xs text-destructive mt-1">{t(registerForm.formState.errors.secondaryCountry.message)}</p>
                   )}
                   {registerForm.formState.errors.secondaryRegion && (
-                    <p className="text-xs text-destructive mt-1">{registerForm.formState.errors.secondaryRegion.message}</p>
+                    <p className="text-xs text-destructive mt-1">{t(registerForm.formState.errors.secondaryRegion.message)}</p>
                   )}
                 </div>
 
@@ -450,7 +450,7 @@ const Welcome = () => {
                     disabled={isLoading || configLoading}
                   />
                   {registerForm.formState.errors.inviteCode && (
-                    <p role="alert" className="text-xs text-red-300">{registerForm.formState.errors.inviteCode.message}</p>
+                    <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.inviteCode.message)}</p>
                   )}
                 </div>
 
@@ -479,7 +479,7 @@ const Welcome = () => {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Creating account...
+                      {t('auth.creatingAccount')}
                     </>
                   ) : (
                     t('auth.createAccount')

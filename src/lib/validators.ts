@@ -10,35 +10,35 @@ export const RESERVED_ACCOUNT_NAMES = new Set<string>([
 ]);
 
 export const accountNameSchema = z.string()
-  .regex(ACCOUNT_NAME_RE, 'Invalid format')
-  .refine((v) => !RESERVED_ACCOUNT_NAMES.has(v.toLowerCase()), 'Reserved name');
+  .regex(ACCOUNT_NAME_RE, 'auth.accountNameInvalid')
+  .refine((v) => !RESERVED_ACCOUNT_NAMES.has(v.toLowerCase()), 'auth.accountNameReserved');
 
 export const loginSchema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('auth.invalidEmail'),
+  password: z.string().min(1, 'auth.passwordRequired'),
 });
 
 export const registerSchema = z.object({
   accountName: accountNameSchema,
-  email: z.string().email('Enter a valid email'),
+  email: z.string().email('auth.invalidEmail'),
   password: z
     .string()
-    .min(8, 'At least 8 characters')
-    .regex(/[A-Z]/, 'One uppercase letter')
-    .regex(/[a-z]/, 'One lowercase letter')
-    .regex(/[0-9]/, 'One number')
-    .regex(/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/, 'One special character'),
-  name: z.string().min(1, 'Name is required'),
+    .min(8, 'auth.passwordMin8')
+    .regex(/[A-Z]/, 'auth.passwordUppercase')
+    .regex(/[a-z]/, 'auth.passwordLowercase')
+    .regex(/[0-9]/, 'auth.passwordNumber')
+    .regex(/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/, 'auth.passwordSpecial'),
+  name: z.string().min(1, 'auth.nameRequired'),
   age: z.preprocess(
     (val) => (Number.isNaN(val) ? undefined : val),
-    z.number().int().min(18, 'Must be at least 18').max(99, 'Must be 99 or under').optional()
+    z.number().int().min(18, 'auth.ageMin').max(99, 'auth.ageMax').optional()
   ),
-  country: z.string().min(1, 'Country is required').max(56, 'Country must be 56 characters or less'),
-  region: z.string().max(80, 'Region must be 80 characters or less').optional(),
-  secondaryCountry: z.string().max(56, 'Secondary country must be 56 characters or less').optional(),
-  secondaryRegion: z.string().max(80, 'Secondary region must be 80 characters or less').optional(),
-  gender: z.string().min(1, 'Gender is required'),
-  bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+  country: z.string().min(1, 'auth.countryRequired').max(56, 'auth.countryMax'),
+  region: z.string().max(80, 'auth.regionMax').optional(),
+  secondaryCountry: z.string().max(56, 'auth.secondaryCountryMax').optional(),
+  secondaryRegion: z.string().max(80, 'auth.secondaryRegionMax').optional(),
+  gender: z.string().min(1, 'auth.genderRequired'),
+  bio: z.string().max(500, 'auth.bioMax').optional(),
   /** Event invite; optional when registration is open, validated as required via registerSchemaWithInvite when policy demands it */
   inviteCode: z.string().optional(),
 });
@@ -99,7 +99,7 @@ export const resetPasswordSchema = z.object({
 });
 
 export const registerSchemaWithInvite = registerSchema.extend({
-  inviteCode: z.string().min(1, 'Invite code is required'),
+  inviteCode: z.string().min(1, 'register.inviteCodeRequired'),
 });
 
 /** Registration via Telegram pending ticket — no email/password fields (those come later via attach). */
