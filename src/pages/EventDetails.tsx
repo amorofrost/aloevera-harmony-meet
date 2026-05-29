@@ -421,12 +421,16 @@ const EventDetails = () => {
           onClick={() => setBadgeLightboxOpen(false)}
           role="presentation"
         >
-          <img
-            src={event.badgeImageUrl.trim()}
-            alt=""
-            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-xl"
+          <div
+            className="rounded-lg bg-[#faf7ef] p-4 shadow-xl"
             onClick={e => e.stopPropagation()}
-          />
+          >
+            <img
+              src={event.badgeImageUrl.trim()}
+              alt=""
+              className="max-h-[82vh] max-w-[82vw] object-contain"
+            />
+          </div>
         </div>
       ) : null}
     </div>

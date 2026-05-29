@@ -19,6 +19,7 @@ import { ImageAttachmentDisplay } from '@/components/ui/image-attachment-display
 import { uploadImage } from '@/services/api/imagesApi';
 import { UserBadges } from '@/components/ui/user-badges';
 import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
+import { BadgeScrollRow } from '@/components/ui/badge-scroll-row';
 import { PhotoCarousel } from '@/components/ui/photo-carousel';
 import { CommonGroundLine } from '@/components/profile/CommonGroundLine';
 import { PromptCard } from '@/components/profile/PromptCard';
@@ -563,16 +564,7 @@ const Friends = () => {
                   </div>
                 )}
                 {target.eventsAttended && target.eventsAttended.length > 0 && (
-                  <div
-                    className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
-                    style={{ scrollbarWidth: 'none' }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onMouseMove={(e) => e.stopPropagation()}
-                    onMouseUp={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    onTouchMove={(e) => e.stopPropagation()}
-                    onTouchEnd={(e) => e.stopPropagation()}
-                  >
+                  <BadgeScrollRow>
                     {target.eventsAttended.map((ev) => (
                       <div key={ev.id} className="flex-shrink-0">
                         <EventAttendanceMark
@@ -583,7 +575,7 @@ const Friends = () => {
                         />
                       </div>
                     ))}
-                  </div>
+                  </BadgeScrollRow>
                 )}
               </div>
             )}

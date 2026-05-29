@@ -5,6 +5,7 @@ import { LocationDisplay } from '@/components/ui/location-display';
 import { UserBadges } from '@/components/ui/user-badges';
 import { PhotoCarousel } from '@/components/ui/photo-carousel';
 import { EventAttendanceMark } from '@/components/ui/event-attendance-mark';
+import { BadgeScrollRow } from '@/components/ui/badge-scroll-row';
 import { PromptCard } from '@/components/profile/PromptCard';
 import type { User } from '@/types/user';
 
@@ -106,7 +107,7 @@ export function ProfileBody({ user }: ProfileBodyProps) {
             <Calendar className="w-4 h-4" />
             {t('search.eventsCount').replace('{count}', String(user.eventsAttended.length))}
           </h3>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+          <BadgeScrollRow>
             {user.eventsAttended.map((ev) => (
               <div key={ev.id} className="flex-shrink-0">
                 <EventAttendanceMark
@@ -117,7 +118,7 @@ export function ProfileBody({ user }: ProfileBodyProps) {
                 />
               </div>
             ))}
-          </div>
+          </BadgeScrollRow>
         </div>
       )}
 

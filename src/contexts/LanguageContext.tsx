@@ -41,6 +41,8 @@ const translations = {
     'common.match': 'Взаимность!',
     'common.pass': 'Пропустить',
     'common.save': 'Сохранить',
+    'common.scrollLeft': 'Прокрутить влево',
+    'common.scrollRight': 'Прокрутить вправо',
 
     // Location
     'location.country': 'Страна',
@@ -350,6 +352,8 @@ const translations = {
     'common.match': 'It\'s a Match!',
     'common.pass': 'Pass',
     'common.save': 'Save',
+    'common.scrollLeft': 'Scroll left',
+    'common.scrollRight': 'Scroll right',
 
     // Location
     'location.country': 'Country',
