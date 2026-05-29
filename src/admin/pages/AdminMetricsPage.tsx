@@ -130,7 +130,7 @@ export default function AdminMetricsPage() {
     if (sel) void fetchEndpointSeries(sel, currentRange);
 
     const openContainer = expandedContainerRef.current;
-    if (openContainer) await fetchContainerSeries(openContainer, currentRange);
+    if (openContainer) void fetchContainerSeries(openContainer, currentRange);
   }, [fetchEndpointSeries, fetchContainerSeries]);
 
   // Fetch when range changes; reset any active drill-down selection
@@ -165,13 +165,15 @@ export default function AdminMetricsPage() {
   }, [fetchEndpointSeries]);
 
   const handleContainerToggle = useCallback((name: string) => {
-    setExpandedContainer((prev) => {
-      if (prev === name) { setContainerSeries(null); return null; }
+    if (expandedContainer === name) {
+      setExpandedContainer(null);
       setContainerSeries(null);
-      void fetchContainerSeries(name, rangeRef.current);
-      return name;
-    });
-  }, [fetchContainerSeries]);
+      return;
+    }
+    setExpandedContainer(name);
+    setContainerSeries(null);
+    void fetchContainerSeries(name, rangeRef.current);
+  }, [expandedContainer, fetchContainerSeries]);
 
   return (
     <div className="space-y-6">
