@@ -152,6 +152,13 @@ const translations = {
     'welcome.subtitle': 'Знакомства и общение для тех, кто на одной волне',
     'welcome.description': 'Ты в правильном месте. Здесь ты найдешь людей, которые разделяют твой вайб и взгляды на жизнь.',
     'welcome.getStarted': 'Начать общение',
+    'welcomePhoto.title': 'Добавьте фото профиля',
+    'welcomePhoto.description': 'Фото помогает другим узнать вас. Выберите чёткое и приветливое изображение.',
+    'welcomePhoto.previewAlt': 'Предпросмотр',
+    'welcomePhoto.savePhoto': 'Сохранить фото',
+    'welcomePhoto.saving': 'Сохранение…',
+    'welcomePhoto.uploadFailed': 'Не удалось загрузить фото',
+    'welcomePhoto.photoSaved': 'Фото профиля сохранено!',
     
     // Auth
     'auth.accountName': 'Логин',
@@ -496,6 +503,13 @@ const translations = {
     'welcome.subtitle': 'Dating for Music Lovers',
     'welcome.description': 'Find like-minded people, fall in love to your favorite melodies, and create harmony in relationships.',
     'welcome.getStarted': 'Start Dating',
+    'welcomePhoto.title': 'Add a profile photo',
+    'welcomePhoto.description': 'A photo helps others recognize you. Choose something clear and friendly.',
+    'welcomePhoto.previewAlt': 'Preview',
+    'welcomePhoto.savePhoto': 'Save photo',
+    'welcomePhoto.saving': 'Saving...',
+    'welcomePhoto.uploadFailed': 'Photo upload failed',
+    'welcomePhoto.photoSaved': 'Profile photo saved!',
     
     // Auth
     'auth.accountName': 'Account name',

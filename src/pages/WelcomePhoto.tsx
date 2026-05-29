@@ -6,12 +6,14 @@ import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
 import { usersApi } from '@/services/api/usersApi';
 import { apiClient } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 import heroBg from '@/assets/hero-bg.jpg';
 import appIcon from '@/assets/app-icon.jpg';
 
 const WelcomePhoto: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const state = location.state as { userId: string } | null;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,13 +41,13 @@ const WelcomePhoto: React.FC = () => {
     try {
       const res = await usersApi.uploadProfileImage(userId, file);
       if (!res.success) {
-        showApiError(res, 'Photo upload failed');
+        showApiError(res, t('welcomePhoto.uploadFailed'));
         return;
       }
-      toast.success('Profile photo saved!');
+      toast.success(t('welcomePhoto.photoSaved'));
       navigate('/friends', { replace: true });
     } catch (err) {
-      showApiError(err, 'Photo upload failed');
+      showApiError(err, t('welcomePhoto.uploadFailed'));
     } finally {
       setIsUploading(false);
     }
@@ -68,9 +70,9 @@ const WelcomePhoto: React.FC = () => {
         <div className="w-full max-w-sm">
           <div className="space-y-6 bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
             <div>
-              <h2 className="text-2xl font-bold text-white">Add a profile photo</h2>
+              <h2 className="text-2xl font-bold text-white">{t('welcomePhoto.title')}</h2>
               <p className="text-sm text-white/70 mt-2">
-                A photo helps others recognize you. Choose something clear and friendly.
+                {t('welcomePhoto.description')}
               </p>
             </div>
 
@@ -80,7 +82,7 @@ const WelcomePhoto: React.FC = () => {
               className="mx-auto w-32 h-32 rounded-full overflow-hidden flex items-center justify-center bg-white/20 border-2 border-dashed border-white/50 hover:border-white transition-colors"
             >
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                <img src={previewUrl} alt={t('welcomePhoto.previewAlt')} className="w-full h-full object-cover" />
               ) : (
                 <Camera className="w-10 h-10 text-white/70" />
               )}
@@ -103,10 +105,10 @@ const WelcomePhoto: React.FC = () => {
               {isUploading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Saving...
+                  {t('welcomePhoto.saving')}
                 </>
               ) : (
-                'Save photo'
+                t('welcomePhoto.savePhoto')
               )}
             </Button>
           </div>
