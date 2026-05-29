@@ -43,13 +43,16 @@ export default function AdminAnalyticsPage() {
   rangeRef.current = range;
 
   const fetchAll = useCallback(async (currentRange: BiRange) => {
-    const [ov, biData] = await Promise.all([
-      adminApi.metrics.getBiOverview(),
-      adminApi.metrics.getBi(currentRange),
-    ]);
-    if (ov.success && ov.data) setOverview(ov.data);
-    if (biData.success && biData.data) setBi(biData.data);
-    setLoading(false);
+    try {
+      const [ov, biData] = await Promise.all([
+        adminApi.metrics.getBiOverview(),
+        adminApi.metrics.getBi(currentRange),
+      ]);
+      if (ov.success && ov.data) setOverview(ov.data);
+      if (biData.success && biData.data) setBi(biData.data);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -97,6 +100,7 @@ export default function AdminAnalyticsPage() {
           <CardTitle className="text-sm font-semibold">BI event counts</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Unwired: BiEventsPanel renders default zeros until a backend feed is wired. */}
           <BiEventsPanel />
         </CardContent>
       </Card>
