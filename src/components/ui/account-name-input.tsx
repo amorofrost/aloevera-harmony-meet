@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { authApi } from '@/services/api/authApi';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, HelpCircle, Loader2, X } from 'lucide-react';
 
 type Status = 'idle' | 'checking' | 'available' | 'invalidFormat' | 'reserved' | 'taken';
 
@@ -87,9 +88,25 @@ export function AccountNameInput({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="text-white font-medium">
-        {t('auth.accountName')} *
-      </Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor={id} className="text-white font-medium">
+          {t('auth.accountName')} *
+        </Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={t('auth.accountNameInfo')}
+              className="text-white/70 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-full"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-72 text-sm leading-relaxed">
+            {t('auth.accountNameInfo')}
+          </PopoverContent>
+        </Popover>
+      </div>
       <Input
         id={id}
         type="text"
