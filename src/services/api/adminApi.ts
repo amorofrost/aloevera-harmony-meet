@@ -293,6 +293,7 @@ export interface ContainerStatusDto {
   gcHeapMb: number | null;
   workingSetMb: number | null;
   threadCount: number | null;
+  cpuPercent: number | null;
   note: string | null;
   startedAtUtc: string | null;
   version: string | null;
@@ -304,6 +305,20 @@ export interface TimeseriesPointDto {
   p50: number | null;
   p95: number | null;
   p99: number | null;
+}
+
+export interface GaugeTimeseriesPointDto {
+  ts: string;
+  avg: number | null;
+  min: number | null;
+  max: number | null;
+}
+
+export interface ContainerTimeseriesDto {
+  heapMb: GaugeTimeseriesPointDto[];
+  workingSetMb: GaugeTimeseriesPointDto[];
+  threadCount: GaugeTimeseriesPointDto[];
+  cpuPercent: GaugeTimeseriesPointDto[];
 }
 
 export interface BiTimeseriesDto {
@@ -1085,10 +1100,10 @@ export const adminApi = {
         return {
           success: true,
           data: [
-            { name: 'backend', status: 'green', heartbeatAgeSeconds: 12, gcHeapMb: 38, workingSetMb: 142, threadCount: 24, note: null, startedAtUtc: null, version: '1.0' },
-            { name: 'telegram-bot', status: 'green', heartbeatAgeSeconds: 18, gcHeapMb: 12, workingSetMb: 38, threadCount: 12, note: null, startedAtUtc: null, version: '1.0' },
-            { name: 'notifications-worker', status: 'green', heartbeatAgeSeconds: 22, gcHeapMb: 19, workingSetMb: 62, threadCount: 18, note: null, startedAtUtc: null, version: '1.0' },
-            { name: 'frontend', status: 'green', heartbeatAgeSeconds: null, gcHeapMb: null, workingSetMb: null, threadCount: null, note: 'HTTP 200', startedAtUtc: null, version: null },
+            { name: 'backend', status: 'green', heartbeatAgeSeconds: 12, gcHeapMb: 38, workingSetMb: 142, threadCount: 24, cpuPercent: 8, note: null, startedAtUtc: null, version: '1.0' },
+            { name: 'telegram-bot', status: 'green', heartbeatAgeSeconds: 18, gcHeapMb: 12, workingSetMb: 38, threadCount: 12, cpuPercent: 2, note: null, startedAtUtc: null, version: '1.0' },
+            { name: 'notifications-worker', status: 'green', heartbeatAgeSeconds: 22, gcHeapMb: 19, workingSetMb: 62, threadCount: 18, cpuPercent: 3, note: null, startedAtUtc: null, version: '1.0' },
+            { name: 'frontend', status: 'green', heartbeatAgeSeconds: null, gcHeapMb: null, workingSetMb: null, threadCount: null, cpuPercent: null, note: 'HTTP 200', startedAtUtc: null, version: null },
           ] as ContainerStatusDto[],
           timestamp: new Date().toISOString(),
         };
@@ -1180,6 +1195,40 @@ export const adminApi = {
         resolution: params.resolution,
       });
       return apiClient.get<TimeseriesPointDto[]>(`/api/v1/admin/metrics/endpoint-timeseries?${q}`);
+    },
+
+    async getContainerTimeseries(params: {
+      container: string;
+      from: string;
+      to: string;
+      resolution: 'minute' | 'hour';
+    }): Promise<ApiResponse<ContainerTimeseriesDto>> {
+      if (!isApiMode()) {
+        const sample = (base: number): GaugeTimeseriesPointDto[] =>
+          Array.from({ length: 6 }, (_, i) => ({
+            ts: new Date(Date.now() - (5 - i) * 60_000).toISOString(),
+            avg: base + i,
+            min: base + i - 2,
+            max: base + i + 3,
+          }));
+        return {
+          success: true,
+          data: {
+            heapMb: sample(40),
+            workingSetMb: sample(140),
+            threadCount: sample(22),
+            cpuPercent: sample(5),
+          } as ContainerTimeseriesDto,
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const q = new URLSearchParams({
+        container: params.container,
+        from: params.from,
+        to: params.to,
+        resolution: params.resolution,
+      });
+      return apiClient.get<ContainerTimeseriesDto>(`/api/v1/admin/metrics/container-timeseries?${q}`);
     },
 
     async getConfig(): Promise<ApiResponse<MetricsAdminConfigDto>> {
