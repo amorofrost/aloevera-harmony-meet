@@ -57,7 +57,7 @@ docker compose logs notifications-worker 2>&1 | grep '"@l":"Warning"'
 |---|---|---|---|
 | `request_timing` | Backend middleware (every HTTP request) | on | `backend\|{method}\|{route}\|{status}` |
 | `bi_events` | 14 producer call sites (register/login/match/message/event-register/topic-create) | on | `bi\|user_registered\|local`, `bi\|match_created`, etc. |
-| `container_stats` | `ContainerHeartbeatWorker` in each .NET process (30s tick) | on | `{container}\|working_set_mb` / `gc_heap_mb` / `thread_count` |
+| `container_stats` | `ContainerHeartbeatWorker` in each .NET process (30s tick) | on | `{container}\|working_set_mb` / `gc_heap_mb` / `thread_count`, `cpu_percent` |
 | `frontend_perf` | Browser `apiClient` interceptor (batches every 30s) | on | `frontend\|{method}\|{route}\|{status}` |
 
 Each toggle is independently switchable. When off, the corresponding `_metrics.Record*` calls short-circuit before doing any work — zero cost.
@@ -159,6 +159,7 @@ Daily 3am UTC: `JanitorWorker` deletes `metricsminute` partitions older than `re
 | `GET` | `/api/v1/admin/metrics/containers` | admin | Container status grid |
 | `GET` | `/api/v1/admin/metrics/timeseries` | admin | Charts (`?category=&from=&to=&resolution=minute\|hour`) |
 | `GET` | `/api/v1/admin/metrics/endpoint-timeseries` | admin | Per-endpoint count+latency (`?method=&route=&from=&to=&resolution=`) |
+| `GET` | `/api/v1/admin/metrics/container-timeseries` | admin | Per-container gauge series avg/min/max (`?container=&from=&to=&resolution=`) |
 | `GET` | `/api/v1/admin/metrics/bi` | admin | Users-over-time series (`?range=24h\|7d\|30d`) |
 | `GET` | `/api/v1/admin/metrics/config` | admin | Read toggle config (full incl. retention) |
 | `PUT` | `/api/v1/admin/metrics/config` | admin | Update + invalidate cache |
@@ -202,6 +203,7 @@ Rows are seeded by `Lovecraft.Tools.Seeder` on initial deploy. Missing rows fall
 - **No alerting.** Pull-based dashboard only. Threshold-based push alerts (Slack / email) would be a separate spec.
 - **No log shipping.** Serilog writes JSON to stdout; `docker compose logs` is the access path. Adding a sink (App Insights / Loki / Seq) is a one-line config change in each container's `Program.cs`.
 - **Frontend error tracking (Sentry) — TD.5 frontend half deferred.** Use `X-Request-Id` response header to correlate frontend errors to backend logs once Sentry is wired.
+- **Container drill-down + CPU (shipped 2026-05-28).** A normalized CPU% (0–100% of all cores, derived from Δprocessor-seconds) is collected by all three .NET containers; `telegram-bot` + `notifications-worker` POST heap/WS/threads/CPU samples to the backend's `POST /api/v1/internal/metrics/container-stats` (service-token) so all accumulate history (starting at deploy; `frontend` has none). Clicking a container row in the status table expands a 2×2 chart grid (avg line + min/max band) fed by `container-timeseries`. Gauge charts use Sum/Count/Min/Max, NOT the latency-tuned histogram percentiles.
 
 ---
 
