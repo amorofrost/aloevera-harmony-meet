@@ -66,7 +66,7 @@ export function ContainerStatusTable({
               <td className="pr-4">{c.gcHeapMb ?? '—'}</td>
               <td className="pr-4">{c.workingSetMb ?? '—'}</td>
               <td className="pr-4">{c.threadCount ?? '—'}</td>
-              <td>{c.cpuPercent !== null ? Math.round(c.cpuPercent) : '—'}</td>
+              <td>{c.cpuPercent != null ? Math.round(c.cpuPercent) : '—'}</td>
             </tr>,
             expanded ? (
               <tr key={`${c.name}-detail`} className="border-t border-border bg-muted/30">

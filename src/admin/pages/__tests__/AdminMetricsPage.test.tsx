@@ -39,6 +39,7 @@ vi.mock('@/services/api/adminApi', () => ({
             gcHeapMb: 38,
             workingSetMb: 142,
             threadCount: 24,
+            cpuPercent: 5,
             note: null,
             startedAtUtc: null,
             version: '1.0',
@@ -50,6 +51,7 @@ vi.mock('@/services/api/adminApi', () => ({
             gcHeapMb: null,
             workingSetMb: null,
             threadCount: null,
+            cpuPercent: null,
             note: 'HTTP 200',
             startedAtUtc: null,
             version: null,
@@ -64,6 +66,10 @@ vi.mock('@/services/api/adminApi', () => ({
         ],
       }),
       getEndpointTimeseries: vi.fn().mockResolvedValue({ success: true, data: [] }),
+      getContainerTimeseries: vi.fn().mockResolvedValue({
+        success: true,
+        data: { heapMb: [], workingSetMb: [], threadCount: [], cpuPercent: [] },
+      }),
       getBi: vi.fn().mockResolvedValue({
         success: true,
         data: {
@@ -183,5 +189,19 @@ describe('AdminMetricsPage', () => {
 
     expect(screen.queryByText('Calls over time')).not.toBeInTheDocument();
     expect(screen.getByText(/Select an endpoint/i)).toBeInTheDocument();
+  });
+
+  it('expands a container row and fetches its timeseries', async () => {
+    const { adminApi } = await import('@/services/api/adminApi');
+    renderPage();
+    await waitFor(() => expect(screen.getByText('backend')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('backend'));
+
+    await waitFor(() =>
+      expect((adminApi as any).metrics.getContainerTimeseries).toHaveBeenCalledWith(
+        expect.objectContaining({ container: 'backend' }),
+      ),
+    );
   });
 });

@@ -3,6 +3,7 @@ import {
   adminApi,
   type MetricsOverviewDto,
   type ContainerStatusDto,
+  type ContainerTimeseriesDto,
   type TimeseriesPointDto,
   type BiTimeseriesDto,
   type EndpointStatDto,
@@ -66,10 +67,16 @@ export default function AdminMetricsPage() {
   const [range, setRange] = useState<Range>('24h');
   const [toggleOpen, setToggleOpen] = useState(false);
 
+  const [expandedContainer, setExpandedContainer] = useState<string | null>(null);
+  const [containerSeries, setContainerSeries] = useState<ContainerTimeseriesDto | null>(null);
+  const [containerSeriesLoading, setContainerSeriesLoading] = useState(false);
+
   const rangeRef = useRef(range);
   rangeRef.current = range;
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
+  const expandedContainerRef = useRef(expandedContainer);
+  expandedContainerRef.current = expandedContainer;
 
   const fetchEndpointSeries = useCallback(async (ep: EndpointStatDto, currentRange: Range) => {
     const from = new Date(Date.now() - rangeMs(currentRange)).toISOString();
@@ -84,6 +91,19 @@ export default function AdminMetricsPage() {
     if (res.success && res.data && selectedRef.current?.routeKey === ep.routeKey) {
       setEndpointSeries(res.data);
     }
+  }, []);
+
+  const fetchContainerSeries = useCallback(async (container: string, currentRange: Range) => {
+    const from = new Date(Date.now() - rangeMs(currentRange)).toISOString();
+    const to = new Date().toISOString();
+    setContainerSeriesLoading(true);
+    const res = await adminApi.metrics.getContainerTimeseries({
+      container, from, to, resolution: resolutionFor(currentRange),
+    });
+    if (res.success && res.data && expandedContainerRef.current === container) {
+      setContainerSeries(res.data);
+    }
+    setContainerSeriesLoading(false);
   }, []);
 
   const fetchAll = useCallback(async (currentRange: Range) => {
@@ -108,13 +128,18 @@ export default function AdminMetricsPage() {
 
     const sel = selectedRef.current;
     if (sel) void fetchEndpointSeries(sel, currentRange);
-  }, [fetchEndpointSeries]);
+
+    const openContainer = expandedContainerRef.current;
+    if (openContainer) await fetchContainerSeries(openContainer, currentRange);
+  }, [fetchEndpointSeries, fetchContainerSeries]);
 
   // Fetch when range changes; reset any active drill-down selection
   useEffect(() => {
     setLoading(true);
     setSelected(null);
     setEndpointSeries([]);
+    setExpandedContainer(null);
+    setContainerSeries(null);
     void fetchAll(range);
   }, [range, fetchAll]);
 
@@ -139,6 +164,15 @@ export default function AdminMetricsPage() {
     void fetchEndpointSeries(ep, rangeRef.current);
   }, [fetchEndpointSeries]);
 
+  const handleContainerToggle = useCallback((name: string) => {
+    setExpandedContainer((prev) => {
+      if (prev === name) { setContainerSeries(null); return null; }
+      setContainerSeries(null);
+      void fetchContainerSeries(name, rangeRef.current);
+      return name;
+    });
+  }, [fetchContainerSeries]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -162,7 +196,14 @@ export default function AdminMetricsPage() {
           <CardTitle className="text-sm font-semibold">Container status</CardTitle>
         </CardHeader>
         <CardContent>
-          <ContainerStatusTable containers={containers} loading={loading} />
+          <ContainerStatusTable
+            containers={containers}
+            loading={loading}
+            expandedContainer={expandedContainer}
+            onToggle={handleContainerToggle}
+            series={containerSeries}
+            seriesLoading={containerSeriesLoading}
+          />
         </CardContent>
       </Card>
 
