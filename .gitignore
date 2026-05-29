@@ -38,3 +38,5 @@ ssl/
 *.sw?
 .superpowers/
 .worktrees/
+
+*.tsbuildinfo
