@@ -43,6 +43,9 @@ export default function AdminLayout() {
             <Link to="/metrics" className="hover:text-foreground">
               Metrics
             </Link>
+            <Link to="/analytics" className="hover:text-foreground">
+              Analytics
+            </Link>
             <Link to="/config" className="hover:text-foreground">
               App config
             </Link>

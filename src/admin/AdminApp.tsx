@@ -15,6 +15,7 @@ import AdminBlogPage from "./pages/AdminBlogPage";
 import AdminInfrastructurePage from "./pages/AdminInfrastructurePage";
 import AdminBroadcastsPage from "./pages/AdminBroadcastsPage";
 import AdminMetricsPage from "./pages/AdminMetricsPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 
 function RequireAdmin() {
   const token = apiClient.getAccessToken();
@@ -44,6 +45,7 @@ export default function AdminApp() {
             <Route path="/broadcasts" element={<AdminBroadcastsPage />} />
             <Route path="/infrastructure" element={<AdminInfrastructurePage />} />
             <Route path="/metrics" element={<AdminMetricsPage />} />
+            <Route path="/analytics" element={<AdminAnalyticsPage />} />
             <Route path="/config" element={<AdminConfigPage />} />
           </Route>
         </Route>
