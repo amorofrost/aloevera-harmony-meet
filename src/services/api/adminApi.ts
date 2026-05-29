@@ -277,13 +277,16 @@ function mapBlogPostRow(x: unknown): AdminBlogPostDto {
   };
 }
 
-export interface MetricsOverviewDto {
+export interface TechnicalOverviewDto {
+  requestsLastHour: number;
+  p95LastHourMs: number | null;
+}
+
+export interface BiOverviewDto {
   registered: number;
   dau: number;
   mau: number;
   currentlyActive: number;
-  requestsLastHour: number;
-  p95LastHourMs: number | null;
 }
 
 export interface ContainerStatusDto {
@@ -1081,18 +1084,26 @@ export const adminApi = {
   },
 
   metrics: {
-    async getOverview(): Promise<ApiResponse<MetricsOverviewDto>> {
+    async getOverview(): Promise<ApiResponse<TechnicalOverviewDto>> {
       if (!isApiMode()) {
         return {
           success: true,
-          data: {
-            registered: 12, dau: 4, mau: 12, currentlyActive: 1,
-            requestsLastHour: 240, p95LastHourMs: 180,
-          },
+          data: { requestsLastHour: 240, p95LastHourMs: 180 },
           timestamp: new Date().toISOString(),
         };
       }
-      return apiClient.get<MetricsOverviewDto>('/api/v1/admin/metrics/overview');
+      return apiClient.get<TechnicalOverviewDto>('/api/v1/admin/metrics/overview');
+    },
+
+    async getBiOverview(): Promise<ApiResponse<BiOverviewDto>> {
+      if (!isApiMode()) {
+        return {
+          success: true,
+          data: { registered: 12, dau: 4, mau: 12, currentlyActive: 1 },
+          timestamp: new Date().toISOString(),
+        };
+      }
+      return apiClient.get<BiOverviewDto>('/api/v1/admin/metrics/bi-overview');
     },
 
     async getContainers(): Promise<ApiResponse<ContainerStatusDto[]>> {
