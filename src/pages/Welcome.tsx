@@ -147,7 +147,7 @@ const Welcome = () => {
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Hero Background */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
       >
         <div className="absolute inset-0 hero-gradient opacity-80"></div>
