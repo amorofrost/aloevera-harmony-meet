@@ -1,22 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   adminApi,
-  type MetricsOverviewDto,
+  type TechnicalOverviewDto,
   type ContainerStatusDto,
   type ContainerTimeseriesDto,
   type TimeseriesPointDto,
-  type BiTimeseriesDto,
   type EndpointStatDto,
 } from '@/services/api/adminApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MetricsOverviewTiles } from '@/admin/components/metrics/MetricsOverviewTiles';
 import { ContainerStatusTable } from '@/admin/components/metrics/ContainerStatusTable';
-import { UsersTimeChart } from '@/admin/components/metrics/UsersTimeChart';
 import { RequestVolumeTable } from '@/admin/components/metrics/RequestVolumeTable';
 import { LatencyChart } from '@/admin/components/metrics/LatencyChart';
 import { RequestCountChart } from '@/admin/components/metrics/RequestCountChart';
-import { BiEventsPanel } from '@/admin/components/metrics/BiEventsPanel';
 import { MetricsToggleSheet } from '@/admin/components/metrics/MetricsToggleSheet';
 
 type Range = '1h' | '24h' | '7d' | '30d';
@@ -57,9 +54,8 @@ function RangeSelector({ value, onChange }: { value: Range; onChange: (r: Range)
 }
 
 export default function AdminMetricsPage() {
-  const [overview, setOverview] = useState<MetricsOverviewDto | null>(null);
+  const [overview, setOverview] = useState<TechnicalOverviewDto | null>(null);
   const [containers, setContainers] = useState<ContainerStatusDto[]>([]);
-  const [bi, setBi] = useState<BiTimeseriesDto | null>(null);
   const [endpointStats, setEndpointStats] = useState<EndpointStatDto[]>([]);
   const [selected, setSelected] = useState<EndpointStatDto | null>(null);
   const [endpointSeries, setEndpointSeries] = useState<TimeseriesPointDto[]>([]);
@@ -107,21 +103,18 @@ export default function AdminMetricsPage() {
   }, []);
 
   const fetchAll = useCallback(async (currentRange: Range) => {
-    const biRange: '24h' | '7d' | '30d' = currentRange === '1h' ? '24h' : currentRange;
     const from = new Date(Date.now() - rangeMs(currentRange)).toISOString();
     const to = new Date().toISOString();
     const resolution = resolutionFor(currentRange);
 
-    const [ov, ct, biData, epStats] = await Promise.all([
+    const [ov, ct, epStats] = await Promise.all([
       adminApi.metrics.getOverview(),
       adminApi.metrics.getContainers(),
-      adminApi.metrics.getBi(biRange),
       adminApi.metrics.getEndpointStats({ from, to, resolution }),
     ]);
 
     if (ov.success && ov.data) setOverview(ov.data);
     if (ct.success && ct.data) setContainers(ct.data);
-    if (biData.success && biData.data) setBi(biData.data);
     if (epStats.success && epStats.data) setEndpointStats(epStats.data);
 
     setLoading(false);
@@ -185,7 +178,10 @@ export default function AdminMetricsPage() {
             Operational dashboard — refreshes every 30 s when visible.
           </p>
         </div>
-        <Button variant="outline" onClick={() => setToggleOpen(true)}>Settings</Button>
+        <div className="flex items-center gap-3">
+          <RangeSelector value={range} onChange={setRange} />
+          <Button variant="outline" onClick={() => setToggleOpen(true)}>Settings</Button>
+        </div>
         <MetricsToggleSheet open={toggleOpen} onOpenChange={setToggleOpen} />
       </div>
 
@@ -209,20 +205,7 @@ export default function AdminMetricsPage() {
         </CardContent>
       </Card>
 
-      {/* 3. Users time chart */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">User activity over time</CardTitle>
-            <RangeSelector value={range} onChange={setRange} />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <UsersTimeChart data={bi} />
-        </CardContent>
-      </Card>
-
-      {/* 4. Request volume + per-endpoint drill-down */}
+      {/* 3. Request volume + per-endpoint drill-down */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-semibold">Request volume &amp; latency</CardTitle>
@@ -269,15 +252,6 @@ export default function AdminMetricsPage() {
         </CardContent>
       </Card>
 
-      {/* 5. BI events */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold">BI event counts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BiEventsPanel />
-        </CardContent>
-      </Card>
     </div>
   );
 }

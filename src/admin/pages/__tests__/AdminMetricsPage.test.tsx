@@ -20,14 +20,7 @@ vi.mock('@/services/api/adminApi', () => ({
     metrics: {
       getOverview: vi.fn().mockResolvedValue({
         success: true,
-        data: {
-          registered: 1247,
-          dau: 89,
-          mau: 412,
-          currentlyActive: 7,
-          requestsLastHour: 1200,
-          p95LastHourMs: 240,
-        },
+        data: { requestsLastHour: 1200, p95LastHourMs: 240 },
       }),
       getContainers: vi.fn().mockResolvedValue({
         success: true,
@@ -70,15 +63,6 @@ vi.mock('@/services/api/adminApi', () => ({
         success: true,
         data: { heapMb: [], workingSetMb: [], threadCount: [], cpuPercent: [] },
       }),
-      getBi: vi.fn().mockResolvedValue({
-        success: true,
-        data: {
-          days: ['2026-05-20', '2026-05-21'],
-          registered: [11, 12],
-          dau: [4, 4],
-          mau: [11, 12],
-        },
-      }),
       getConfig: vi.fn().mockResolvedValue({
         success: true,
         data: {
@@ -106,11 +90,10 @@ function renderPage() {
 describe('AdminMetricsPage', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renders overview tile values from API', async () => {
+  it('renders the technical overview tiles from API', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText('1247')).toBeInTheDocument());
-    expect(screen.getByText('89')).toBeInTheDocument();
-    expect(screen.getByText('412')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('1200')).toBeInTheDocument()); // Req / hr
+    expect(screen.getByText('240')).toBeInTheDocument();                       // p95 ms
   });
 
   it('renders container rows for backend and frontend', async () => {
@@ -122,7 +105,7 @@ describe('AdminMetricsPage', () => {
   it('shows a Settings button that can be clicked', async () => {
     renderPage();
     // Wait for data to load so the page has fully rendered
-    await waitFor(() => screen.getByText('1247'));
+    await waitFor(() => screen.getByText('1200'));
     const btn = screen.getByRole('button', { name: /Settings/i });
     expect(btn).toBeInTheDocument();
     fireEvent.click(btn);
