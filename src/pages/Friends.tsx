@@ -563,7 +563,16 @@ const Friends = () => {
                   </div>
                 )}
                 {target.eventsAttended && target.eventsAttended.length > 0 && (
-                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                  <div
+                    className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+                    style={{ scrollbarWidth: 'none' }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseMove={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  >
                     {target.eventsAttended.map((ev) => (
                       <div key={ev.id} className="flex-shrink-0">
                         <EventAttendanceMark
