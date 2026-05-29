@@ -155,7 +155,8 @@ Daily 3am UTC: `JanitorWorker` deletes `metricsminute` partitions older than `re
 |---|---|---|---|
 | `GET` | `/api/v1/metrics/config` | `[Authorize]` | Frontend interceptor reads `frontendPerf` flag every 5min |
 | `POST` | `/api/v1/metrics/frontend` | `[Authorize]` + per-user 10/min rate limit | Batch ingest from browser |
-| `GET` | `/api/v1/admin/metrics/overview` | `[RequireStaffRole("admin")]` | KPI tiles |
+| `GET` | `/api/v1/admin/metrics/overview` | `[RequireStaffRole("admin")]` | KPI tiles — technical (req/hr + p95) |
+| `GET` | `/api/v1/admin/metrics/bi-overview` | admin | BI KPI tiles (registered, DAU, MAU, online now) |
 | `GET` | `/api/v1/admin/metrics/containers` | admin | Container status grid |
 | `GET` | `/api/v1/admin/metrics/timeseries` | admin | Charts (`?category=&from=&to=&resolution=minute\|hour`) |
 | `GET` | `/api/v1/admin/metrics/endpoint-timeseries` | admin | Per-endpoint count+latency (`?method=&route=&from=&to=&resolution=`) |
@@ -196,6 +197,7 @@ Rows are seeded by `Lovecraft.Tools.Seeder` on initial deploy. Missing rows fall
 
 ## Known follow-ups (not blocking)
 
+- **Metrics / Analytics page split (shipped 2026-05-29).** The admin dashboard is split into **Metrics** (`/admin/metrics` — technical telemetry: req/hr + p95, container status, request volume & latency) and **Analytics** (`/admin/analytics` — registered/DAU/MAU/online tiles, user-activity-over-time, BI event counts). The `overview` endpoint was split into `overview` (technical) + `bi-overview` (BI) so each page fetches only what it needs.
 - **Admin shell doesn't init the frontend collector.** `src/admin/main.tsx` doesn't call `frontendMetrics.init()` — admin-page API traffic is not in `frontend_perf` samples. Trivial fix when needed.
 - **No source toggle on the request-volume panel.** Dashboard always shows `request_timing` (backend perspective). `frontend_perf` data is collected but not surfaced.
 - **Per-endpoint drill-down (shipped 2026-05-27).** Resource IDs in request-timing/frontend-perf dimension keys are normalized to `{id}` via `MetricsRouteNormalizer` (backend), so the endpoint list is per-API not per-resource. The endpoint table has a search box + GET/POST/PUT/DELETE filter pills (client-side). Clicking a row replaces the right panel with that endpoint's call-count and p50/p95/p99 charts over time, fed by `GET /api/v1/admin/metrics/endpoint-timeseries?method=&route=&from=&to=&resolution=`. `endpoint-stats` now returns one row per `(method, route)` summed across status codes (no `statusCode` field; new `routeKey` identifier).
