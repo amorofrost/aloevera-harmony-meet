@@ -231,7 +231,7 @@ const Profile = () => {
                 )}
               </div>
               <div className="mt-4 text-center">
-                <h2 className="text-2xl font-bold">{user.name}, {user.age}</h2>
+                <h2 className="text-2xl font-bold">{user.name}{user.age ? `, ${user.age}` : ''}</h2>
                 <p className="text-muted-foreground">{user.location}</p>
               </div>
             </div>

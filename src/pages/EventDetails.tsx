@@ -354,7 +354,7 @@ const EventDetails = () => {
                           </Avatar>
                           <div>
                             <h4 className="font-semibold">{user.name}</h4>
-                            <p className="text-sm text-muted-foreground">{user.age} лет</p>
+                            {user.age ? <p className="text-sm text-muted-foreground">{user.age} лет</p> : null}
                             <p className="text-xs text-muted-foreground">{user.location}</p>
                           </div>
                           <div className="flex items-center gap-2">

@@ -466,7 +466,7 @@ const Friends = () => {
             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${user.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold truncate">{user.name}, {user.age}</h3>
+            <h3 className="font-semibold truncate">{user.name}{user.age ? `, ${user.age}` : ''}</h3>
             <p className="text-sm text-muted-foreground truncate"><LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} /></p>
             {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
           </div>

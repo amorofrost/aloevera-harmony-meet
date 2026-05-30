@@ -427,7 +427,7 @@ const Search = () => {
                   </span>
                 </div>
                 <h2 className="text-2xl font-bold mb-1">
-                  {currentUser.name}, {currentUser.age}
+                  {currentUser.name}{currentUser.age ? `, ${currentUser.age}` : ''}
                 </h2>
                 <p className="text-sm opacity-90 mb-2">{currentUser.location}</p>
                 {!showDetails && (
@@ -448,7 +448,7 @@ const Search = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="opacity-75">Возраст:</span>
-                        <div>{currentUser.age}</div>
+                        <div>{currentUser.age || '—'}</div>
                       </div>
                       <div>
                         <span className="opacity-75">Пол:</span>

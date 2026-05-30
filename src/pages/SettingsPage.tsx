@@ -165,7 +165,7 @@ const SettingsPage = () => {
                       className="w-32 h-32 rounded-full object-cover shadow-lg"
                     />
                   </div>
-                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} accountName={user.accountName} className="mt-1" /><LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} className="text-sm text-muted-foreground" /></div>
+                  <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}{user.age ? `, ${user.age}` : ''}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} accountName={user.accountName} className="mt-1" /><LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} className="text-sm text-muted-foreground" /></div>
                 </div>
               </CardContent>
             </Card>
