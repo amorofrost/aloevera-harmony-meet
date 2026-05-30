@@ -174,9 +174,9 @@ const Welcome = () => {
             {t('welcome.subtitle')}
           </p>
           
-          <p className="text-lg text-white/80 drop-shadow-md leading-relaxed">
+          {/*<p className="text-lg text-white/80 drop-shadow-md leading-relaxed">
             {t('welcome.description')}
-          </p>
+          </p>*/}
         </div>
 
         {/* Login/Register Forms */}

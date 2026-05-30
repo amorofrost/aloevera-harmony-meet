@@ -236,7 +236,9 @@ const MiniAppEntry: React.FC = () => {
 
   const tgUsernamePrefill = (telegram?.username ?? '').replace(/[^A-Za-z0-9_]/g, '');
 
-  const greeting = telegram?.firstName ? `Welcome, ${telegram.firstName}!` : 'Welcome!';
+  const greeting = telegram?.firstName
+    ? `${t('miniApp.welcome')}, ${telegram.firstName}!`
+    : `${t('miniApp.welcome')}!`;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start px-5 py-8 bg-background">
@@ -248,17 +250,17 @@ const MiniAppEntry: React.FC = () => {
         <div className="text-center">
           <h2 className="text-xl font-semibold">{greeting}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            We couldn't find an AloeVera account for your Telegram profile yet.
+            {t('miniApp.noAccountYet')}
           </p>
         </div>
 
         {phase === 'choose' && (
           <div className="space-y-3">
             <Button size="lg" className="w-full" onClick={() => setPhase('link')}>
-              I already have an account
+              {t('miniApp.haveAccount')}
             </Button>
             <Button size="lg" variant="outline" className="w-full" onClick={() => setPhase('create')}>
-              Create a new account
+              {t('miniApp.createAccount')}
             </Button>
           </div>
         )}

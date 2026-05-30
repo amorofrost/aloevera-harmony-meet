@@ -149,7 +149,7 @@ const translations = {
 
     // Welcome
     'welcome.title': 'Добро пожаловать в Клуб АлоэВера',
-    'welcome.subtitle': 'Знакомства и общение для тех, кто на одной волне',
+    'welcome.subtitle': 'Для тех, кто на одной волне',
     'welcome.description': 'Ты в правильном месте. Здесь ты найдешь людей, которые разделяют твой вайб и взгляды на жизнь.',
     'welcome.getStarted': 'Начать общение',
     'welcomePhoto.title': 'Добавьте фото профиля',
@@ -159,6 +159,10 @@ const translations = {
     'welcomePhoto.saving': 'Сохранение…',
     'welcomePhoto.uploadFailed': 'Не удалось загрузить фото',
     'welcomePhoto.photoSaved': 'Фото профиля сохранено!',
+    'miniApp.welcome': 'Привет',
+    'miniApp.noAccountYet': 'Мы пока не нашли аккаунт, привязанный к вашему профилю Telegram.',
+    'miniApp.haveAccount': 'У меня уже есть аккаунт',
+    'miniApp.createAccount': 'Создать новый аккаунт',
     
     // Auth
     'auth.accountName': 'Логин',
@@ -500,7 +504,7 @@ const translations = {
 
     // Welcome
     'welcome.title': 'Welcome to AloeVera World',
-    'welcome.subtitle': 'Dating for Music Lovers',
+    'welcome.subtitle': 'Find like-minded people',
     'welcome.description': 'Find like-minded people, fall in love to your favorite melodies, and create harmony in relationships.',
     'welcome.getStarted': 'Start Dating',
     'welcomePhoto.title': 'Add a profile photo',
@@ -510,6 +514,10 @@ const translations = {
     'welcomePhoto.saving': 'Saving...',
     'welcomePhoto.uploadFailed': 'Photo upload failed',
     'welcomePhoto.photoSaved': 'Profile photo saved!',
+    'miniApp.welcome': 'Welcome',
+    'miniApp.noAccountYet': "We couldn't find an account for your Telegram profile yet.",
+    'miniApp.haveAccount': 'I already have an account',
+    'miniApp.createAccount': 'Create a new account',
     
     // Auth
     'auth.accountName': 'Account name',
