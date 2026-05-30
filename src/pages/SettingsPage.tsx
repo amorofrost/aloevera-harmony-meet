@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, LogOut, Globe, ChevronLeft, ChevronRight, Pencil, Instagram } from 'lucide-react';
+import { Edit3, LogOut, Globe, ChevronLeft, ChevronRight, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -43,10 +43,6 @@ const SettingsPage = () => {
     resolver: zodResolver(profileEditSchema),
   });
   const [editStartUser, setEditStartUser] = useState<User | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [availability, setAvailability] = useState<NotificationAvailability>({
     telegramLinked: false,
     emailVerified: false,
@@ -110,51 +106,6 @@ const SettingsPage = () => {
     }
   });
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error(t('profile.photoTooLarge'));
-      e.target.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => setPreviewUrl(reader.result as string);
-    reader.readAsDataURL(file);
-    setPendingFile(file);
-  };
-
-  const handleSavePhoto = async () => {
-    if (!pendingFile || !user) return;
-    setIsUploading(true);
-    try {
-      const result = await usersApi.uploadProfileImage(user.id, pendingFile);
-      if (!result.success) throw result;
-      setUser({ ...user, profileImage: result.data! });
-      setPreviewUrl(null);
-      setPendingFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      toast.success(t('profile.photoUpdated'));
-    } catch (err) {
-      showApiError(err, t('profile.photoUploadFailed'));
-      setPreviewUrl(null);
-      setPendingFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleCancelPhoto = () => {
-    setPreviewUrl(null);
-    setPendingFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   const handleSignOut = async () => {
     try {
       await authApi.logout();
@@ -206,34 +157,14 @@ const SettingsPage = () => {
                 <div className="text-center">
                   <div
                     className="relative inline-block cursor-pointer"
-                    onClick={handleAvatarClick}
+                    onClick={() => navigate(`/friends?userId=${user.id}`)}
                   >
                     <img
-                      src={previewUrl ?? user.profileImage}
+                      src={user.profileImage}
                       alt={user.name}
                       className="w-32 h-32 rounded-full object-cover shadow-lg"
                     />
-                    <div className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-[--aloe-flame] flex items-center justify-center border-2 border-background">
-                      <Pencil className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      hidden
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                    />
                   </div>
-                  {pendingFile && (
-                    <div className="flex gap-2 mt-3">
-                      <Button onClick={handleSavePhoto} disabled={isUploading} size="sm">
-                        {isUploading ? t('profile.savingPhoto') : t('profile.savePhoto')}
-                      </Button>
-                      <Button onClick={handleCancelPhoto} disabled={isUploading} variant="outline" size="sm">
-                        {t('common.cancel')}
-                      </Button>
-                    </div>
-                  )}
                   <div className="mt-4"><h2 className="text-2xl font-bold">{user.name}, {user.age}</h2><UserBadges rank={user.rank} staffRole={user.staffRole} accountName={user.accountName} className="mt-1" /><LocationDisplay country={user.country} region={user.region} secondaryCountry={user.secondaryCountry} secondaryRegion={user.secondaryRegion} location={user.location} className="text-sm text-muted-foreground" /></div>
                 </div>
               </CardContent>
