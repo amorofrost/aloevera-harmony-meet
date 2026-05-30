@@ -51,6 +51,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { uploadImage } from "@/services/api/imagesApi";
 import InviteLinkDialog from '../components/InviteLinkDialog';
+import TelegramInviteLinkDialog from '../components/TelegramInviteLinkDialog';
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -124,6 +125,7 @@ export default function AdminEventEditorPage() {
   );
   const [invitePlainOverride, setInvitePlainOverride] = useState("");
   const [linkDialogInvite, setLinkDialogInvite] = useState<EventInviteAdminDto | null>(null);
+  const [tgLinkDialogInvite, setTgLinkDialogInvite] = useState<EventInviteAdminDto | null>(null);
 
   const [newTopicTitle, setNewTopicTitle] = useState("");
   const [newTopicContent, setNewTopicContent] = useState("");
@@ -746,14 +748,24 @@ export default function AdminEventEditorPage() {
                         </TableCell>
                         <TableCell>
                           {!inv.revoked && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setLinkDialogInvite(inv)}
-                            >
-                              Link / QR
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setLinkDialogInvite(inv)}
+                              >
+                                Link / QR
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setTgLinkDialogInvite(inv)}
+                              >
+                                Telegram link / QR
+                              </Button>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -979,6 +991,13 @@ export default function AdminEventEditorPage() {
           onOpenChange={(open) => { if (!open) setLinkDialogInvite(null); }}
           eventId={eventId}
           plainCode={linkDialogInvite.plainCode}
+        />
+      )}
+      {tgLinkDialogInvite && (
+        <TelegramInviteLinkDialog
+          open
+          onOpenChange={(open) => { if (!open) setTgLinkDialogInvite(null); }}
+          plainCode={tgLinkDialogInvite.plainCode}
         />
       )}
     </div>

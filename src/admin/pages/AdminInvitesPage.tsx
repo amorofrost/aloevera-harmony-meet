@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import InviteLinkDialog from '../components/InviteLinkDialog';
+import TelegramInviteLinkDialog from '../components/TelegramInviteLinkDialog';
 
 function isCampaign(eventId: string) {
   return eventId.startsWith("-") && /^-[0-9]+$/.test(eventId);
@@ -25,6 +26,7 @@ export default function AdminInvitesPage() {
   const [invites, setInvites] = useState<EventInviteAdminDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [linkDialogInvite, setLinkDialogInvite] = useState<EventInviteAdminDto | null>(null);
+  const [tgLinkDialogInvite, setTgLinkDialogInvite] = useState<EventInviteAdminDto | null>(null);
 
   const [campaignId, setCampaignId] = useState("-1");
   const [campaignLabel, setCampaignLabel] = useState("");
@@ -199,14 +201,24 @@ export default function AdminInvitesPage() {
                     </TableCell>
                     <TableCell>
                       {!inv.revoked && !isCampaign(inv.eventId) && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setLinkDialogInvite(inv)}
-                        >
-                          Link / QR
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setLinkDialogInvite(inv)}
+                          >
+                            Link / QR
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setTgLinkDialogInvite(inv)}
+                          >
+                            Telegram link / QR
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -222,6 +234,13 @@ export default function AdminInvitesPage() {
           onOpenChange={(open) => { if (!open) setLinkDialogInvite(null); }}
           eventId={linkDialogInvite.eventId}
           plainCode={linkDialogInvite.plainCode}
+        />
+      )}
+      {tgLinkDialogInvite && !isCampaign(tgLinkDialogInvite.eventId) && (
+        <TelegramInviteLinkDialog
+          open
+          onOpenChange={(open) => { if (!open) setTgLinkDialogInvite(null); }}
+          plainCode={tgLinkDialogInvite.plainCode}
         />
       )}
     </div>

@@ -11,7 +11,7 @@ import { DualLocationPicker } from '@/components/ui/dual-location-picker';
 import { AccountNameInput } from '@/components/ui/account-name-input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { authApi, apiClient } from '@/services/api';
+import { authApi, apiClient, invitesApi } from '@/services/api';
 import appIcon from '@/assets/app-icon.jpg';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
@@ -25,12 +25,24 @@ import {
 } from '@/lib/validators';
 import {
   getInitData,
+  getStartParam,
   getTelegramUserHint,
   isTelegramMiniApp,
   ready,
   expand,
   applyTheme,
 } from '@/lib/telegramWebApp';
+
+/**
+ * Decode a Mini App start_param into an invite code. The admin Telegram-link/QR dialog
+ * emits <c>inv-{plainCode}</c>; anything else is treated as no invite. Returns null when
+ * the page was opened without a start_param at all.
+ */
+function inviteFromStartParam(startParam: string | null): string | null {
+  if (!startParam || !startParam.startsWith('inv-')) return null;
+  const code = startParam.slice('inv-'.length);
+  return code.length > 0 ? code : null;
+}
 import type { TelegramUserInfo } from '@/services/api/authApi';
 
 type Phase = 'initializing' | 'choose' | 'link' | 'create' | 'error';
@@ -62,6 +74,9 @@ const MiniAppEntry: React.FC = () => {
   });
 
   const hint = getTelegramUserHint();
+  // Read deep-link invite from start_param synchronously at mount so the registration form
+  // can pre-fill it through defaultValues (rather than racing with a setValue after render).
+  const inviteFromDeepLink = inviteFromStartParam(getStartParam());
   const registerForm = useForm<TelegramRegisterSchema>({
     resolver: async (values, ctx, opts) => {
       const schema = requireInviteRef.current ? telegramRegisterSchemaWithInvite : telegramRegisterSchema;
@@ -76,6 +91,7 @@ const MiniAppEntry: React.FC = () => {
       secondaryCountry: '',
       secondaryRegion: '',
       gender: '',
+      inviteCode: inviteFromDeepLink ?? '',
     },
     mode: 'onBlur',
   });
@@ -106,6 +122,24 @@ const MiniAppEntry: React.FC = () => {
         if (res.data.status === 'signedIn' && res.data.auth) {
           apiClient.setAccessToken(res.data.auth.accessToken);
           if (res.data.auth.refreshToken) apiClient.setRefreshToken(res.data.auth.refreshToken);
+
+          // Deep-link from the admin Telegram-invite link/QR: signed-in users land on the
+          // event detail page with the code applied, mirroring the web flow
+          // (https://aloeve.club/aloevera/events/{eventId}?code={code}). Falls back to the
+          // normal post-auth destination if the code can't be resolved (revoked, expired,
+          // network error etc).
+          if (inviteFromDeepLink) {
+            try {
+              const lookup = await invitesApi.lookupEvent(inviteFromDeepLink);
+              if (lookup.success && lookup.data?.eventId) {
+                navigate(`/aloevera/events/${lookup.data.eventId}?code=${encodeURIComponent(inviteFromDeepLink)}`, { replace: true });
+                return;
+              }
+            } catch (lookupErr) {
+              console.error('Invite lookup failed; falling back to default post-auth nav', lookupErr);
+            }
+          }
+
           navigateAfterAuth(navigate, res.data.auth.user);
           return;
         }
@@ -115,7 +149,9 @@ const MiniAppEntry: React.FC = () => {
           const prefill = [res.data.telegram.firstName, res.data.telegram.lastName].filter(Boolean).join(' ').trim();
           if (prefill && !registerForm.getValues('name')) registerForm.setValue('name', prefill);
         }
-        setPhase('choose');
+        // Skip the link-or-create chooser when the user arrived via an invite deep link —
+        // they clearly want to register, and the code is already pre-filled in the form.
+        setPhase(inviteFromDeepLink ? 'create' : 'choose');
       } catch (err) {
         console.error(err);
         setErrorMsg('Mini app login failed.');

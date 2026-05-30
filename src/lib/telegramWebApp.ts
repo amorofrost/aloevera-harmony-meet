@@ -24,6 +24,11 @@ interface TelegramWebApp {
       username?: string;
       photo_url?: string;
     };
+    /**
+     * Deep-link payload from <c>t.me/{bot}?startapp={value}</c>. Constrained by Telegram to
+     * 64 chars and the set <c>[A-Za-z0-9_-]</c>.
+     */
+    start_param?: string;
   };
   version: string;
   platform: string;
@@ -61,6 +66,14 @@ export function isTelegramMiniApp(): boolean {
 export function getInitData(): string | null {
   const wa = webApp();
   return wa?.initData || null;
+}
+
+/**
+ * Deep-link start parameter from <c>t.me/{bot}?startapp={value}</c>. Returns null when the
+ * Mini App was opened without a payload (e.g. directly from a bot menu button).
+ */
+export function getStartParam(): string | null {
+  return webApp()?.initDataUnsafe?.start_param ?? null;
 }
 
 export function getTelegramUserHint(): { firstName?: string; lastName?: string } | null {

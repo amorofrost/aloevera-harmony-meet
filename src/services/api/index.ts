@@ -9,6 +9,7 @@ export { chatsApi } from './chatsApi';
 export { songsApi } from './songsApi';
 export { matchingApi, getCurrentUserIdFromToken } from './matchingApi';
 export { imagesApi, uploadImage } from './imagesApi';
+export { invitesApi, type InviteEventLookupDto } from './invitesApi';
 
 export type { ApiResponse } from './apiClient';
 export { adminApi, type AppConfigDto, type EventInviteAdminDto } from './adminApi';
