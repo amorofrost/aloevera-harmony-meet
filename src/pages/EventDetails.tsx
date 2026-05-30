@@ -7,6 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSmartBack } from '@/hooks/useSmartBack';
@@ -389,9 +400,25 @@ const EventDetails = () => {
         )}
 
         {isJoined ? (
-          <Button type="button" variant="secondary" className="w-full" size="lg" onClick={handleLeaveEvent}>
-            {t('events.leaveEvent')}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="secondary" className="w-full" size="lg">
+                {t('events.leaveEvent')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('events.leaveConfirmTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>{t('events.leaveConfirmBody')}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void handleLeaveEvent()}>
+                  {t('events.leaveConfirmAction')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : (
           <Card className="profile-card">
             <CardContent className="p-6 space-y-4">
