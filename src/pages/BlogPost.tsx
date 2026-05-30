@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BottomNavigation from '@/components/ui/bottom-navigation';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { blogApi } from '@/services/api';
 import type { BlogPost } from '@/data/mockBlogPosts';
 
@@ -57,7 +58,8 @@ const BlogPostPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate('/aloevera?tab=blog')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-lg font-bold truncate">{post.title}</h1>
+          <h1 className="text-lg font-bold truncate flex-1">{post.title}</h1>
+          <NotificationBell />
         </div>
       </div>
 

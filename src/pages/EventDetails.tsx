@@ -19,6 +19,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import EventPostmark from '@/components/ui/event-postmark';
+import BottomNavigation from '@/components/ui/bottom-navigation';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import type { Event, User } from '@/types/user';
@@ -232,7 +234,7 @@ const EventDetails = () => {
   const interestedCount = event.interestedUserIds?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background relative pb-20">
       <div className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-80" style={{ backgroundImage: `url(${heroBg})` }}>
         <div className="absolute inset-0 bg-background/90"></div>
       </div>
@@ -243,6 +245,7 @@ const EventDetails = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-xl font-bold text-foreground flex-1">Детали события</h1>
+          <NotificationBell />
         </div>
       </div>
 
@@ -464,6 +467,8 @@ const EventDetails = () => {
           </div>
         </div>
       ) : null}
+
+      <BottomNavigation />
     </div>
   );
 };

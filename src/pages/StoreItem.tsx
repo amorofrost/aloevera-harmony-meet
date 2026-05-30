@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import BottomNavigation from '@/components/ui/bottom-navigation';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { storeApi } from '@/services/api';
 import type { StoreItem } from '@/data/mockStoreItems';
@@ -57,7 +58,8 @@ const StoreItemPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate('/aloevera?tab=store')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-lg font-bold truncate">{item.title}</h1>
+          <h1 className="text-lg font-bold truncate flex-1">{item.title}</h1>
+          <NotificationBell />
         </div>
       </div>
 
