@@ -56,9 +56,13 @@ const EventDetails = () => {
       setIsJoined(!!myId && ev.attendees.includes(myId));
       setIsInterested(!!myId && (ev.interestedUserIds ?? []).includes(myId));
 
-      const usersRes = await usersApi.getUsers();
-      if (usersRes.success && usersRes.data) {
-        setAttendeeUsers(usersRes.data.filter(u => ev.attendees.includes(u.id)));
+      if (ev.attendees.length > 0) {
+        const usersRes = await usersApi.getUsersByIds(ev.attendees);
+        if (usersRes.success && usersRes.data) {
+          setAttendeeUsers(usersRes.data);
+        }
+      } else {
+        setAttendeeUsers([]);
       }
 
       setNotFound(false);
@@ -138,9 +142,13 @@ const EventDetails = () => {
         setEvent(ev);
         const myId = getCurrentUserIdFromToken();
         setIsInterested(!!myId && (ev.interestedUserIds ?? []).includes(myId));
-        const usersRes = await usersApi.getUsers();
-        if (usersRes.success && usersRes.data) {
-          setAttendeeUsers(usersRes.data.filter(u => ev.attendees.includes(u.id)));
+        if (ev.attendees.length > 0) {
+          const usersRes = await usersApi.getUsersByIds(ev.attendees);
+          if (usersRes.success && usersRes.data) {
+            setAttendeeUsers(usersRes.data);
+          }
+        } else {
+          setAttendeeUsers([]);
         }
       }
     } catch (err) {
