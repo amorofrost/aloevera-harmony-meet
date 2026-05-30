@@ -7,6 +7,7 @@ import { authApi } from '@/services/api/authApi';
 import { Check, HelpCircle, Loader2, X } from 'lucide-react';
 
 type Status = 'idle' | 'checking' | 'available' | 'invalidFormat' | 'reserved' | 'taken';
+type Variant = 'hero' | 'plain';
 
 interface AccountNameInputProps {
   value: string;
@@ -15,6 +16,13 @@ interface AccountNameInputProps {
   disabled?: boolean;
   prefillSuggestion?: string;
   id?: string;
+  /**
+   * Visual variant. `hero` (default) renders white text + translucent input
+   * on the dark hero-background of the Welcome forms. `plain` renders with
+   * standard theme colors so the field is visible on a regular `bg-background`
+   * surface (e.g. the Telegram Mini App entry).
+   */
+  variant?: Variant;
 }
 
 const FORMAT_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
@@ -32,9 +40,23 @@ export function AccountNameInput({
   disabled,
   prefillSuggestion,
   id = 'accountName',
+  variant = 'hero',
 }: AccountNameInputProps) {
   const { t } = useLanguage();
   const [status, setStatus] = useState<Status>('idle');
+
+  const isHero = variant === 'hero';
+  const labelRowClass = isHero
+    ? 'flex items-center justify-center gap-1.5'
+    : 'flex items-center gap-1.5';
+  const labelClass = isHero ? 'text-white font-medium' : 'font-medium';
+  const infoBtnClass = isHero
+    ? 'text-white/70 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-full'
+    : 'text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full';
+  const inputClass = isHero
+    ? 'bg-white/20 border-white/30 text-white placeholder:text-white/60'
+    : '';
+  const hintClass = isHero ? 'text-xs text-white/60' : 'text-xs text-muted-foreground';
   const abortRef = useRef<AbortController | null>(null);
   const prefillApplied = useRef(false);
 
@@ -88,8 +110,8 @@ export function AccountNameInput({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-center gap-1.5">
-        <Label htmlFor={id} className="text-white font-medium">
+      <div className={labelRowClass}>
+        <Label htmlFor={id} className={labelClass}>
           {t('auth.accountName')} *
         </Label>
         <Popover>
@@ -97,7 +119,7 @@ export function AccountNameInput({
             <button
               type="button"
               aria-label={t('auth.accountNameInfo')}
-              className="text-white/70 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-full"
+              className={infoBtnClass}
             >
               <HelpCircle className="w-4 h-4" />
             </button>
@@ -118,20 +140,29 @@ export function AccountNameInput({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         placeholder={t('auth.accountNamePlaceholder')}
-        className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+        className={inputClass}
       />
-      <p className="text-xs text-white/60">{t('auth.accountNameHint')}</p>
-      <StatusRow status={status} t={t} />
+      <p className={hintClass}>{t('auth.accountNameHint')}</p>
+      <StatusRow status={status} t={t} variant={variant} />
     </div>
   );
 }
 
-function StatusRow({ status, t }: { status: Status; t: (k: string) => string }) {
+function StatusRow({
+  status,
+  t,
+  variant,
+}: {
+  status: Status;
+  t: (k: string) => string;
+  variant: Variant;
+}) {
   if (status === 'idle') return null;
+  const isHero = variant === 'hero';
 
   if (status === 'checking') {
     return (
-      <p className="text-xs text-white/70 flex items-center gap-1">
+      <p className={`text-xs flex items-center gap-1 ${isHero ? 'text-white/70' : 'text-muted-foreground'}`}>
         <Loader2 className="w-3 h-3 animate-spin" />
         {t('auth.accountNameChecking')}
       </p>
@@ -140,7 +171,7 @@ function StatusRow({ status, t }: { status: Status; t: (k: string) => string }) 
 
   if (status === 'available') {
     return (
-      <p className="text-xs text-green-300 flex items-center gap-1">
+      <p className={`text-xs flex items-center gap-1 ${isHero ? 'text-green-300' : 'text-green-600'}`}>
         <Check className="w-3 h-3" />
         {t('auth.accountNameAvailable')}
       </p>
@@ -155,7 +186,7 @@ function StatusRow({ status, t }: { status: Status; t: (k: string) => string }) 
         : 'auth.accountNameTaken';
 
   return (
-    <p role="alert" className="text-xs text-red-300 flex items-center gap-1">
+    <p role="alert" className={`text-xs flex items-center gap-1 ${isHero ? 'text-red-300' : 'text-destructive'}`}>
       <X className="w-3 h-3" />
       {t(msgKey)}
     </p>

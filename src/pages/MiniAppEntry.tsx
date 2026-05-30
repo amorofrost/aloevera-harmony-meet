@@ -346,11 +346,12 @@ const MiniAppEntry: React.FC = () => {
                     onValidityChange={setAccountNameValid}
                     disabled={isSubmitting}
                     prefillSuggestion={tgUsernamePrefill}
+                    variant="plain"
                   />
                 )}
               />
               {registerForm.formState.errors.accountName && (
-                <p role="alert" className="text-xs text-red-300">{t(registerForm.formState.errors.accountName.message)}</p>
+                <p role="alert" className="text-xs text-destructive">{t(registerForm.formState.errors.accountName.message)}</p>
               )}
 
               <div className="space-y-2">
