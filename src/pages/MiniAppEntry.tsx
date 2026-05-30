@@ -372,7 +372,7 @@ const MiniAppEntry: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="mini-age">{t('auth.age')} *</Label>
+                  <Label htmlFor="mini-age">{t('auth.age')}</Label>
                   <Input
                     id="mini-age"
                     type="number"
