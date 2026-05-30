@@ -360,11 +360,7 @@ const EventDetails = () => {
                             <AvatarImage src={user.profileImage} alt={user.name} />
                             <AvatarFallback>{user.name[0]}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <h4 className="font-semibold">{user.name}</h4>
-                            {user.age ? <p className="text-sm text-muted-foreground">{user.age} лет</p> : null}
-                            <p className="text-xs text-muted-foreground">{user.location}</p>
-                          </div>
+                          <h4 className="font-semibold">{user.name}</h4>
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${user.isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
                             <span className="text-xs text-muted-foreground">{user.isOnline ? 'Онлайн' : 'Был недавно'}</span>
