@@ -81,6 +81,11 @@ const Friends = () => {
   const [messages, setMessages] = useState<MessageDto[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagePage, setMessagePage] = useState(1);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  // True when the next render should scroll to the bottom of the message list.
+  // Set on chat open and on incoming SignalR messages; intentionally NOT set when
+  // "Load older messages" prepends history, so the user stays anchored where they were.
+  const shouldScrollToBottomRef = useRef(false);
 
   // SignalR live updates
   const { sendMessage: signalRSend, isConnected, onEvent } = useChatSignalR(
@@ -91,11 +96,21 @@ const Friends = () => {
     if (!activeChatId) return;
     return onEvent('MessageReceived', (msg: unknown) => {
       const incoming = msg as MessageDto;
-      setMessages(prev =>
-        prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]
-      );
+      setMessages(prev => {
+        if (prev.some(m => m.id === incoming.id)) return prev;
+        shouldScrollToBottomRef.current = true;
+        return [...prev, incoming];
+      });
     });
   }, [activeChatId, onEvent]);
+
+  // Scroll to the bottom after messages render, but only when flagged.
+  useEffect(() => {
+    if (shouldScrollToBottomRef.current && !messagesLoading) {
+      messagesEndRef.current?.scrollIntoView({ block: 'end' });
+      shouldScrollToBottomRef.current = false;
+    }
+  }, [messages, messagesLoading]);
 
   // Load matches, likes and chats once on mount
   useEffect(() => {
@@ -189,6 +204,7 @@ const Friends = () => {
     }
     setActiveChatId(selectedChat);
     setMessagesLoading(true);
+    shouldScrollToBottomRef.current = true;
     chatsApi.getMessages(selectedChat, 1).then(msgsResult => {
       if (msgsResult.success && msgsResult.data) {
         setMessages(msgsResult.data);
@@ -424,6 +440,7 @@ const Friends = () => {
               </div>
             )
           )}
+          <div ref={messagesEndRef} />
           </div>
         </div>
         <div className="border-t p-4 relative z-10">
@@ -435,7 +452,9 @@ const Friends = () => {
                 value={messageText}
                 onChange={e => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  // Ctrl+Enter (or Cmd+Enter on Mac) sends. Plain Enter inserts a newline
+                  // so multi-line drafting works on both desktop and mobile.
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
                     handleSendClick();
                   }

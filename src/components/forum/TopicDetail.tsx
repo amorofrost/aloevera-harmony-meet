@@ -357,6 +357,12 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
                 }}
                 placeholder="Написать ответ..."
                 className="min-h-[100px]"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
+                  }
+                }}
               />
             </div>
             <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
