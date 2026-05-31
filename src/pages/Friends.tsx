@@ -509,43 +509,43 @@ const Friends = () => {
               const isHighlighted = highlightedMessageId === msg.id;
               return (
                 <div key={msg.id} className={cn('flex group', isMine ? 'justify-end' : 'justify-start')}>
-                  <div className={cn('flex flex-col gap-1 max-w-[75%]', isMine ? 'items-end' : 'items-start')}>
-                    <div className={cn('flex items-center gap-1', isMine ? 'flex-row-reverse' : 'flex-row')}>
-                      <div className={cn('flex items-center gap-0.5', isMine ? 'flex-row-reverse' : 'flex-row')}>
-                        {!isMine && (
-                          <ReactionPicker
-                            currentReaction={myReaction}
-                            onSelect={(emoji) => handleSetReaction(msg.id, emoji)}
-                            onRemove={() => handleRemoveReaction(msg.id)}
-                          >
-                            <button
-                              type="button"
-                              aria-label="Add reaction"
-                              className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
-                            >
-                              <SmilePlus className="w-4 h-4" />
-                            </button>
-                          </ReactionPicker>
-                        )}
-                        <button
-                          type="button"
-                          aria-label="Reply"
-                          onClick={() => {
-                            setReplyingToMessage(msg);
-                            chatInputRef.current?.focus();
-                          }}
-                          className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                  <div className={cn('flex items-end gap-1 max-w-[75%]', isMine ? 'flex-row-reverse' : 'flex-row')}>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      {!isMine && (
+                        <ReactionPicker
+                          currentReaction={myReaction}
+                          onSelect={(emoji) => handleSetReaction(msg.id, emoji)}
+                          onRemove={() => handleRemoveReaction(msg.id)}
                         >
-                          <Reply className="w-4 h-4" />
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            aria-label="Add reaction"
+                            className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
+                          >
+                            <SmilePlus className="w-4 h-4" />
+                          </button>
+                        </ReactionPicker>
+                      )}
+                      <button
+                        type="button"
+                        aria-label="Reply"
+                        onClick={() => {
+                          setReplyingToMessage(msg);
+                          chatInputRef.current?.focus();
+                        }}
+                        className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                      >
+                        <Reply className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className={cn('flex flex-col gap-1 min-w-0', isMine ? 'items-end' : 'items-start')}>
                       <div
                         ref={el => {
                           if (el) messageRefs.current.set(msg.id, el);
                           else messageRefs.current.delete(msg.id);
                         }}
                         className={cn(
-                          'min-w-0 rounded-lg px-3 py-2 text-sm break-words transition-shadow',
+                          'min-w-0 max-w-full rounded-lg px-3 py-2 text-sm break-words transition-shadow',
                           isMine ? 'bg-primary text-primary-foreground' : 'bg-muted',
                           isHighlighted && 'ring-2 ring-primary ring-offset-2'
                         )}
@@ -562,19 +562,19 @@ const Friends = () => {
                         <BbcodeRenderer content={msg.content} />
                         <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
                       </div>
+                      {reactionEntries.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {reactionEntries.map(([uid, emoji]) => (
+                            <ReactionPill
+                              key={uid}
+                              emoji={emoji}
+                              isOwn={uid === myId}
+                              onClick={uid === myId ? () => handleRemoveReaction(msg.id) : undefined}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {reactionEntries.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {reactionEntries.map(([uid, emoji]) => (
-                          <ReactionPill
-                            key={uid}
-                            emoji={emoji}
-                            isOwn={uid === myId}
-                            onClick={uid === myId ? () => handleRemoveReaction(msg.id) : undefined}
-                          />
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               );
