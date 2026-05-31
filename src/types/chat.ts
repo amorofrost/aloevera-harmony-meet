@@ -9,6 +9,14 @@ export interface Chat {
   eventId?: string; // For event-related group chats
 }
 
+export interface MessageReplySnippet {
+  id: string;
+  senderId: string;
+  /** First ~100 chars of the original Content. */
+  contentPreview: string;
+  hasImages: boolean;
+}
+
 export interface Message {
   id: string;
   chatId: string;
@@ -20,6 +28,10 @@ export interface Message {
   imageUrls?: string[];
   /** userId → emoji. One reaction per user per message; senders cannot react to own. */
   reactions?: Record<string, string>;
+  /** Id of the message this is a reply to, or undefined. Always in the same chat. */
+  replyToMessageId?: string;
+  /** Backend-embedded snapshot of the replied-to message for rendering the quote. */
+  replyToSnippet?: MessageReplySnippet;
 }
 
 export interface GroupChat extends Chat {

@@ -100,6 +100,12 @@ const translations = {
     'search.genderFemale': 'Женщины',
     'search.genderNonBinary': 'Небинарные',
 
+    // Chat
+    'chat.cancelReply': 'Отменить ответ',
+    'chat.photo': 'Фото',
+    'chat.replyTo': 'Ответ — {name}',
+    'chat.you': 'Ты',
+
     // Events
     'events.applyCode': 'Показать детали по коду',
     'events.attendees': 'участников',
@@ -457,6 +463,12 @@ const translations = {
     'search.genderMale': 'Men',
     'search.genderFemale': 'Women',
     'search.genderNonBinary': 'Non-binary',
+
+    // Chat
+    'chat.cancelReply': 'Cancel reply',
+    'chat.photo': 'Photo',
+    'chat.replyTo': 'Replying to {name}',
+    'chat.you': 'You',
 
     // Events
     'events.applyCode': 'Apply code',

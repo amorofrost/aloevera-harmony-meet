@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus, Reply } from 'lucide-react';
 import { SearchFilterSheet, EMPTY_FILTERS, type SearchFilters } from '@/components/SearchFilterSheet';
 import { LocationDisplay } from '@/components/ui/location-display';
 import { COUNTRY_BY_CODE } from '@/data/countries';
@@ -39,6 +39,7 @@ import heroBg from '@/assets/hero-bg.jpg';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { ReactionPicker } from '@/components/chat/ReactionPicker';
 import { ReactionPill } from '@/components/chat/ReactionPill';
+import { QuotedMessage } from '@/components/chat/QuotedMessage';
 import { showApiError } from '@/lib/apiError';
 
 function composePhotos(user: { profileImage: string; images: string[] }): string[] {
@@ -89,6 +90,12 @@ const Friends = () => {
   // Set on chat open and on incoming SignalR messages; intentionally NOT set when
   // "Load older messages" prepends history, so the user stays anchored where they were.
   const shouldScrollToBottomRef = useRef(false);
+  // Message the composer is currently replying to (null = not in reply mode).
+  const [replyingToMessage, setReplyingToMessage] = useState<MessageDto | null>(null);
+  // Briefly ring-highlight a message after the user clicks a quote to jump to it.
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  // Per-message DOM refs so we can scrollIntoView when a quote is clicked.
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // SignalR live updates
   const { sendMessage: signalRSend, isConnected, onEvent } = useChatSignalR(
@@ -222,6 +229,7 @@ const Friends = () => {
     setActiveChatId(selectedChat);
     setMessagesLoading(true);
     shouldScrollToBottomRef.current = true;
+    setReplyingToMessage(null);
     chatsApi.getMessages(selectedChat, 1).then(msgsResult => {
       if (msgsResult.success && msgsResult.data) {
         setMessages(msgsResult.data);
@@ -374,10 +382,23 @@ const Friends = () => {
       const res = await uploadImage(file);
       imageUrls.push(res.url);
     }
+    const replyToId = replyingToMessage?.id;
     // Don't add to state from the REST response — the SignalR broadcast delivers
     // the message to all group members including the sender, avoiding duplicates.
-    await chatsApi.sendMessage(activeChatId, messageText.trim(), imageUrls);
+    await chatsApi.sendMessage(activeChatId, messageText.trim(), imageUrls, replyToId);
     setImageFiles([]);
+    setReplyingToMessage(null);
+  };
+
+  const handleScrollToOriginal = (messageId: string) => {
+    const el = messageRefs.current.get(messageId);
+    if (!el) return; // Original is not in the loaded page set; silent no-op for now.
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedMessageId(messageId);
+    setTimeout(
+      () => setHighlightedMessageId(curr => (curr === messageId ? null : curr)),
+      1500
+    );
   };
 
   const handleSetReaction = async (messageId: string, emoji: string) => {
@@ -483,27 +504,61 @@ const Friends = () => {
               const isMine = !!myId && msg.senderId === myId;
               const myReaction = !isMine && myId ? msg.reactions?.[myId] : undefined;
               const reactionEntries = Object.entries(msg.reactions ?? {});
+              const senderLabelFor = (senderId: string): string =>
+                senderId === myId ? t('chat.you') : chat.otherUser.name;
+              const isHighlighted = highlightedMessageId === msg.id;
               return (
                 <div key={msg.id} className={cn('flex group', isMine ? 'justify-end' : 'justify-start')}>
                   <div className={cn('flex flex-col gap-1 max-w-[75%]', isMine ? 'items-end' : 'items-start')}>
                     <div className={cn('flex items-center gap-1', isMine ? 'flex-row-reverse' : 'flex-row')}>
-                      {!isMine && (
-                        <ReactionPicker
-                          currentReaction={myReaction}
-                          onSelect={(emoji) => handleSetReaction(msg.id, emoji)}
-                          onRemove={() => handleRemoveReaction(msg.id)}
-                        >
-                          <button
-                            type="button"
-                            aria-label="Add reaction"
-                            className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
+                      <div className={cn('flex items-center gap-0.5', isMine ? 'flex-row-reverse' : 'flex-row')}>
+                        {!isMine && (
+                          <ReactionPicker
+                            currentReaction={myReaction}
+                            onSelect={(emoji) => handleSetReaction(msg.id, emoji)}
+                            onRemove={() => handleRemoveReaction(msg.id)}
                           >
-                            <SmilePlus className="w-4 h-4" />
-                          </button>
-                        </ReactionPicker>
-                      )}
-                      <div className={cn('rounded-lg px-3 py-2 text-sm',
-                        isMine ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                            <button
+                              type="button"
+                              aria-label="Add reaction"
+                              className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
+                            >
+                              <SmilePlus className="w-4 h-4" />
+                            </button>
+                          </ReactionPicker>
+                        )}
+                        <button
+                          type="button"
+                          aria-label="Reply"
+                          onClick={() => {
+                            setReplyingToMessage(msg);
+                            chatInputRef.current?.focus();
+                          }}
+                          className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Reply className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div
+                        ref={el => {
+                          if (el) messageRefs.current.set(msg.id, el);
+                          else messageRefs.current.delete(msg.id);
+                        }}
+                        className={cn(
+                          'rounded-lg px-3 py-2 text-sm transition-shadow',
+                          isMine ? 'bg-primary text-primary-foreground' : 'bg-muted',
+                          isHighlighted && 'ring-2 ring-primary ring-offset-2'
+                        )}
+                      >
+                        {msg.replyToSnippet && (
+                          <QuotedMessage
+                            senderLabel={senderLabelFor(msg.replyToSnippet.senderId)}
+                            contentPreview={msg.replyToSnippet.contentPreview || t('chat.photo')}
+                            hasImages={msg.replyToSnippet.hasImages}
+                            onClick={() => handleScrollToOriginal(msg.replyToSnippet!.id)}
+                            variant={isMine ? 'own' : 'opponent'}
+                          />
+                        )}
                         <BbcodeRenderer content={msg.content} />
                         <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
                       </div>
@@ -539,32 +594,60 @@ const Friends = () => {
           </div>
         </div>
         <div className="border-t p-4 relative z-10">
-          <div className="flex gap-2 max-w-3xl mx-auto w-full">
-            <div className="relative flex-1">
-              <BbcodeToolbar textareaRef={chatInputRef} />
-              <textarea
-                ref={chatInputRef}
-                value={messageText}
-                onChange={e => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
-                onKeyDown={e => {
-                  // Ctrl+Enter (or Cmd+Enter on Mac) sends. Plain Enter inserts a newline
-                  // so multi-line drafting works on both desktop and mobile.
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    handleSendClick();
-                  }
-                }}
-                placeholder="Написать сообщение..."
-                className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[40px] max-h-[120px]"
-                rows={1}
-              />
+          <div className="max-w-3xl mx-auto w-full">
+            {replyingToMessage && (() => {
+              const myId = getCurrentUserIdFromToken();
+              const senderName = replyingToMessage.senderId === myId
+                ? t('chat.you')
+                : chat.otherUser.name;
+              const preview = replyingToMessage.content
+                || (replyingToMessage.imageUrls?.length ? t('chat.photo') : '');
+              return (
+                <div className="flex items-start gap-2 mb-2 rounded-md border-l-2 border-primary bg-muted/60 px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-primary">
+                      {t('chat.replyTo', { name: senderName })}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{preview}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyingToMessage(null)}
+                    aria-label={t('chat.cancelReply')}
+                    className="text-muted-foreground hover:text-foreground p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })()}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <BbcodeToolbar textareaRef={chatInputRef} />
+                <textarea
+                  ref={chatInputRef}
+                  value={messageText}
+                  onChange={e => { setMessageText(e.target.value); if (messageError) setMessageError(''); }}
+                  onKeyDown={e => {
+                    // Ctrl+Enter (or Cmd+Enter on Mac) sends. Plain Enter inserts a newline
+                    // so multi-line drafting works on both desktop and mobile.
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      handleSendClick();
+                    }
+                  }}
+                  placeholder="Написать сообщение..."
+                  className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[40px] max-h-[120px]"
+                  rows={1}
+                />
+              </div>
+              <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
+              <Button onClick={handleSendClick} disabled={!messageText.trim()}><Send className="w-4 h-4" /></Button>
             </div>
-            <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
-            <Button onClick={handleSendClick} disabled={!messageText.trim()}><Send className="w-4 h-4" /></Button>
+            {messageError && (
+              <p className="text-xs text-destructive mt-1">{messageError}</p>
+            )}
           </div>
-          {messageError && (
-            <p className="text-xs text-destructive mt-1">{messageError}</p>
-          )}
         </div>
         <BottomNavigation />
       </div>

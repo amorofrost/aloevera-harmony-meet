@@ -34,7 +34,7 @@ export const chatsApi = {
     return apiClient.post<ChatDto>('/api/v1/chats', { targetUserId });
   },
 
-  async sendMessage(chatId: string, content: string, imageUrls?: string[]) {
+  async sendMessage(chatId: string, content: string, imageUrls?: string[], replyToMessageId?: string) {
     if (!isApiMode()) {
       const msg: MessageDto = {
         id: crypto.randomUUID(),
@@ -45,10 +45,15 @@ export const chatsApi = {
         read: false,
         type: 'text',
         imageUrls: imageUrls ?? [],
+        replyToMessageId,
       };
       return mockSuccess(msg);
     }
-    return apiClient.post<MessageDto>(`/api/v1/chats/${chatId}/messages`, { content, imageUrls: imageUrls ?? [] });
+    return apiClient.post<MessageDto>(`/api/v1/chats/${chatId}/messages`, {
+      content,
+      imageUrls: imageUrls ?? [],
+      replyToMessageId: replyToMessageId ?? null,
+    });
   },
 
   /** Add or replace the caller's reaction on a message. Returns updated message. */
