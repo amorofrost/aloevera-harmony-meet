@@ -43,11 +43,11 @@ export function QuotedMessage({
         {senderLabel}
       </div>
       <div className={cn(
-        'flex items-center gap-1 truncate',
+        'truncate',
         variant === 'own' ? 'text-primary-foreground/90' : 'text-muted-foreground'
       )}>
-        {hasImages && <ImageIcon className="w-3 h-3 shrink-0" />}
-        <span className="truncate">{contentPreview}</span>
+        {hasImages && <ImageIcon className="inline w-3 h-3 mr-1 -mt-0.5" />}
+        {contentPreview}
       </div>
     </button>
   );

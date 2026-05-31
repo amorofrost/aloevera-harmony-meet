@@ -545,7 +545,7 @@ const Friends = () => {
                           else messageRefs.current.delete(msg.id);
                         }}
                         className={cn(
-                          'rounded-lg px-3 py-2 text-sm transition-shadow',
+                          'min-w-0 rounded-lg px-3 py-2 text-sm break-words transition-shadow',
                           isMine ? 'bg-primary text-primary-foreground' : 'bg-muted',
                           isHighlighted && 'ring-2 ring-primary ring-offset-2'
                         )}
