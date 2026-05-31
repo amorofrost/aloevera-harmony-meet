@@ -18,6 +18,8 @@ export interface Message {
   read: boolean;
   type: 'text' | 'image' | 'system';
   imageUrls?: string[];
+  /** userId → emoji. One reaction per user per message; senders cannot react to own. */
+  reactions?: Record<string, string>;
 }
 
 export interface GroupChat extends Chat {

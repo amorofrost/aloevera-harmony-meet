@@ -50,6 +50,33 @@ export const chatsApi = {
     }
     return apiClient.post<MessageDto>(`/api/v1/chats/${chatId}/messages`, { content, imageUrls: imageUrls ?? [] });
   },
+
+  /** Add or replace the caller's reaction on a message. Returns updated message. */
+  async setReaction(chatId: string, messageId: string, emoji: string) {
+    if (!isApiMode()) {
+      // Mock returns a thin stub; the UI optimistically updates local state.
+      const msg: MessageDto = {
+        id: messageId, chatId, senderId: '', content: '', timestamp: new Date(),
+        read: false, type: 'text', imageUrls: [],
+        reactions: { 'current-user': emoji },
+      };
+      return mockSuccess(msg);
+    }
+    return apiClient.put<MessageDto>(`/api/v1/chats/${chatId}/messages/${messageId}/reaction`, { emoji });
+  },
+
+  /** Remove the caller's reaction on a message. Idempotent. Returns updated message. */
+  async removeReaction(chatId: string, messageId: string) {
+    if (!isApiMode()) {
+      const msg: MessageDto = {
+        id: messageId, chatId, senderId: '', content: '', timestamp: new Date(),
+        read: false, type: 'text', imageUrls: [],
+        reactions: {},
+      };
+      return mockSuccess(msg);
+    }
+    return apiClient.delete<MessageDto>(`/api/v1/chats/${chatId}/messages/${messageId}/reaction`);
+  },
 };
 
 // Re-export PrivateChatWithUser for consumers that import it from here

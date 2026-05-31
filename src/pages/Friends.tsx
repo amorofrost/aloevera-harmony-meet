@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus } from 'lucide-react';
 import { SearchFilterSheet, EMPTY_FILTERS, type SearchFilters } from '@/components/SearchFilterSheet';
 import { LocationDisplay } from '@/components/ui/location-display';
 import { COUNTRY_BY_CODE } from '@/data/countries';
@@ -37,6 +37,9 @@ import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/da
 import type { PrivateChatWithUser } from '@/data/mockChats';
 import heroBg from '@/assets/hero-bg.jpg';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { ReactionPicker } from '@/components/chat/ReactionPicker';
+import { ReactionPill } from '@/components/chat/ReactionPill';
+import { showApiError } from '@/lib/apiError';
 
 function composePhotos(user: { profileImage: string; images: string[] }): string[] {
   const set = new Set<string>();
@@ -101,6 +104,20 @@ const Friends = () => {
         shouldScrollToBottomRef.current = true;
         return [...prev, incoming];
       });
+    });
+  }, [activeChatId, onEvent]);
+
+  // Live-patch a message's reactions when any participant adds/replaces/removes.
+  useEffect(() => {
+    if (!activeChatId) return;
+    return onEvent('MessageReactionUpdated', (payload: unknown) => {
+      const { messageId, reactions } = payload as {
+        messageId: string;
+        reactions: Record<string, string>;
+      };
+      setMessages(prev =>
+        prev.map(m => (m.id === messageId ? { ...m, reactions: reactions ?? {} } : m))
+      );
     });
   }, [activeChatId, onEvent]);
 
@@ -363,6 +380,47 @@ const Friends = () => {
     setImageFiles([]);
   };
 
+  const handleSetReaction = async (messageId: string, emoji: string) => {
+    const myId = getCurrentUserIdFromToken();
+    if (!myId || !activeChatId) return;
+    const prevMessages = messages;
+    setMessages(ms => ms.map(m =>
+      m.id === messageId
+        ? { ...m, reactions: { ...(m.reactions ?? {}), [myId]: emoji } }
+        : m));
+    try {
+      const r = await chatsApi.setReaction(activeChatId, messageId, emoji);
+      if (!r.success) throw r;
+      // Adopt server truth (SignalR will also broadcast the same payload; setter is idempotent).
+      setMessages(ms => ms.map(m =>
+        m.id === messageId ? { ...m, reactions: r.data?.reactions ?? {} } : m));
+    } catch (err) {
+      setMessages(prevMessages);
+      showApiError(err, 'Failed to add reaction');
+    }
+  };
+
+  const handleRemoveReaction = async (messageId: string) => {
+    const myId = getCurrentUserIdFromToken();
+    if (!myId || !activeChatId) return;
+    const prevMessages = messages;
+    setMessages(ms => ms.map(m => {
+      if (m.id !== messageId) return m;
+      const next = { ...(m.reactions ?? {}) };
+      delete next[myId];
+      return { ...m, reactions: next };
+    }));
+    try {
+      const r = await chatsApi.removeReaction(activeChatId, messageId);
+      if (!r.success) throw r;
+      setMessages(ms => ms.map(m =>
+        m.id === messageId ? { ...m, reactions: r.data?.reactions ?? {} } : m));
+    } catch (err) {
+      setMessages(prevMessages);
+      showApiError(err, 'Failed to remove reaction');
+    }
+  };
+
   const handleSendClick = () => {
     if (!messageText.trim()) {
       setMessageError("Message can't be empty");
@@ -420,15 +478,52 @@ const Friends = () => {
           {messagesLoading ? (
             <div className="text-center py-4 text-muted-foreground text-sm">Загрузка сообщений...</div>
           ) : messages.length > 0 ? (
-            messages.map(msg => (
-              <div key={msg.id} className={cn('flex', msg.senderId === getCurrentUserIdFromToken() ? 'justify-end' : 'justify-start')}>
-                <div className={cn('rounded-lg px-3 py-2 max-w-[75%] text-sm',
-                  msg.senderId === 'current-user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
-                  <BbcodeRenderer content={msg.content} />
-                  <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
+            messages.map(msg => {
+              const myId = getCurrentUserIdFromToken();
+              const isMine = !!myId && msg.senderId === myId;
+              const myReaction = !isMine && myId ? msg.reactions?.[myId] : undefined;
+              const reactionEntries = Object.entries(msg.reactions ?? {});
+              return (
+                <div key={msg.id} className={cn('flex group', isMine ? 'justify-end' : 'justify-start')}>
+                  <div className={cn('flex flex-col gap-1 max-w-[75%]', isMine ? 'items-end' : 'items-start')}>
+                    <div className={cn('flex items-center gap-1', isMine ? 'flex-row-reverse' : 'flex-row')}>
+                      {!isMine && (
+                        <ReactionPicker
+                          currentReaction={myReaction}
+                          onSelect={(emoji) => handleSetReaction(msg.id, emoji)}
+                          onRemove={() => handleRemoveReaction(msg.id)}
+                        >
+                          <button
+                            type="button"
+                            aria-label="Add reaction"
+                            className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
+                          >
+                            <SmilePlus className="w-4 h-4" />
+                          </button>
+                        </ReactionPicker>
+                      )}
+                      <div className={cn('rounded-lg px-3 py-2 text-sm',
+                        isMine ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                        <BbcodeRenderer content={msg.content} />
+                        <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
+                      </div>
+                    </div>
+                    {reactionEntries.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {reactionEntries.map(([uid, emoji]) => (
+                          <ReactionPill
+                            key={uid}
+                            emoji={emoji}
+                            isOwn={uid === myId}
+                            onClick={uid === myId ? () => handleRemoveReaction(msg.id) : undefined}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             chat.lastMessage && (
               <div className="flex gap-3">
