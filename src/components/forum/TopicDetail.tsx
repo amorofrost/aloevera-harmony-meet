@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { forumsApi } from '@/services/api';
-import type { ForumTopicDetail as TopicDetailType } from '@/data/mockForumData';
+import type { ForumTopicDetail as TopicDetailType, ForumReply } from '@/data/mockForumData';
 import { BbcodeRenderer } from '@/components/ui/bbcode-renderer';
 import { BbcodeToolbar } from '@/components/ui/bbcode-toolbar';
 import { ImageAttachmentPicker } from '@/components/ui/image-attachment-picker';
@@ -22,6 +22,10 @@ import { UserBadges } from '@/components/ui/user-badges';
 import { AttendedEventBadges } from '@/components/ui/attended-event-badges';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useChatSignalR } from '@/hooks/useChatSignalR';
+
+// Must match the backend default pageSize for /forum/topics/{id}/replies.
+const REPLIES_PAGE_SIZE = 50;
 
 interface TopicDetailProps {
   topicId: string;
@@ -30,6 +34,14 @@ interface TopicDetailProps {
 
 const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [topic, setTopic] = useState<TopicDetailType | null>(null);
+  const [replies, setReplies] = useState<ForumReply[]>([]);
+  // Page number for "load older" pagination. Page 1 is the newest pageSize replies,
+  // which is loaded by getTopic. Each Load Older click increments this to fetch older slices.
+  const [repliesPage, setRepliesPage] = useState(1);
+  // True while we may still have older replies to load. Flipped to false when a fetched
+  // page returns fewer than pageSize items.
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
@@ -39,9 +51,14 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  // Sentinel pinned at the bottom of the replies list; we scrollIntoView on this when
+  // the scroll flag is set (initial load + new outgoing/incoming reply, but NOT load-older).
+  const repliesEndRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollToBottomRef = useRef(false);
   const replyForm = useForm<ReplySchema>({
     resolver: zodResolver(replySchema),
   });
+  const { onEvent } = useChatSignalR('topic', topicId);
   const navigate = useNavigate();
   const { user } = useCurrentUser();
   const { t } = useLanguage();
@@ -54,11 +71,72 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
     const load = async () => {
       setIsLoading(true);
       const res = await forumsApi.getTopic(topicId);
-      if (res.success && res.data) setTopic(res.data);
+      if (res.success && res.data) {
+        setTopic(res.data);
+        setReplies(res.data.replies);
+        setRepliesPage(1);
+        // If the first page came back full, there may be older history to load.
+        setHasMoreOlder(res.data.replies.length >= REPLIES_PAGE_SIZE);
+        // Land on the latest reply on open, mirroring private chat behavior.
+        shouldScrollToBottomRef.current = true;
+      }
       setIsLoading(false);
     };
     load();
   }, [topicId]);
+
+  // Scroll to the bottom after replies render — but only when explicitly flagged
+  // (initial load, new outgoing reply, SignalR push). Load Older intentionally
+  // doesn't set the flag, so the user stays anchored to where they were reading.
+  useEffect(() => {
+    if (shouldScrollToBottomRef.current && !isLoading) {
+      repliesEndRef.current?.scrollIntoView({ block: 'end' });
+      shouldScrollToBottomRef.current = false;
+    }
+  }, [replies, isLoading]);
+
+  // Live updates: another participant posting a reply broadcasts ReplyPosted on the
+  // topic-{topicId} SignalR group. Append + dedupe by id; scroll to follow.
+  useEffect(() => {
+    return onEvent('ReplyPosted', (payload: unknown) => {
+      const incoming = payload as ForumReply;
+      setReplies(prev => {
+        if (prev.some(r => r.id === incoming.id)) return prev;
+        shouldScrollToBottomRef.current = true;
+        // Backend sends the reply with createdAt as a string; normalize to Date.
+        const withDate: ForumReply = {
+          ...incoming,
+          createdAt: new Date(incoming.createdAt as unknown as string),
+          editedAt: incoming.editedAt ? new Date(incoming.editedAt as unknown as string) : undefined,
+        };
+        return [...prev, withDate];
+      });
+      setTopic(t => (t ? { ...t, replyCount: t.replyCount + 1 } : t));
+    });
+  }, [onEvent]);
+
+  const loadOlderReplies = async () => {
+    if (isLoadingOlder || !hasMoreOlder) return;
+    setIsLoadingOlder(true);
+    try {
+      const nextPage = repliesPage + 1;
+      const res = await forumsApi.getReplies(topicId, nextPage);
+      if (res.success && res.data) {
+        if (res.data.length === 0) {
+          setHasMoreOlder(false);
+        } else {
+          // Page N is older than page 1. Prepend; do NOT set the scroll flag.
+          setReplies(prev => [...res.data!, ...prev]);
+          setRepliesPage(nextPage);
+          if (res.data.length < REPLIES_PAGE_SIZE) setHasMoreOlder(false);
+        }
+      }
+    } catch (err) {
+      showApiError(err, 'Failed to load older replies');
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -106,12 +184,11 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
         showApiError(res, 'Failed to post reply');
         return;
       }
-      if (res.data && topic) {
-        setTopic({
-          ...topic,
-          replies: [...topic.replies, res.data],
-          replyCount: topic.replyCount + 1,
-        });
+      if (res.data) {
+        // Append + dedupe (SignalR may also deliver it on the same connection).
+        setReplies(prev => (prev.some(r => r.id === res.data!.id) ? prev : [...prev, res.data!]));
+        if (topic) setTopic({ ...topic, replyCount: topic.replyCount + 1 });
+        shouldScrollToBottomRef.current = true;
       }
       replyForm.reset();
       setImageFiles([]);
@@ -150,13 +227,8 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
         showApiError(res, t('forum.editFailed'));
         return;
       }
-      if (topic) {
-        const updated = res.data;
-        setTopic({
-          ...topic,
-          replies: topic.replies.map(r => (r.id === replyId ? { ...r, ...updated } : r)),
-        });
-      }
+      const updated = res.data;
+      setReplies(prev => prev.map(r => (r.id === replyId ? { ...r, ...updated } : r)));
       setEditingReplyId(null);
       setEditingContent('');
       toast.success(t('forum.saveEdit'));
@@ -272,7 +344,19 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
 
       {/* Replies */}
       <div className="space-y-3">
-        {topic.replies.map((reply) => {
+        {hasMoreOlder && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={loadOlderReplies}
+              disabled={isLoadingOlder}
+              className="text-xs text-muted-foreground underline py-2 disabled:opacity-50"
+            >
+              {isLoadingOlder ? t('forum.loadingOlder') : t('forum.loadOlder')}
+            </button>
+          </div>
+        )}
+        {replies.map((reply) => {
           const isEditingThis = editingReplyId === reply.id;
           const mayEdit = canEditReply(reply);
           return (
@@ -341,6 +425,7 @@ const TopicDetail: React.FC<TopicDetailProps> = ({ topicId, onBack }) => {
           </Card>
           );
         })}
+        <div ref={repliesEndRef} />
       </div>
 
       {/* Reply input */}

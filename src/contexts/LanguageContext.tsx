@@ -286,6 +286,8 @@ const translations = {
     'forum.unsubscribe': 'Отписаться',
     'forum.subscribed': 'Вы подписаны',
     'forum.subscribeFailed': 'Не удалось изменить подписку',
+    'forum.loadOlder': 'Загрузить старые ответы',
+    'forum.loadingOlder': 'Загрузка...',
 
     // Ranks & staff roles
     'rank.novice': 'Новичок',
@@ -650,6 +652,8 @@ const translations = {
     'forum.unsubscribe': 'Unsubscribe',
     'forum.subscribed': 'Subscribed',
     'forum.subscribeFailed': 'Could not update subscription',
+    'forum.loadOlder': 'Load older replies',
+    'forum.loadingOlder': 'Loading...',
 
     // Ranks & staff roles
     'rank.novice': 'Novice',

@@ -193,7 +193,8 @@ export const forumsApi = {
     if (isApiMode()) {
       const res = await apiClient.get<any>(`/api/v1/forum/topics/${topicId}`);
       if (res.success && res.data) {
-        const repliesRes = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies`);
+        // Initial load fetches page 1 (newest 50). Older pages are loaded on demand.
+        const repliesRes = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies?page=1`);
         const replies = repliesRes.success && repliesRes.data
           ? repliesRes.data.map(mapReplyFromApi)
           : [];
@@ -208,14 +209,16 @@ export const forumsApi = {
     return mockSuccess(detail);
   },
 
-  async getReplies(topicId: string): Promise<ApiResponse<ForumReply[]>> {
+  async getReplies(topicId: string, page = 1): Promise<ApiResponse<ForumReply[]>> {
     if (isApiMode()) {
-      const res = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies`);
+      const res = await apiClient.get<any[]>(`/api/v1/forum/topics/${topicId}/replies?page=${page}`);
       if (res.success && res.data) {
         return { ...res, data: res.data.map(mapReplyFromApi) };
       }
       return res as ApiResponse<ForumReply[]>;
     }
+    // Mock mode doesn't paginate; only page 1 returns data, rest returns empty.
+    if (page > 1) return mockSuccess([]);
     const detail = mockTopicDetails[topicId];
     return mockSuccess(detail ? detail.replies : []);
   },
