@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/sheet';
 import { CountryRegionPicker } from '@/components/ui/country-region-picker';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { User } from '@/types/user';
+import type { Event, User } from '@/types/user';
 
 export interface SearchFilters {
   country: string;
@@ -21,6 +21,8 @@ export interface SearchFilters {
   minAge: number | null;
   maxAge: number | null;
   gender: User['gender'] | '';
+  /** Event id to restrict the deck to that event's attendees. Empty = unset. */
+  eventId: string;
 }
 
 export const EMPTY_FILTERS: SearchFilters = {
@@ -31,14 +33,17 @@ export const EMPTY_FILTERS: SearchFilters = {
   minAge: null,
   maxAge: null,
   gender: '',
+  eventId: '',
 };
 
 interface Props {
   value: SearchFilters;
   onApply: (next: SearchFilters) => void;
+  /** Events the current user has attended. The event picker only offers these. */
+  attendedEvents?: Event[];
 }
 
-export function SearchFilterSheet({ value, onApply }: Props) {
+export function SearchFilterSheet({ value, onApply, attendedEvents = [] }: Props) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<SearchFilters>(value);
@@ -147,6 +152,26 @@ export function SearchFilterSheet({ value, onApply }: Props) {
                 <SelectItem value="non-binary">{t('search.genderNonBinary')}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="filter-event">{t('search.event')}</Label>
+            {attendedEvents.length === 0 ? (
+              <p className="text-xs text-muted-foreground mt-1">{t('search.noAttendedEvents')}</p>
+            ) : (
+              <Select
+                value={draft.eventId || 'all'}
+                onValueChange={(v) => setField('eventId', v === 'all' ? '' : v)}
+              >
+                <SelectTrigger id="filter-event" className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('search.eventAll')}</SelectItem>
+                  {attendedEvents.map(ev => (
+                    <SelectItem key={ev.id} value={ev.id}>{ev.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 

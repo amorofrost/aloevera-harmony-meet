@@ -30,7 +30,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types/user';
 import type { MessageDto } from '@/types/chat';
-import { matchingApi, usersApi, getCurrentUserIdFromToken } from '@/services/api';
+import { matchingApi, usersApi, getCurrentUserIdFromToken, eventsApi } from '@/services/api';
 import { chatsApi } from '@/services/api/chatsApi';
 import { useChatSignalR } from '@/hooks/useChatSignalR';
 import type { MatchWithUser, SentLikeWithUser, ReceivedLikeWithUser } from '@/data/mockProfiles';
@@ -66,9 +66,14 @@ const Friends = () => {
   const activeTab = searchParams.get('tab') || 'search';
   const likesTab = searchParams.get('sub') || 'matches';
   const selectedChat = searchParams.get('chat');
+  const urlEventId = searchParams.get('eventId') || '';
   const goBackFromChat = useSmartBack('/friends?tab=chats');
 
   const [filter, setFilter] = useState<SearchFilters>(EMPTY_FILTERS);
+  // The events the viewer has attended power the event picker in the filter sheet
+  // AND validate any incoming ?eventId= deep link (you can't filter by an event you
+  // didn't attend).
+  const attendedEvents = useMemo(() => viewer?.eventsAttended ?? [], [viewer]);
   const [searchProfiles, setSearchProfiles] = useState<User[]>([]);
   const [matches, setMatches] = useState<MatchWithUser[]>([]);
   const [sentLikes, setSentLikes] = useState<SentLikeWithUser[]>([]);
@@ -191,12 +196,70 @@ const Friends = () => {
     load();
   }, []);
 
-  // Reload search deck whenever the filter changes
+  // Seed filter.eventId from a ?eventId= deep link (e.g. clicked from EventDetails).
+  // Guard: only honor the param if the viewer actually attended that event, otherwise
+  // the picker would silently disagree with the active filter.
   useEffect(() => {
+    if (!urlEventId) return;
+    if (filter.eventId === urlEventId) return;
+    if (attendedEvents.some(ev => ev.id === urlEventId)) {
+      setFilter(prev => ({ ...prev, eventId: urlEventId }));
+    }
+  }, [urlEventId, attendedEvents, filter.eventId]);
+
+  // Reload search deck whenever the filter changes. When filter.eventId is set we
+  // restrict the deck to that event's attendees (resolved via getUsersByIds, same
+  // surface used by EventDetails), and apply the other filters client-side. Otherwise
+  // the existing server-filtered getUsers flow runs.
+  useEffect(() => {
+    const myId = getCurrentUserIdFromToken();
+    const applyClientFilters = (list: User[]): User[] => {
+      const ci = (a?: string, b?: string) =>
+        Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+      let out = list.filter(u => u.id !== myId);
+      if (filter.country && filter.region) {
+        out = out.filter(u =>
+          (ci(u.country, filter.country) && ci(u.region, filter.region)) ||
+          (ci(u.secondaryCountry, filter.country) && ci(u.secondaryRegion, filter.region))
+        );
+      } else if (filter.country) {
+        out = out.filter(u => ci(u.country, filter.country) || ci(u.secondaryCountry, filter.country));
+      } else if (filter.region) {
+        out = out.filter(u => ci(u.region, filter.region) || ci(u.secondaryRegion, filter.region));
+      }
+      if (filter.accountName) {
+        const lc = filter.accountName.toLowerCase();
+        out = out.filter(u => (u.accountName ?? '').toLowerCase() === lc);
+      }
+      if (filter.name) {
+        const lc = filter.name.toLowerCase();
+        out = out.filter(u => (u.name ?? '').toLowerCase().includes(lc));
+      }
+      if (filter.minAge != null) out = out.filter(u => u.age >= filter.minAge!);
+      if (filter.maxAge != null) out = out.filter(u => u.age <= filter.maxAge!);
+      if (filter.gender) out = out.filter(u => u.gender === filter.gender);
+      return out;
+    };
+
     const load = async () => {
       setIsLoading(true);
       setCurrentUserIndex(0);
       try {
+        if (filter.eventId) {
+          const eventRes = await eventsApi.getEventById(filter.eventId);
+          const ev = eventRes.success ? eventRes.data : null;
+          if (!ev || ev.attendees.length === 0) {
+            setSearchProfiles([]);
+            return;
+          }
+          const usersRes = await usersApi.getUsersByIds(ev.attendees);
+          if (usersRes.success && usersRes.data) {
+            setSearchProfiles(applyClientFilters(usersRes.data));
+          } else {
+            setSearchProfiles([]);
+          }
+          return;
+        }
         const result = await usersApi.getUsers({
           skip: 0,
           take: 100,
@@ -216,7 +279,7 @@ const Friends = () => {
     load();
   }, [
     filter.country, filter.region, filter.accountName, filter.name,
-    filter.minAge, filter.maxAge, filter.gender,
+    filter.minAge, filter.maxAge, filter.gender, filter.eventId,
   ]);
 
   // Sync activeChatId with URL and load messages when selectedChat changes
@@ -326,8 +389,16 @@ const Friends = () => {
         clear: () => patch({ gender: '' }),
       });
     }
+    if (filter.eventId) {
+      const ev = attendedEvents.find(e => e.id === filter.eventId);
+      chips.push({
+        key: 'event',
+        label: <>📅 {ev?.title ?? t('search.event')}</>,
+        clear: () => patch({ eventId: '' }),
+      });
+    }
     return chips;
-  }, [filter, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filter, t, attendedEvents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatDateShort = (date: Date) =>
     new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(date);
@@ -711,7 +782,18 @@ const Friends = () => {
               </div>
             )}
             {target.bio && (
-              <p className="text-sm opacity-75 line-clamp-2">{target.bio}</p>
+              // Collapsed state: 2-line clamp. Expanded (swipe-up): scrollable max-h
+              // so long bios are fully readable without pushing other details off-card.
+              <div
+                className={cn(
+                  'text-sm',
+                  showDeckDetails
+                    ? 'opacity-90 max-h-28 overflow-y-auto pr-1 whitespace-pre-line'
+                    : 'opacity-75 line-clamp-2'
+                )}
+              >
+                {target.bio}
+              </div>
             )}
             {viewer && (() => {
               const signals = commonGround(viewer, target);
@@ -837,7 +919,7 @@ const Friends = () => {
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-foreground">Друзья</h1>
           <div className="flex items-center gap-1">
-            <SearchFilterSheet value={filter} onApply={setFilter} />
+            <SearchFilterSheet value={filter} onApply={setFilter} attendedEvents={attendedEvents} />
             <NotificationBell />
             <Heart className="w-6 h-6 text-primary" />
           </div>

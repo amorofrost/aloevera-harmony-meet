@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, MessageCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Clock, MessageCircle, ExternalLink, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -363,7 +363,17 @@ const EventDetails = () => {
         {isJoined && attendeeUsers.length > 0 && (
           <Card className="profile-card">
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Участники ({attendeeUsers.length})</h3>
+              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-lg font-semibold">Участники ({attendeeUsers.length})</h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/friends?tab=search&eventId=${encodeURIComponent(event.id)}`)}
+                >
+                  <SearchIcon className="w-4 h-4 mr-1" />
+                  {t('events.browseAttendees')}
+                </Button>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 {attendeeUsers.map((user) => (
                   <div key={user.id} onClick={() => navigate(`/friends?userId=${user.id}`)} className="cursor-pointer group">

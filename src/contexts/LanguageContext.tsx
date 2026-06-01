@@ -99,6 +99,9 @@ const translations = {
     'search.genderMale': 'Мужчины',
     'search.genderFemale': 'Женщины',
     'search.genderNonBinary': 'Небинарные',
+    'search.event': 'Посещённое событие',
+    'search.eventAll': 'Все события',
+    'search.noAttendedEvents': 'Вы ещё не посещали мероприятий',
 
     // Chat
     'chat.cancelReply': 'Отменить ответ',
@@ -109,6 +112,7 @@ const translations = {
     // Events
     'events.applyCode': 'Показать детали по коду',
     'events.attendees': 'участников',
+    'events.browseAttendees': 'Смотреть в поиске',
     'events.attendWithInvite': 'Подтвердить участие по коду',
     'events.externalLink': 'Сайт и билеты',
     'events.interested': 'Интересно',
@@ -466,6 +470,9 @@ const translations = {
     'search.genderMale': 'Men',
     'search.genderFemale': 'Women',
     'search.genderNonBinary': 'Non-binary',
+    'search.event': 'Attended event',
+    'search.eventAll': 'All events',
+    'search.noAttendedEvents': "You haven't attended any events yet",
 
     // Chat
     'chat.cancelReply': 'Cancel reply',
@@ -476,6 +483,7 @@ const translations = {
     // Events
     'events.applyCode': 'Apply code',
     'events.attendees': 'attendees',
+    'events.browseAttendees': 'Browse in search',
     'events.attendWithInvite': 'Confirm attendance with code',
     'events.externalLink': 'Website & tickets',
     'events.interested': 'Interested',
