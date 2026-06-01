@@ -308,6 +308,7 @@ const translations = {
     'commonGround.sharedCity': 'Оба из {city}',
 
     // Settings - Photos
+    'settings.comingSoon': 'Скоро будет доступно',
     'settings.photos.title': 'Фотографии',
     'settings.photos.add': 'Добавить фото',
     'settings.photos.delete': 'Удалить',
@@ -674,6 +675,7 @@ const translations = {
     'commonGround.sharedCity': 'Both from {city}',
 
     // Settings - Photos
+    'settings.comingSoon': 'Coming soon',
     'settings.photos.title': 'Photos',
     'settings.photos.add': 'Add photo',
     'settings.photos.delete': 'Delete',

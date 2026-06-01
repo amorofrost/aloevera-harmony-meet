@@ -380,9 +380,16 @@ const SettingsPage = () => {
             <Card className="profile-card">
               <CardHeader><CardTitle>{t('profile.settings')}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div><Label>Видимость профиля</Label><p className="text-sm text-muted-foreground">Кто может видеть ваш профиль</p></div>
-                  <Select value={user.settings.profileVisibility} onValueChange={(v) => setUser({...user, settings: {...user.settings, profileVisibility: v as User['settings']['profileVisibility']}})}>
+                {/* Profile visibility, anonymous likes, and push notifications aren't
+                    backed by anything server-side yet — disabled until the corresponding
+                    features ship. Controls stay visible so users can see what's coming. */}
+                <div className="flex items-center justify-between opacity-60">
+                  <div>
+                    <Label>Видимость профиля</Label>
+                    <p className="text-sm text-muted-foreground">Кто может видеть ваш профиль</p>
+                    <p className="text-xs italic text-muted-foreground mt-0.5">{t('settings.comingSoon')}</p>
+                  </div>
+                  <Select value={user.settings.profileVisibility} disabled>
                     <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Публичный</SelectItem>
@@ -391,13 +398,21 @@ const SettingsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div><Label>Анонимные лайки</Label><p className="text-sm text-muted-foreground">Скрыть ваше имя при лайках</p></div>
-                  <Switch checked={user.settings.anonymousLikes} onCheckedChange={(v) => setUser({...user, settings: {...user.settings, anonymousLikes: v}})} />
+                <div className="flex items-center justify-between opacity-60">
+                  <div>
+                    <Label>Анонимные лайки</Label>
+                    <p className="text-sm text-muted-foreground">Скрыть ваше имя при лайках</p>
+                    <p className="text-xs italic text-muted-foreground mt-0.5">{t('settings.comingSoon')}</p>
+                  </div>
+                  <Switch checked={user.settings.anonymousLikes} disabled />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div><Label>Уведомления</Label><p className="text-sm text-muted-foreground">Push-уведомления</p></div>
-                  <Switch checked={user.settings.notifications} onCheckedChange={(v) => setUser({...user, settings: {...user.settings, notifications: v}})} />
+                <div className="flex items-center justify-between opacity-60">
+                  <div>
+                    <Label>Уведомления</Label>
+                    <p className="text-sm text-muted-foreground">Push-уведомления</p>
+                    <p className="text-xs italic text-muted-foreground mt-0.5">{t('settings.comingSoon')}</p>
+                  </div>
+                  <Switch checked={user.settings.notifications} disabled />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2"><Globe className="w-4 h-4" /><Label>Язык</Label></div>
