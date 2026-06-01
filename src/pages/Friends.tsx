@@ -60,7 +60,7 @@ const Friends = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user: viewer } = useCurrentUser();
+  const { user: viewer, loading: viewerLoading } = useCurrentUser();
 
   const viewingUserId = searchParams.get('userId');
   const activeTab = searchParams.get('tab') || 'search';
@@ -211,7 +211,19 @@ const Friends = () => {
   // restrict the deck to that event's attendees (resolved via getUsersByIds, same
   // surface used by EventDetails), and apply the other filters client-side. Otherwise
   // the existing server-filtered getUsers flow runs.
+  //
+  // Two race-prevention guards live here, both motivated by the deep-link entry path
+  // (EventDetails → /friends?eventId=X):
+  //   1. Defer fetching while a URL eventId is waiting to be reconciled with the
+  //      viewer's attendedEvents — otherwise an empty-filter getUsers fires first
+  //      and races the seeded-filter getUsersByIds that follows.
+  //   2. A `cancelled` flag on every run so a slow stale response (e.g. getUsers
+  //      returning after the filter has already flipped to eventId=X) cannot stomp
+  //      the newer attendees result.
   useEffect(() => {
+    if (urlEventId && filter.eventId !== urlEventId && viewerLoading) return;
+
+    let cancelled = false;
     const myId = getCurrentUserIdFromToken();
     const applyClientFilters = (list: User[]): User[] => {
       const ci = (a?: string, b?: string) =>
@@ -247,12 +259,14 @@ const Friends = () => {
       try {
         if (filter.eventId) {
           const eventRes = await eventsApi.getEventById(filter.eventId);
+          if (cancelled) return;
           const ev = eventRes.success ? eventRes.data : null;
           if (!ev || ev.attendees.length === 0) {
             setSearchProfiles([]);
             return;
           }
           const usersRes = await usersApi.getUsersByIds(ev.attendees);
+          if (cancelled) return;
           if (usersRes.success && usersRes.data) {
             setSearchProfiles(applyClientFilters(usersRes.data));
           } else {
@@ -271,15 +285,18 @@ const Friends = () => {
           maxAge: filter.maxAge ?? undefined,
           gender: filter.gender || undefined,
         });
+        if (cancelled) return;
         if (result.success && result.data) setSearchProfiles(result.data);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
     load();
+    return () => { cancelled = true; };
   }, [
     filter.country, filter.region, filter.accountName, filter.name,
     filter.minAge, filter.maxAge, filter.gender, filter.eventId,
+    urlEventId, viewerLoading,
   ]);
 
   // Sync activeChatId with URL and load messages when selectedChat changes
