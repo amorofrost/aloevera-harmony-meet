@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import EventPostmark from '@/components/ui/event-postmark';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatEventDate } from '@/lib/eventDates';
 import type { Notification } from '@/types/notification';
@@ -43,14 +44,30 @@ export function EventFeedCard({ notification }: EventFeedCardProps) {
     >
       <div className="space-y-2">
         {loading && !event ? (
-          <Skeleton className="w-full aspect-video rounded-md" />
+          <Skeleton className="w-full aspect-video max-h-52 rounded-md" />
         ) : event?.imageUrl ? (
-          <img
-            src={event.imageUrl}
-            alt={title}
-            className="w-full aspect-video object-cover rounded-md"
-            loading="lazy"
-          />
+          // aspect-video keeps the mobile look; max-h-52 (~208px) caps the height
+          // on wider viewports so the image stays a compact letterboxed strip
+          // instead of dominating the desktop card.
+          <div className="relative w-full aspect-video max-h-52 overflow-hidden rounded-md">
+            <img
+              src={event.imageUrl}
+              alt={title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {event && (
+              <div className="absolute bottom-2 right-2">
+                <EventPostmark
+                  location={event.location}
+                  date={event.date}
+                  title={event.title}
+                  category={event.category}
+                  badgeImageUrl={event.badgeImageUrl}
+                />
+              </div>
+            )}
+          </div>
         ) : null}
 
         {title && <p className="text-base font-semibold leading-tight">{title}</p>}
