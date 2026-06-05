@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Notification } from '@/types/notification';
+import { chatsApi } from '@/services/api/chatsApi';
 import { FeedCard } from './FeedCard';
 import { useActor } from './feedContextCache';
 
@@ -20,21 +21,31 @@ export function MatchFeedCard({ notification }: MatchFeedCardProps) {
     .charAt(0)
     .toUpperCase();
 
+  // Open (or create) the private chat with the matched user and land in it —
+  // not on their profile page.
+  const handleStartChatting = async () => {
+    if (!notification.actorId) {
+      navigate('/friends?tab=chats');
+      return;
+    }
+    try {
+      const res = await chatsApi.getOrCreateChat(notification.actorId);
+      if (res.success && res.data) {
+        navigate(`/friends?tab=chats&chat=${res.data.id}`);
+        return;
+      }
+    } catch {
+      /* fall through to the profile as a best-effort fallback */
+    }
+    navigate(`/friends?userId=${notification.actorId}`);
+  };
+
   return (
     <FeedCard
       notification={notification}
       className="border-aloe-flame/40"
       footer={
-        <Button
-          size="sm"
-          onClick={() =>
-            navigate(
-              notification.actorId
-                ? `/friends?userId=${notification.actorId}`
-                : '/friends',
-            )
-          }
-        >
+        <Button size="sm" onClick={handleStartChatting}>
           {t('feed.startChatting')}
         </Button>
       }

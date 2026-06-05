@@ -157,13 +157,17 @@ const Friends = () => {
     });
   }, [activeChatId, onEvent]);
 
-  // Scroll to the bottom after messages render, but only when flagged.
+  // Scroll to the bottom after messages render, but only when flagged. Guard on the
+  // end-ref actually being mounted: on a fresh mount (e.g. opening a chat from the Feed)
+  // privateChats loads after the messages do, so the chat view — and this ref — isn't in
+  // the DOM yet. Without the guard the flag would be consumed before we can scroll.
+  // privateChats is a dependency so the effect re-runs once the chat view mounts.
   useEffect(() => {
-    if (shouldScrollToBottomRef.current && !messagesLoading) {
-      messagesEndRef.current?.scrollIntoView({ block: 'end' });
+    if (shouldScrollToBottomRef.current && !messagesLoading && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ block: 'end' });
       shouldScrollToBottomRef.current = false;
     }
-  }, [messages, messagesLoading]);
+  }, [messages, messagesLoading, privateChats]);
 
   // Load matches, likes and chats once on mount
   useEffect(() => {
