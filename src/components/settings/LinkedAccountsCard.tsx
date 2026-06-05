@@ -158,11 +158,9 @@ export const LinkedAccountsCard: React.FC = () => {
               {hasTelegram ? (
                 <span className="text-xs text-muted-foreground">Linked</span>
               ) : (
-                <div className="w-48">
+                <div className="w-48 flex justify-end">
                   {isLinkingTelegram ? (
-                    <div className="flex justify-end">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    </div>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <TelegramLoginWidget onPending={handleTelegramPending} />
                   )}

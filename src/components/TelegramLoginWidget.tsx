@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 import { apiClient, authApi, isApiMode } from '@/services/api';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
@@ -17,7 +18,19 @@ export interface TelegramWidgetUser {
 
 declare global {
   interface Window {
-    onTelegramAuth?: (user: TelegramWidgetUser) => void;
+    Telegram?: {
+      Login?: {
+        /**
+         * Legacy programmatic auth — opens the Telegram OAuth popup and calls back with the
+         * signed user object (or `false` if the user closes it). Same payload the iframe widget
+         * produces, so the existing backend HMAC verifier handles it unchanged.
+         */
+        auth: (
+          options: { bot_id: number; request_access?: string; lang?: string },
+          callback: (user: TelegramWidgetUser | false) => void,
+        ) => void;
+      };
+    };
   }
 }
 
@@ -33,14 +46,50 @@ interface TelegramLoginWidgetProps {
   onPending?: (result: { ticket: string; telegram: { id: number; firstName: string; lastName?: string | null; username?: string | null; photoUrl?: string | null; } }) => void;
 }
 
+const TELEGRAM_WIDGET_SRC = 'https://telegram.org/js/telegram-widget.js?22';
+
+// Load telegram-widget.js once (module-level, dedup across instances). The script registers
+// window.Telegram.Login.auth; we don't render its iframe widget — we drive auth from our own button.
+let telegramScriptPromise: Promise<void> | null = null;
+function loadTelegramScript(): Promise<void> {
+  if (telegramScriptPromise) return telegramScriptPromise;
+  telegramScriptPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${TELEGRAM_WIDGET_SRC}"]`);
+    if (existing) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = TELEGRAM_WIDGET_SRC;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      telegramScriptPromise = null; // allow retry on next attempt
+      reject(new Error('Failed to load Telegram widget script'));
+    };
+    document.head.appendChild(script);
+  });
+  return telegramScriptPromise;
+}
+
+/** Telegram paper-plane glyph (so the round button is brand-recognisable). */
+function TelegramGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" />
+    </svg>
+  );
+}
+
 /**
- * Renders the official Telegram Login button (script from telegram.org).
- * Bot username comes from GET /api/v1/auth/telegram-login-config or VITE_TELEGRAM_BOT_USERNAME.
+ * Round Telegram sign-in icon button. Uses the legacy `Telegram.Login.auth({ bot_id })` flow so it
+ * keeps the existing backend verifier, while matching the Google icon in the social-login row.
+ * bot_id comes from GET /api/v1/auth/telegram-login-config (or VITE_TELEGRAM_BOT_ID).
  */
 export function TelegramLoginWidget({ disabled, onSuccess, onPending, redirectTo }: TelegramLoginWidgetProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [botUsername, setBotUsername] = useState<string | null>(null);
+  const [botId, setBotId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
 
   const handleTelegramUser = useCallback(
@@ -94,9 +143,9 @@ export function TelegramLoginWidget({ disabled, onSuccess, onPending, redirectTo
   );
 
   useEffect(() => {
-    const envName = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined;
-    if (envName?.trim()) {
-      setBotUsername(envName.trim());
+    const envId = (import.meta.env.VITE_TELEGRAM_BOT_ID as string | undefined)?.trim();
+    if (envId) {
+      setBotId(envId);
       setLoading(false);
       return;
     }
@@ -111,8 +160,8 @@ export function TelegramLoginWidget({ disabled, onSuccess, onPending, redirectTo
       .getTelegramLoginConfig()
       .then((res) => {
         if (cancelled) return;
-        if (res.success && res.data?.botUsername?.trim()) {
-          setBotUsername(res.data.botUsername.trim());
+        if (res.success && res.data?.botId?.trim()) {
+          setBotId(res.data.botId.trim());
         }
       })
       .catch(() => {
@@ -127,54 +176,65 @@ export function TelegramLoginWidget({ disabled, onSuccess, onPending, redirectTo
     };
   }, []);
 
+  // Warm the script as soon as we know we'll need it, so the first click is instant.
   useEffect(() => {
-    if (!botUsername || disabled || loading) return;
-    const el = containerRef.current;
-    if (!el) return;
+    if (botId) loadTelegramScript().catch(() => { /* surfaced on click */ });
+  }, [botId]);
 
-    el.innerHTML = '';
-    window.onTelegramAuth = (user: TelegramWidgetUser) => {
-      void handleTelegramUser(user);
-    };
-
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    script.async = true;
-    script.setAttribute('data-telegram-login', botUsername);
-    // Compact, avatar-less, rounded — so it sits inline in the social-login row
-    // next to the Google icon. (The legacy widget has no true icon-only mode;
-    // 'small' + userpic off is the most compact official variant.)
-    script.setAttribute('data-size', 'small');
-    script.setAttribute('data-userpic', 'false');
-    script.setAttribute('data-radius', '20');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-    script.setAttribute('data-request-access', 'write');
-    el.appendChild(script);
-
-    return () => {
-      el.innerHTML = '';
-      if (window.onTelegramAuth) {
-        delete window.onTelegramAuth;
+  const handleClick = useCallback(async () => {
+    if (!isApiMode()) {
+      toast.error('Telegram sign-in requires API mode (set VITE_API_MODE=api).');
+      return;
+    }
+    if (!botId) return;
+    setBusy(true);
+    try {
+      await loadTelegramScript();
+      const login = window.Telegram?.Login;
+      if (!login?.auth) {
+        toast.error('Telegram sign-in failed to load. Please try again.');
+        return;
       }
-    };
-  }, [botUsername, disabled, loading, handleTelegramUser]);
+      login.auth({ bot_id: Number(botId), request_access: 'write' }, (user) => {
+        // user === false → the user closed the popup; stay silent.
+        if (user) void handleTelegramUser(user);
+      });
+    } catch (err) {
+      showApiError(err, 'Telegram sign-in failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [botId, handleTelegramUser]);
 
   if (loading) {
+    return <div className="h-11 w-11 rounded-full bg-white/10 border border-white/20 animate-pulse" />;
+  }
+
+  if (!botId) {
     return (
-      <div className="flex justify-center py-1">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+      <div
+        className="h-11 w-11 rounded-full bg-white/5 border border-dashed border-white/30 text-white/50 text-[10px] flex items-center justify-center text-center"
+        title="Set Telegram:BotToken + Telegram:BotUsername on the API to enable Telegram sign-in."
+      >
+        TG?
       </div>
     );
   }
 
-  if (!botUsername) {
-    return (
-      <p className="text-xs text-white/50 text-center">
-        Set <code className="text-white/70">Telegram:BotUsername</code> and{' '}
-        <code className="text-white/70">TELEGRAM_BOT_TOKEN</code> on the API to enable Telegram sign-in.
-      </p>
-    );
-  }
-
-  return <div ref={containerRef} className="inline-flex items-center" />;
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled || busy}
+      aria-label="Sign in with Telegram"
+      title="Sign in with Telegram"
+      className="h-11 w-11 rounded-full bg-[#229ED9] hover:bg-[#1c8dc2] active:scale-95 transition-transform flex items-center justify-center shadow disabled:opacity-50 disabled:pointer-events-none"
+    >
+      {busy ? (
+        <Loader2 className="h-5 w-5 animate-spin text-white" />
+      ) : (
+        <TelegramGlyph className="h-5 w-5 text-white" />
+      )}
+    </button>
+  );
 }

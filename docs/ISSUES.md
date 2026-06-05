@@ -1,6 +1,6 @@
 # Known Issues & Technical Debt
 
-**Last Updated**: 2026-05-15
+**Last Updated**: 2026-06-05
 **Active issues only.** Resolved issues are archived in [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md).
 
 ---
@@ -296,6 +296,25 @@ Storing the access token in `localStorage` is vulnerable to XSS. The more secure
 
 ---
 
+### TD.9. Migrate Telegram sign-in to the new Login SDK (OIDC `id_token`)
+**Impact**: We're on Telegram's **legacy** Login Widget flow; Telegram has since shipped a new Login SDK that is the forward-looking, better-styled, OIDC-standard option.
+
+**Current state** (2026-06-05): The web client signs in via the legacy `telegram-widget.js` script. We render our own round icon button (`src/components/TelegramLoginWidget.tsx`) that calls `window.Telegram.Login.auth({ bot_id })`, which returns the classic `{ id, first_name, auth_date, hash }` payload. The backend `TelegramLoginVerifier` validates it with `HMAC(SHA256(bot_token))`. `bot_id` is exposed (public) via `GET /api/v1/auth/telegram-login-config`. This works and looks right, but the legacy widget has **no native icon-only mode** — the icon is our own button wrapper.
+
+**The new SDK** (`Telegram.Login.init/open/auth` with `client_id` + `nonce`) returns an OpenID-Connect **`id_token` JWT** and supports native button styles including `data-style="icon"`. Refs: https://core.telegram.org/widgets/login and https://core.telegram.org/bots/telegram-login.
+
+**Why migrate**: native icon/style options (drop the custom-button wrapper), OIDC-standard verification (JWKS) instead of bespoke HMAC, `nonce` replay protection, and staying on Telegram's supported path as the legacy widget ages out.
+
+**What needs to change**:
+- **Backend** (`Lovecraft.Backend`): add an `id_token` verifier alongside `TelegramLoginVerifier` — validate the JWT against Telegram's published JWKS; check `aud == client_id`, `iss`, `exp`, and the `nonce`. Map OIDC claims (`sub` → Telegram user id, `name`, `picture`) onto the existing user-provisioning path so `telegram-login` → `signedIn`/`pending`, register, and link flows stay unchanged. Keep the legacy verifier during the transition (accept both).
+- **DTOs**: extend the Telegram login request (or add a sibling) to accept `idToken` instead of the widget fields.
+- **Frontend**: replace the custom button + `Telegram.Login.auth({ bot_id })` in `TelegramLoginWidget.tsx` with the new SDK (`Telegram.Login.init({ client_id, request_access, nonce })` + `open()`), or the new embeddable icon button; POST the returned `id_token`. Generate + round-trip a `nonce`. The `bot_id` already surfaced via `/telegram-login-config` doubles as `client_id`.
+- **Config**: confirm whether the new `client_id` setup differs from the current BotFather `/setdomain`.
+
+**Scope note**: medium. The account-provisioning/linking logic is reusable; work concentrates in token verification (backend) + the sign-in call (frontend). The Telegram **Mini App** flow (`telegram-miniapp-*`, `initData` HMAC) is separate and unaffected.
+
+---
+
 ## 🟢 UX / Polish
 
 ### UX.1. Accessibility Issues
@@ -401,14 +420,16 @@ Users cannot report another user or flag a forum post. Only admin-side moderatio
 |---|---|
 | 🔴 Production Blockers | 1 |
 | 🟠 Missing Core Features | 14 (3 partials: MCF.12, MCF.16, MCF.17 — MCF.4 closed 2026-05-19) |
-| 🟡 Technical Debt & Infrastructure | 8 |
+| 🟡 Technical Debt & Infrastructure | 9 |
 | 🟢 UX / Polish | 11 |
-| **Total active** | **34** |
+| **Total active** | **35** |
 | ✅ Resolved (see [RESOLVED_ISSUES.md](./RESOLVED_ISSUES.md)) | many |
 
 ---
 
 ## 📝 Changelog
+
+**June 5, 2026** — Google sign-in re-enabled (real Google Cloud Web client id wired via backend `GOOGLE_OAUTH_CLIENT_ID`; frontend reads it at runtime from `/auth/google-config`; `<GoogleSignInButton>` restored to Welcome). Social-login row redesigned as round icon buttons. Telegram sign-in switched to a **custom round icon button** using the legacy `Telegram.Login.auth({ bot_id })` flow (Option B) — added public `botId` to `GET /auth/telegram-login-config`; existing HMAC verifier unchanged. Added **TD.9** to track migrating Telegram to the new OIDC `id_token` Login SDK.
 
 **May 19, 2026 (later)** — Notifications Phase H shipped: `RankUp` producer wired into `IUserService.IncrementCounterAsync`. `Lazy<INotificationProducer>` injection avoids the producer→IUserService→producer DI cycle. Strict level-increase guard prevents decrement transitions (UnregisterFromEvent) from firing. All 8 phases complete; **MCF.4 fully resolved**.
 

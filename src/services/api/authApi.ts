@@ -305,11 +305,14 @@ export const authApi = {
 
   async getTelegramLoginConfig() {
     if (isApiMode()) {
-      return apiClient.get<{ botUsername: string }>('/api/v1/auth/telegram-login-config');
+      return apiClient.get<{ botUsername: string; botId: string }>('/api/v1/auth/telegram-login-config');
     }
     return {
       success: true,
-      data: { botUsername: (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string) || '' },
+      data: {
+        botUsername: (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string) || '',
+        botId: (import.meta.env.VITE_TELEGRAM_BOT_ID as string) || '',
+      },
       timestamp: new Date().toISOString(),
     };
   },
