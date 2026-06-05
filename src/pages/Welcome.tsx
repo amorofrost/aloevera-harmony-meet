@@ -236,7 +236,9 @@ const Welcome = () => {
 
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm text-center">{t('auth.orContinueWith')}</p>
-                <GoogleSignInButton disabled={isLoading} useCase="signin" />
+                <div className="flex justify-center gap-3">
+                  <GoogleSignInButton disabled={isLoading} useCase="signin" />
+                </div>
                 <p className="text-white/60 text-sm text-center">{t('auth.telegram')}</p>
                 <TelegramLoginWidget disabled={isLoading} redirectTo={safeRedirect || undefined} />
               </div>
@@ -492,7 +494,9 @@ const Welcome = () => {
 
               <div className="space-y-3 pt-4 border-t border-white/20">
                 <p className="text-white/60 text-sm text-center">{t('auth.orContinueWith')}</p>
-                <GoogleSignInButton disabled={isLoading} useCase="signup" />
+                <div className="flex justify-center gap-3">
+                  <GoogleSignInButton disabled={isLoading} useCase="signup" />
+                </div>
               </div>
 
               <div className="text-center">
