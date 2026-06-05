@@ -23,6 +23,8 @@ export interface Message {
   senderId: string;
   content: string;
   timestamp: Date;
+  /** Set when the message was edited by its author; absent if never edited. */
+  editedAt?: Date;
   read: boolean;
   type: 'text' | 'image' | 'system';
   imageUrls?: string[];

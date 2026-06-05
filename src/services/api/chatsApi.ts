@@ -56,6 +56,18 @@ export const chatsApi = {
     });
   },
 
+  /** Edit the text content of a message the caller authored (within the 24h window). */
+  async editMessage(chatId: string, messageId: string, content: string) {
+    if (!isApiMode()) {
+      const msg: MessageDto = {
+        id: messageId, chatId, senderId: 'current-user', content,
+        timestamp: new Date(), editedAt: new Date(), read: false, type: 'text', imageUrls: [],
+      };
+      return mockSuccess(msg);
+    }
+    return apiClient.put<MessageDto>(`/api/v1/chats/${chatId}/messages/${messageId}`, { content });
+  },
+
   /** Add or replace the caller's reaction on a message. Returns updated message. */
   async setReaction(chatId: string, messageId: string, emoji: string) {
     if (!isApiMode()) {

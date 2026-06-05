@@ -110,6 +110,11 @@ const translations = {
     'chat.photo': 'Фото',
     'chat.replyTo': 'Ответ — {name}',
     'chat.you': 'Ты',
+    'chat.edit': 'Редактировать',
+    'chat.edited': 'изменено',
+    'chat.editingMessage': 'Редактирование сообщения',
+    'chat.cancelEdit': 'Отменить редактирование',
+    'chat.saveEdit': 'Сохранить',
 
     // Events
     'events.applyCode': 'Показать детали по коду',
@@ -484,6 +489,11 @@ const translations = {
     'chat.photo': 'Photo',
     'chat.replyTo': 'Replying to {name}',
     'chat.you': 'You',
+    'chat.edit': 'Edit',
+    'chat.edited': 'edited',
+    'chat.editingMessage': 'Editing message',
+    'chat.cancelEdit': 'Cancel editing',
+    'chat.saveEdit': 'Save',
 
     // Events
     'events.applyCode': 'Apply code',

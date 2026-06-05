@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus, Reply } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus, Reply, Pencil, Check } from 'lucide-react';
 import { SearchFilterSheet, EMPTY_FILTERS, type SearchFilters } from '@/components/SearchFilterSheet';
 import { LocationDisplay } from '@/components/ui/location-display';
 import { COUNTRY_BY_CODE } from '@/data/countries';
@@ -97,6 +97,8 @@ const Friends = () => {
   const shouldScrollToBottomRef = useRef(false);
   // Message the composer is currently replying to (null = not in reply mode).
   const [replyingToMessage, setReplyingToMessage] = useState<MessageDto | null>(null);
+  // Message the composer is currently editing (null = not in edit mode).
+  const [editingMessage, setEditingMessage] = useState<MessageDto | null>(null);
   // Briefly ring-highlight a message after the user clicks a quote to jump to it.
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   // Per-message DOM refs so we can scrollIntoView when a quote is clicked.
@@ -116,6 +118,25 @@ const Friends = () => {
         shouldScrollToBottomRef.current = true;
         return [...prev, incoming];
       });
+    });
+  }, [activeChatId, onEvent]);
+
+  // Live-patch a message's content + edited marker when its author edits it.
+  useEffect(() => {
+    if (!activeChatId) return;
+    return onEvent('MessageEdited', (payload: unknown) => {
+      const { messageId, content, editedAt } = payload as {
+        messageId: string;
+        content: string;
+        editedAt?: string;
+      };
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === messageId
+            ? { ...m, content, editedAt: editedAt ? new Date(editedAt) : new Date() }
+            : m
+        )
+      );
     });
   }, [activeChatId, onEvent]);
 
@@ -310,6 +331,8 @@ const Friends = () => {
     setMessagesLoading(true);
     shouldScrollToBottomRef.current = true;
     setReplyingToMessage(null);
+    setEditingMessage(null);
+    setMessageText('');
     chatsApi.getMessages(selectedChat, 1).then(msgsResult => {
       if (msgsResult.success && msgsResult.data) {
         setMessages(msgsResult.data);
@@ -427,6 +450,15 @@ const Friends = () => {
     return formatDateShort(date);
   };
 
+  // A message is editable by its author for 24h after it was sent. The server is the
+  // source of truth (it re-checks and returns EDIT_WINDOW_EXPIRED); this just gates the UI.
+  const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+  const canEditMessage = (msg: MessageDto): boolean => {
+    if (!msg.content?.trim()) return false; // nothing to edit (e.g. image-only message)
+    const sent = new Date(msg.timestamp).getTime();
+    return Number.isFinite(sent) && Date.now() - sent < EDIT_WINDOW_MS;
+  };
+
   const handleOpenChat = async (targetUserId: string) => {
     const chatResult = await chatsApi.getOrCreateChat(targetUserId);
     if (chatResult.success && chatResult.data) {
@@ -530,6 +562,43 @@ const Friends = () => {
     }
   };
 
+  // Enter edit mode for one of the viewer's own messages: prefill the composer,
+  // leave reply mode, and focus the input.
+  const startEditMessage = (msg: MessageDto) => {
+    setReplyingToMessage(null);
+    setEditingMessage(msg);
+    setMessageText(msg.content);
+    setMessageError('');
+    setTimeout(() => chatInputRef.current?.focus(), 0);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setMessageText('');
+  };
+
+  const handleEditMessage = async () => {
+    const target = editingMessage;
+    const newContent = messageText.trim();
+    if (!target || !activeChatId || !newContent) return;
+    const prevMessages = messages;
+    // Optimistically apply; the SignalR broadcast will reconcile both parties.
+    setMessages(ms => ms.map(m =>
+      m.id === target.id ? { ...m, content: newContent, editedAt: new Date() } : m));
+    setEditingMessage(null);
+    try {
+      const r = await chatsApi.editMessage(activeChatId, target.id, newContent);
+      if (!r.success) throw r;
+      setMessages(ms => ms.map(m =>
+        m.id === target.id
+          ? { ...m, content: r.data?.content ?? newContent, editedAt: r.data?.editedAt ? new Date(r.data.editedAt) : m.editedAt }
+          : m));
+    } catch (err) {
+      setMessages(prevMessages);
+      showApiError(err, 'Failed to edit message');
+    }
+  };
+
   const handleSendClick = () => {
     if (!messageText.trim()) {
       setMessageError("Message can't be empty");
@@ -537,7 +606,11 @@ const Friends = () => {
     }
     if (!selectedChat) return;
     setMessageError('');
-    handleSendMessage();
+    if (editingMessage) {
+      handleEditMessage();
+    } else {
+      handleSendMessage();
+    }
     setMessageText('');
   };
 
@@ -618,6 +691,7 @@ const Friends = () => {
                         type="button"
                         aria-label="Reply"
                         onClick={() => {
+                          if (editingMessage) { setEditingMessage(null); setMessageText(''); }
                           setReplyingToMessage(msg);
                           chatInputRef.current?.focus();
                         }}
@@ -625,6 +699,16 @@ const Friends = () => {
                       >
                         <Reply className="w-4 h-4" />
                       </button>
+                      {isMine && canEditMessage(msg) && (
+                        <button
+                          type="button"
+                          aria-label={t('chat.edit')}
+                          onClick={() => startEditMessage(msg)}
+                          className="text-muted-foreground hover:text-foreground p-1 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                     <div className={cn('flex flex-col gap-1 min-w-0', isMine ? 'items-end' : 'items-start')}>
                       <div
@@ -650,6 +734,11 @@ const Friends = () => {
                         <BbcodeRenderer content={msg.content} />
                         <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
                       </div>
+                      {msg.editedAt && (
+                        <span className="text-[10px] text-muted-foreground px-1">
+                          {t('chat.edited')} · {formatTime(new Date(msg.editedAt))}
+                        </span>
+                      )}
                       {reactionEntries.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {reactionEntries.map(([uid, emoji]) => (
@@ -683,6 +772,23 @@ const Friends = () => {
         </div>
         <div className="border-t p-4 relative z-10">
           <div className="max-w-3xl mx-auto w-full">
+            {editingMessage && (
+              <div className="flex items-start gap-2 mb-2 rounded-md border-l-2 border-primary bg-muted/60 px-3 py-2">
+                <Pencil className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-primary">{t('chat.editingMessage')}</div>
+                  <div className="text-xs text-muted-foreground truncate">{editingMessage.content}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  aria-label={t('chat.cancelEdit')}
+                  className="text-muted-foreground hover:text-foreground p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             {replyingToMessage && (() => {
               const myId = getCurrentUserIdFromToken();
               const senderName = replyingToMessage.senderId === myId
@@ -729,8 +835,14 @@ const Friends = () => {
                   rows={1}
                 />
               </div>
-              <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />
-              <Button onClick={handleSendClick} disabled={!messageText.trim()}><Send className="w-4 h-4" /></Button>
+              {!editingMessage && <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />}
+              <Button
+                onClick={handleSendClick}
+                disabled={!messageText.trim()}
+                aria-label={editingMessage ? t('chat.saveEdit') : undefined}
+              >
+                {editingMessage ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+              </Button>
             </div>
             {messageError && (
               <p className="text-xs text-destructive mt-1">{messageError}</p>
