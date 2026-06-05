@@ -530,7 +530,8 @@ const Friends = () => {
   });
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !activeChatId) return;
+    if (!activeChatId) return;
+    if (!messageText.trim() && imageFiles.length === 0) return; // need text or at least one image
     const imageUrls: string[] = [];
     for (const file of imageFiles) {
       const res = await uploadImage(file);
@@ -634,7 +635,10 @@ const Friends = () => {
   };
 
   const handleSendClick = () => {
-    if (!messageText.trim()) {
+    const hasText = !!messageText.trim();
+    const hasImages = imageFiles.length > 0;
+    // Editing requires text; a new message needs either text or at least one image.
+    if (editingMessage ? !hasText : (!hasText && !hasImages)) {
       setMessageError("Message can't be empty");
       return;
     }
@@ -880,10 +884,15 @@ const Friends = () => {
                   rows={1}
                 />
               </div>
-              {!editingMessage && <ImageAttachmentPicker files={imageFiles} onChange={setImageFiles} />}
+              {!editingMessage && (
+                <ImageAttachmentPicker
+                  files={imageFiles}
+                  onChange={(files) => { setImageFiles(files); if (messageError) setMessageError(''); }}
+                />
+              )}
               <Button
                 onClick={handleSendClick}
-                disabled={!messageText.trim()}
+                disabled={editingMessage ? !messageText.trim() : (!messageText.trim() && imageFiles.length === 0)}
                 aria-label={editingMessage ? t('chat.saveEdit') : undefined}
               >
                 {editingMessage ? <Check className="w-4 h-4" /> : <Send className="w-4 h-4" />}
