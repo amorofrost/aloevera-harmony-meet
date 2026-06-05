@@ -21,6 +21,7 @@ import { navigateAfterAuth } from '@/lib/authNavigation';
 import { safeRedirectFrom, inviteCodeFrom } from '@/lib/inviteRedirect';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { TelegramLoginWidget } from '@/components/TelegramLoginWidget';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -234,6 +235,8 @@ const Welcome = () => {
               </form>
 
               <div className="space-y-3 pt-4 border-t border-white/20">
+                <p className="text-white/60 text-sm text-center">{t('auth.orContinueWith')}</p>
+                <GoogleSignInButton disabled={isLoading} useCase="signin" />
                 <p className="text-white/60 text-sm text-center">{t('auth.telegram')}</p>
                 <TelegramLoginWidget disabled={isLoading} redirectTo={safeRedirect || undefined} />
               </div>
@@ -486,6 +489,11 @@ const Welcome = () => {
                   )}
                 </Button>
               </form>
+
+              <div className="space-y-3 pt-4 border-t border-white/20">
+                <p className="text-white/60 text-sm text-center">{t('auth.orContinueWith')}</p>
+                <GoogleSignInButton disabled={isLoading} useCase="signup" />
+              </div>
 
               <div className="text-center">
                 <button
