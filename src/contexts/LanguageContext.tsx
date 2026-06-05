@@ -20,6 +20,8 @@ export const useLanguage = () => {
 
 const translations = {
   ru: {
+    // BB code
+    'bbcode.spoilerReveal': 'Спойлер, нажмите чтобы показать',
     // Navigation
     'nav.profile': 'Профиль',
     'nav.search': 'Поиск',
@@ -392,6 +394,8 @@ const translations = {
     'feed.inviteCode': 'Код приглашения',
   },
   en: {
+    // BB code
+    'bbcode.spoilerReveal': 'Spoiler, click to reveal',
     // Navigation
     'nav.profile': 'Profile',
     'nav.search': 'Search',

@@ -1,6 +1,7 @@
 // src/components/ui/bbcode-renderer.tsx
 import React, { useState } from 'react';
 import { BBCODE_CONFIG, BbcodeTag } from '@/config/bbcode.config';
+import { LanguageContext } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
 // ── Tokenizer ──────────────────────────────────────────────────────────────
@@ -36,22 +37,30 @@ function tokenize(input: string): Token[] {
 // ── Spoiler component (needs useState) ───────────────────────────────────
 
 function SpoilerSpan({ children }: { children: React.ReactNode }) {
+  // Consume the context directly (not via useLanguage) so the renderer stays
+  // usable outside a LanguageProvider, e.g. in isolated unit tests.
+  const lang = React.useContext(LanguageContext);
+  const revealLabel = lang?.t('bbcode.spoilerReveal') ?? 'Spoiler, click to reveal';
   const [revealed, setRevealed] = useState(false);
+  const toggle = () => setRevealed(r => !r);
+
   return (
     <span
       data-spoiler
-      data-revealed={String(revealed)}
-      onClick={() => setRevealed(r => !r)}
-      style={{
-        background: revealed ? 'transparent' : 'currentColor',
-        color: revealed ? 'inherit' : 'transparent',
-        borderRadius: '3px',
-        cursor: 'pointer',
-        userSelect: 'none',
-        padding: '0 2px',
+      data-revealed={revealed ? 'true' : 'false'}
+      className="bb-spoiler"
+      role={revealed ? undefined : 'button'}
+      tabIndex={revealed ? -1 : 0}
+      aria-label={revealed ? undefined : revealLabel}
+      onClick={toggle}
+      onKeyDown={e => {
+        if (!revealed && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          toggle();
+        }
       }}
     >
-      {children}
+      <span className="bb-spoiler__text">{children}</span>
     </span>
   );
 }
