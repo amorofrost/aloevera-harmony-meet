@@ -118,8 +118,11 @@ const Friends = () => {
         shouldScrollToBottomRef.current = true;
         return [...prev, incoming];
       });
+      // The viewer is looking at this chat, so a message they receive is already "read".
+      const myId = getCurrentUserIdFromToken();
+      if (incoming.senderId !== myId) markChatRead(activeChatId);
     });
-  }, [activeChatId, onEvent]);
+  }, [activeChatId, onEvent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Live-patch a message's content + edited marker when its author edits it.
   useEffect(() => {
@@ -203,6 +206,7 @@ const Friends = () => {
             ...chat,
             createdAt: new Date(chat.createdAt),
             updatedAt: new Date(chat.updatedAt),
+            unreadCount: chat.unreadCount ?? 0,
             lastMessage: chat.lastMessage ? {
               ...chat.lastMessage,
               timestamp: new Date(chat.lastMessage.timestamp),
@@ -333,6 +337,7 @@ const Friends = () => {
     setReplyingToMessage(null);
     setEditingMessage(null);
     setMessageText('');
+    markChatRead(selectedChat);
     chatsApi.getMessages(selectedChat, 1).then(msgsResult => {
       if (msgsResult.success && msgsResult.data) {
         setMessages(msgsResult.data);
@@ -340,7 +345,7 @@ const Friends = () => {
       }
       setMessagesLoading(false);
     });
-  }, [selectedChat]);
+  }, [selectedChat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset the details overlay whenever the currently-rendered user changes.
   useEffect(() => {
@@ -494,6 +499,15 @@ const Friends = () => {
 
   const handleOpenChatById = (chatId: string) => {
     setSearchParams({ tab: 'chats', chat: chatId });
+  };
+
+  // Clear the unread indicator for a chat the viewer is now reading: zero it locally
+  // (instant dot removal) and tell the backend to reset its UnreadCount (best-effort).
+  const markChatRead = (chatId: string) => {
+    setPrivateChats(prev =>
+      prev.map(c => (c.id === chatId && (c.unreadCount ?? 0) > 0 ? { ...c, unreadCount: 0 } : c))
+    );
+    chatsApi.markRead(chatId).catch(() => { /* best-effort; dot already cleared locally */ });
   };
 
   // Open the in-app profile view (/friends?userId=...). Pushes a history entry so the
@@ -1097,7 +1111,7 @@ const Friends = () => {
             </TabsTrigger>
             <TabsTrigger value="chats" className="relative">
               Чаты
-              {privateChats.some(c => c.lastMessage && !c.lastMessage.read) && (
+              {privateChats.some(c => (c.unreadCount ?? 0) > 0) && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full" />
               )}
             </TabsTrigger>
@@ -1203,7 +1217,7 @@ const Friends = () => {
                           {chat.lastMessage && (
                             <div className="flex items-center justify-between">
                               <p className="text-sm text-muted-foreground truncate">{chat.lastMessage.content}</p>
-                              {!chat.lastMessage.read && <div className="w-2 h-2 bg-primary rounded-full ml-2" />}
+                              {(chat.unreadCount ?? 0) > 0 && <div className="w-2 h-2 bg-primary rounded-full ml-2" />}
                             </div>
                           )}
                         </div>

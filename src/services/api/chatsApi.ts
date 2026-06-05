@@ -56,6 +56,14 @@ export const chatsApi = {
     });
   },
 
+  /** Reset the caller's unread counter for a chat (called when they open/read it). */
+  async markRead(chatId: string) {
+    if (!isApiMode()) {
+      return mockSuccess({ chatId });
+    }
+    return apiClient.post<{ chatId: string }>(`/api/v1/chats/${chatId}/read`, {});
+  },
+
   /** Edit the text content of a message the caller authored (within the 24h window). */
   async editMessage(chatId: string, messageId: string, content: string) {
     if (!isApiMode()) {

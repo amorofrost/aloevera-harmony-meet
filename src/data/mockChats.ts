@@ -52,7 +52,7 @@ export type PrivateChatWithUser = PrivateChat & { otherUser: User };
 export const mockPrivateChats: PrivateChatWithUser[] = [
   {
     id: 'private-1', type: 'private', participants: ['current-user', '1'], matchId: 'match-1',
-    createdAt: new Date('2024-02-20'), updatedAt: new Date('2024-02-22'),
+    createdAt: new Date('2024-02-20'), updatedAt: new Date('2024-02-22'), unreadCount: 1,
     lastMessage: {
       id: 'msg-1', chatId: 'private-1', senderId: '1',
       content: 'Привет! Тоже обожаешь AloeVera?',

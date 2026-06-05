@@ -4,6 +4,8 @@ export interface Chat {
   name?: string; // For group chats
   participants: string[]; // User IDs
   lastMessage?: Message;
+  /** Unread messages for the current user in this chat (0 when caught up). */
+  unreadCount?: number;
   createdAt: Date;
   updatedAt: Date;
   eventId?: string; // For event-related group chats
