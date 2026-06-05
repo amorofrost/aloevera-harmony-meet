@@ -199,25 +199,17 @@ All colors MUST be HSL.
     filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.4));
   }
 
-  /* BB code spoiler — Telegram-style particle + blur cover, click to reveal */
+  /* BB code spoiler — frosted blur cover, click to reveal */
   .bb-spoiler {
-    position: relative;
     cursor: pointer;
     border-radius: 4px;
     padding: 0 3px;
-    /* tint behind the text */
-    background-color: hsl(var(--foreground) / 0.07);
-    /* two offset dot layers form a shimmering "static" cover */
-    background-image:
-      radial-gradient(circle, hsl(var(--foreground) / 0.85) 0.7px, transparent 1.1px),
-      radial-gradient(circle, hsl(var(--foreground) / 0.55) 0.7px, transparent 1.1px);
-    background-size: 5px 5px, 8px 8px;
-    background-repeat: repeat, repeat;
-    animation: bb-spoiler-twinkle 0.65s steps(4) infinite;
+    /* soft tinted panel behind the blurred text */
+    background-color: hsl(var(--foreground) / 0.08);
     /* round the ends on every wrapped line fragment, not just the bounding box */
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
-    transition: background-color 0.35s ease;
+    transition: background-color 0.4s ease;
   }
 
   .bb-spoiler__text {
@@ -235,8 +227,6 @@ All colors MUST be HSL.
 
   .bb-spoiler[data-revealed='true'] {
     background-color: transparent;
-    background-image: none;
-    animation: none;
     cursor: text;
   }
 
@@ -245,16 +235,5 @@ All colors MUST be HSL.
     opacity: 1;
     -webkit-user-select: text;
     user-select: text;
-  }
-
-  @keyframes bb-spoiler-twinkle {
-    0%   { background-position: 0 0,       2px 3px; }
-    100% { background-position: 5px 5px,  -8px -8px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .bb-spoiler {
-      animation: none;
-    }
   }
 }
