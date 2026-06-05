@@ -115,6 +115,8 @@ const translations = {
     'chat.editingMessage': 'Редактирование сообщения',
     'chat.cancelEdit': 'Отменить редактирование',
     'chat.saveEdit': 'Сохранить',
+    'chat.today': 'Сегодня',
+    'chat.yesterday': 'Вчера',
 
     // Events
     'events.applyCode': 'Показать детали по коду',
@@ -494,6 +496,8 @@ const translations = {
     'chat.editingMessage': 'Editing message',
     'chat.cancelEdit': 'Cancel editing',
     'chat.saveEdit': 'Save',
+    'chat.today': 'Today',
+    'chat.yesterday': 'Yesterday',
 
     // Events
     'events.applyCode': 'Apply code',

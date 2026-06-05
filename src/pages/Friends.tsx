@@ -59,7 +59,7 @@ const Friends = () => {
   const [messageError, setMessageError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user: viewer, loading: viewerLoading } = useCurrentUser();
 
   const viewingUserId = searchParams.get('userId');
@@ -450,6 +450,22 @@ const Friends = () => {
     return formatDateShort(date);
   };
 
+  // Telegram-style date separators between messages on different local-time days.
+  const isSameLocalDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  const formatDaySeparator = (date: Date): string => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (isSameLocalDay(date, today)) return t('chat.today');
+    if (isSameLocalDay(date, yesterday)) return t('chat.yesterday');
+    const sameYear = date.getFullYear() === today.getFullYear();
+    return new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      ...(sameYear ? {} : { year: 'numeric' }),
+    }).format(date);
+  };
+
   // A message is editable by its author for 24h after it was sent. The server is the
   // source of truth (it re-checks and returns EDIT_WINDOW_EXPIRED); this just gates the UI.
   const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -660,7 +676,7 @@ const Friends = () => {
           {messagesLoading ? (
             <div className="text-center py-4 text-muted-foreground text-sm">Загрузка сообщений...</div>
           ) : messages.length > 0 ? (
-            messages.map(msg => {
+            messages.map((msg, index) => {
               const myId = getCurrentUserIdFromToken();
               const isMine = !!myId && msg.senderId === myId;
               const myReaction = !isMine && myId ? msg.reactions?.[myId] : undefined;
@@ -668,8 +684,19 @@ const Friends = () => {
               const senderLabelFor = (senderId: string): string =>
                 senderId === myId ? t('chat.you') : chat.otherUser.name;
               const isHighlighted = highlightedMessageId === msg.id;
+              const msgDate = new Date(msg.timestamp);
+              const prevDate = index > 0 ? new Date(messages[index - 1].timestamp) : null;
+              const showDaySeparator = !prevDate || !isSameLocalDay(msgDate, prevDate);
               return (
-                <div key={msg.id} className={cn('flex group', isMine ? 'justify-end' : 'justify-start')}>
+                <React.Fragment key={msg.id}>
+                {showDaySeparator && (
+                  <div className="flex justify-center my-2">
+                    <span className="text-[11px] font-medium text-muted-foreground bg-muted/70 rounded-full px-3 py-0.5">
+                      {formatDaySeparator(msgDate)}
+                    </span>
+                  </div>
+                )}
+                <div className={cn('flex group', isMine ? 'justify-end' : 'justify-start')}>
                   <div className={cn('flex items-end gap-1 max-w-[75%]', isMine ? 'flex-row-reverse' : 'flex-row')}>
                     <div className="flex items-center gap-0.5 shrink-0">
                       {!isMine && (
@@ -734,11 +761,10 @@ const Friends = () => {
                         <BbcodeRenderer content={msg.content} />
                         <ImageAttachmentDisplay imageUrls={msg.imageUrls ?? []} />
                       </div>
-                      {msg.editedAt && (
-                        <span className="text-[10px] text-muted-foreground px-1">
-                          {t('chat.edited')} · {formatTime(new Date(msg.editedAt))}
-                        </span>
-                      )}
+                      <span className="text-[10px] text-muted-foreground px-1">
+                        {formatTime(msgDate)}
+                        {msg.editedAt && <> · {t('chat.edited')} {formatTime(new Date(msg.editedAt))}</>}
+                      </span>
                       {reactionEntries.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {reactionEntries.map(([uid, emoji]) => (
@@ -754,6 +780,7 @@ const Friends = () => {
                     </div>
                   </div>
                 </div>
+                </React.Fragment>
               );
             })
           ) : (
