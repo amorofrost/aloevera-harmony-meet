@@ -241,6 +241,14 @@ with:
         if (string.IsNullOrEmpty(link))
             return "/aloevera";
 
+        // A rooted path is already an in-app relative path. This MUST be checked before
+        // Uri.TryCreate: on Unix a leading-'/' string parses as an absolute file:// URI
+        // (Uri.TryCreate(..., Absolute) returns true), which would otherwise send every
+        // relative link down the "disallowed absolute" fallback. Reject protocol-relative
+        // '//host' (open-redirect surface) → safe default.
+        if (link.StartsWith('/'))
+            return link.StartsWith("//") ? "/aloevera" : link;
+
         if (Uri.TryCreate(link, UriKind.Absolute, out var absolute))
         {
             // Only allow absolute URLs pointing to the app's own domain; use just the path+query.
@@ -254,10 +262,12 @@ with:
             return "/aloevera";
         }
 
-        // Relative path — ensure it starts with '/'.
-        return link.StartsWith('/') ? link : $"/{link}";
+        // Non-rooted, non-absolute (e.g. "aloevera") — treat as a path.
+        return $"/{link}";
     }
 ```
+
+> **Note (pre-existing baseline):** before this change, `CommunityBroadcast_uses_payload_link` **fails** on Linux for exactly the `Uri.TryCreate` file:// reason above (asserts `/aloevera/events/42`, gets `/aloevera`). The corrected resolver above makes the rewritten test pass, so Task 1 also clears that baseline failure. When Step 5 runs the full suite, expect the total failing count to drop by 1 relative to the pre-task baseline.
 
 Leave `IsAnonymous`, `GetString`, `ToCamelCase`, and the `body` switch untouched.
 
