@@ -106,6 +106,17 @@ const SettingsPage = () => {
     }
   });
 
+  const handleToggleAnonymousLikes = async (checked: boolean) => {
+    if (!user) return;
+    const next = { ...user, settings: { ...user.settings, anonymousLikes: checked } };
+    setUser(next);
+    const res = await usersApi.updateUser(user.id, next);
+    if (!res.success) {
+      setUser(user); // revert on failure
+      showApiError(res, 'Failed to update setting');
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       await authApi.logout();
@@ -380,9 +391,10 @@ const SettingsPage = () => {
             <Card className="profile-card">
               <CardHeader><CardTitle>{t('profile.settings')}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                {/* Profile visibility, anonymous likes, and push notifications aren't
-                    backed by anything server-side yet — disabled until the corresponding
-                    features ship. Controls stay visible so users can see what's coming. */}
+                {/* Profile visibility and push notifications aren't backed by anything
+                    server-side yet — disabled until the corresponding features ship.
+                    Controls stay visible so users can see what's coming. Anonymous
+                    likes is enabled and persists immediately via PUT /users/{id}. */}
                 <div className="flex items-center justify-between opacity-60">
                   <div>
                     <Label>Видимость профиля</Label>
@@ -398,13 +410,15 @@ const SettingsPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center justify-between opacity-60">
-                  <div>
-                    <Label>Анонимные лайки</Label>
-                    <p className="text-sm text-muted-foreground">Скрыть ваше имя при лайках</p>
-                    <p className="text-xs italic text-muted-foreground mt-0.5">{t('settings.comingSoon')}</p>
+                <div className="flex items-center justify-between">
+                  <div className="pr-4">
+                    <p className="text-sm font-medium">{t('settings.anonymousLikes')}</p>
+                    <p className="text-xs text-muted-foreground">{t('settings.anonymousLikesHelp')}</p>
                   </div>
-                  <Switch checked={user.settings.anonymousLikes} disabled />
+                  <Switch
+                    checked={user.settings.anonymousLikes}
+                    onCheckedChange={handleToggleAnonymousLikes}
+                  />
                 </div>
                 <div className="flex items-center justify-between opacity-60">
                   <div>
