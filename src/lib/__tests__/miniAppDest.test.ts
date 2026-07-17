@@ -15,6 +15,10 @@ describe('sanitizeDest', () => {
     expect(sanitizeDest('//evil.com')).toBeNull();
   });
 
+  it('rejects a backslash-tricked path', () => {
+    expect(sanitizeDest('/\\evil.com')).toBeNull();
+  });
+
   it('rejects an absolute URL', () => {
     expect(sanitizeDest('https://evil.com')).toBeNull();
     expect(sanitizeDest('http://evil.com/x')).toBeNull();
