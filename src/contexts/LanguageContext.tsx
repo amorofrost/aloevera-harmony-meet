@@ -81,6 +81,8 @@ const translations = {
     'search.swipeInstructions': 'Свайп вправо - лайк, влево - пропустить, вверх - подробнее',
     'search.moreInfo': 'Подробнее',
     'search.lessInfo': 'Скрыть подробности',
+    'search.like': 'Лайк',
+    'search.secretLike': 'Тайный лайк',
     'search.eventsCount': 'Событий посещено: {count}',
     'search.scrollPrompts': '↕ Прокрутите, чтобы увидеть {count} ответа(ов)',
     'search.filter': 'Фильтр',
@@ -159,6 +161,8 @@ const translations = {
     'likes.noMatches': 'Пока нет взаимных лайков',
     'likes.noSent': 'Ты пока никого не лайкнул',
     'likes.noReceived': 'Пока нет лайков',
+    'likes.secretAdmirers': 'Вас тайно лайкнули: {count}',
+    'likes.sentSecretBadge': 'тайный',
 
     // Chats
     'chats.private': 'Личные чаты',
@@ -341,6 +345,10 @@ const translations = {
     'settings.prompts.saveSuccess': 'Подсказки сохранены',
     'settings.prompts.saveFailed': 'Не удалось сохранить подсказки',
 
+    // Settings - Anonymous Likes
+    'settings.anonymousLikes': 'Тайные лайки',
+    'settings.anonymousLikesHelp': 'Свайп вправо будет отправлять тайный лайк. Под карточкой всегда можно выбрать вручную.',
+
     // Notifications
     'notifications.bell': 'Уведомления',
     'notifications.markAllRead': 'Отметить все прочитанными',
@@ -462,6 +470,8 @@ const translations = {
     'search.swipeInstructions': 'Swipe right to like, left to pass, up for more info',
     'search.moreInfo': 'More info',
     'search.lessInfo': 'Hide details',
+    'search.like': 'Like',
+    'search.secretLike': 'Secret like',
     'search.eventsCount': '{count} events attended',
     'search.scrollPrompts': '↕ Scroll for {count} answers',
     'search.filter': 'Filter',
@@ -540,6 +550,8 @@ const translations = {
     'likes.noMatches': 'No matches yet',
     'likes.noSent': 'No likes sent yet',
     'likes.noReceived': 'No likes received yet',
+    'likes.secretAdmirers': '{count} people liked you secretly',
+    'likes.sentSecretBadge': 'secret',
 
     // Chats
     'chats.private': 'Private Chats',
@@ -721,6 +733,10 @@ const translations = {
     'settings.prompts.save': 'Save',
     'settings.prompts.saveSuccess': 'Prompts saved',
     'settings.prompts.saveFailed': 'Could not save prompts',
+
+    // Settings - Anonymous Likes
+    'settings.anonymousLikes': 'Secret likes',
+    'settings.anonymousLikesHelp': 'Swipe right will send a secret like. You can still choose per profile under the card.',
 
     // Notifications
     'notifications.bell': 'Notifications',
