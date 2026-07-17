@@ -78,6 +78,7 @@ const Friends = () => {
   const [matches, setMatches] = useState<MatchWithUser[]>([]);
   const [sentLikes, setSentLikes] = useState<SentLikeWithUser[]>([]);
   const [receivedLikes, setReceivedLikes] = useState<ReceivedLikeWithUser[]>([]);
+  const [anonymousReceivedCount, setAnonymousReceivedCount] = useState(0);
   const [privateChats, setPrivateChats] = useState<PrivateChatWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
@@ -173,15 +174,17 @@ const Friends = () => {
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const [matchesRes, sentRes, receivedRes, chatsRes] = await Promise.all([
+      const [matchesRes, sentRes, receivedRes, chatsRes, anonCountRes] = await Promise.all([
         matchingApi.getMatches(),
         matchingApi.getSentLikes(),
         matchingApi.getReceivedLikes(),
         chatsApi.getChats(),
+        matchingApi.getAnonymousReceivedCount(),
       ]);
       if (matchesRes.success && matchesRes.data) setMatches(matchesRes.data);
       if (sentRes.success && sentRes.data) setSentLikes(sentRes.data);
       if (receivedRes.success && receivedRes.data) setReceivedLikes(receivedRes.data);
+      if (anonCountRes.success && typeof anonCountRes.data === 'number') setAnonymousReceivedCount(anonCountRes.data);
       if (chatsRes.success && chatsRes.data) {
         const chatList = chatsRes.data as any[];
         const myId = getCurrentUserIdFromToken();
@@ -1202,10 +1205,19 @@ const Friends = () => {
               </TabsContent>
               <TabsContent value="sent" className="mt-4">
                 {sentLikes.map((like) => (
-                  <UserCard key={like.id} user={like.toUser} subtitle={`Лайк отправлен ${formatDateShort(like.createdAt)}`} />
+                  <UserCard key={like.id} user={like.toUser}
+                    subtitle={`${`Лайк отправлен ${formatDateShort(like.createdAt)}`}${like.isAnonymous ? ` · ${t('likes.sentSecretBadge')}` : ''}`} />
                 ))}
               </TabsContent>
               <TabsContent value="received" className="mt-4">
+                {anonymousReceivedCount > 0 && (
+                  <Card className="profile-card mb-4">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <Lock className="w-6 h-6 text-primary shrink-0" />
+                      <p className="text-sm font-medium">{t('likes.secretAdmirers', { count: String(anonymousReceivedCount) })}</p>
+                    </CardContent>
+                  </Card>
+                )}
                 {receivedLikes.map((like) => (
                   <UserCard key={like.id} user={like.fromUser} subtitle={`Лайкнул(а) вас ${formatDateShort(like.createdAt)}`}
                     actionButton={<Button size="sm" className="btn-like" onClick={() => matchingApi.sendLike(like.fromUser.id)}><Heart className="w-4 h-4" /></Button>} />
