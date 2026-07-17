@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus, Reply, Pencil, Check } from 'lucide-react';
+import { Heart, X, ArrowLeft, Send, MessageCircle, MoreVertical, Search as SearchIcon, ChevronUp, ChevronDown, Calendar, SmilePlus, Reply, Pencil, Check, Lock } from 'lucide-react';
 import { SearchFilterSheet, EMPTY_FILTERS, type SearchFilters } from '@/components/SearchFilterSheet';
 import { LocationDisplay } from '@/components/ui/location-display';
 import { COUNTRY_BY_CODE } from '@/data/countries';
@@ -372,7 +372,13 @@ const Friends = () => {
 
   const handleLike = async () => {
     if (currentUser) {
-      await matchingApi.sendLike(currentUser.id);
+      await matchingApi.sendLike(currentUser.id, viewer?.settings.anonymousLikes ?? false);
+    }
+    nextUser();
+  };
+  const handleSecretLike = async () => {
+    if (currentUser) {
+      await matchingApi.sendLike(currentUser.id, true);
     }
     nextUser();
   };
@@ -927,7 +933,7 @@ const Friends = () => {
     </Card>
   );
 
-  const renderUserDeckCard = (target: User, onPass: () => void, onLike: () => void) => (
+  const renderUserDeckCard = (target: User, onPass: () => void, onLike: () => void, onSecretLike: () => void) => (
     <div>
       <SwipeCard
         onSwipeLeft={onPass}
@@ -1044,18 +1050,22 @@ const Friends = () => {
           </div>
         </Card>
       </SwipeCard>
-      <div className="flex justify-center items-center gap-6 mt-6">
-        <Button size="lg" variant="outline" onClick={onPass} className="rounded-full w-16 h-16 btn-pass"><X className="w-8 h-8" /></Button>
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <Button size="lg" variant="outline" onClick={onPass} aria-label={t('search.pass')} className="rounded-full w-14 h-14 btn-pass"><X className="w-7 h-7" /></Button>
         <Button
           size="lg"
           variant="outline"
           onClick={() => setShowDeckDetails(v => !v)}
           aria-label={showDeckDetails ? t('search.lessInfo') : t('search.moreInfo')}
-          className="rounded-full w-12 h-12"
+          className="rounded-full w-11 h-11"
         >
           {showDeckDetails ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
         </Button>
-        <Button size="lg" onClick={onLike} className="rounded-full w-16 h-16 btn-like"><Heart className="w-8 h-8" /></Button>
+        <Button size="lg" onClick={onLike} aria-label={t('search.like')} className="rounded-full w-14 h-14 btn-like"><Heart className="w-7 h-7" /></Button>
+        <Button size="lg" onClick={onSecretLike} aria-label={t('search.secretLike')} className="rounded-full w-14 h-14 btn-like relative">
+          <Heart className="w-7 h-7" />
+          <Lock className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 bg-background rounded-full p-0.5" />
+        </Button>
       </div>
     </div>
   );
@@ -1081,7 +1091,11 @@ const Friends = () => {
             viewingUser,
             () => navigate(-1),
             async () => {
-              await matchingApi.sendLike(viewingUser.id);
+              await matchingApi.sendLike(viewingUser.id, viewer?.settings.anonymousLikes ?? false);
+              navigate(-1);
+            },
+            async () => {
+              await matchingApi.sendLike(viewingUser.id, true);
               navigate(-1);
             }
           )}
@@ -1166,7 +1180,7 @@ const Friends = () => {
               </div>
             ) : currentUser ? (
               <div>
-                {renderUserDeckCard(currentUser, handlePass, handleLike)}
+                {renderUserDeckCard(currentUser, handlePass, handleLike, handleSecretLike)}
                 <p className="text-center text-sm text-muted-foreground mt-4">{t('search.swipeInstructions')}</p>
               </div>
             ) : null}
