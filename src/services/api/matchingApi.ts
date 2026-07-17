@@ -59,9 +59,9 @@ export const matchingApi = {
     return mockSuccess(mockSearchProfiles.filter(u => u.id !== myId));
   },
 
-  async sendLike(toUserId: string): Promise<ApiResponse<{ isMatch: boolean }>> {
+  async sendLike(toUserId: string, anonymous = false): Promise<ApiResponse<{ isMatch: boolean }>> {
     if (isApiMode()) {
-      return apiClient.post<{ isMatch: boolean }>('/api/v1/matching/likes', { toUserId });
+      return apiClient.post<{ isMatch: boolean }>('/api/v1/matching/likes', { toUserId, anonymous });
     }
     return mockSuccess({ isMatch: false });
   },
@@ -103,6 +103,7 @@ export const matchingApi = {
         const like: Like = {
           id: dto.id, fromUserId: dto.fromUserId, toUserId: dto.toUserId,
           createdAt: new Date(dto.createdAt), isMatch: dto.isMatch,
+          isAnonymous: dto.isAnonymous ?? false,
         };
         return { ...like, toUser };
       });
@@ -124,6 +125,7 @@ export const matchingApi = {
         const like: Like = {
           id: dto.id, fromUserId: dto.fromUserId, toUserId: dto.toUserId,
           createdAt: new Date(dto.createdAt), isMatch: dto.isMatch,
+          isAnonymous: dto.isAnonymous ?? false,
         };
         return { ...like, fromUser, isRead: false };
       });
@@ -131,5 +133,13 @@ export const matchingApi = {
       return { ...res, data: enriched };
     }
     return mockSuccess(mockReceivedLikes);
+  },
+
+  async getAnonymousReceivedCount(): Promise<ApiResponse<number>> {
+    if (isApiMode()) {
+      const res = await apiClient.get<{ count: number }>('/api/v1/matching/likes/received/anonymous-count');
+      return { ...res, data: res.success && res.data ? res.data.count : 0 };
+    }
+    return mockSuccess(0);
   },
 };

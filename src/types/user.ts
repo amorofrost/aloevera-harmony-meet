@@ -72,6 +72,7 @@ export interface Like {
   toUserId: string;
   createdAt: Date;
   isMatch: boolean;
+  isAnonymous?: boolean;
 }
 
 export interface Event {

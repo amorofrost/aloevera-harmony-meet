@@ -23,10 +23,13 @@ vi.mock('@/services/api/apiClient', () => ({
     postForm: vi.fn(),
     getAccessToken: vi.fn(() => MOCK_TOKEN),
   },
-  isApiMode: () => false,
+  // A vi.fn (default: mock mode) so individual tests can flip to api-mode
+  // for a single call via mockReturnValueOnce(true).
+  isApiMode: vi.fn(() => false),
 }));
 
 import { matchingApi, getCurrentUserIdFromToken } from './matchingApi';
+import { apiClient, isApiMode } from './apiClient';
 import { mockMatches, mockSentLikes, mockReceivedLikes, mockSearchProfiles } from '@/data/mockProfiles';
 
 describe('getCurrentUserIdFromToken', () => {
@@ -96,6 +99,44 @@ describe('matchingApi — mock mode', () => {
     const res = await matchingApi.sendLike('some-user');
     expect(res.success).toBe(true);
     expect(res.data?.isMatch).toBe(false);
+  });
+});
+
+describe('matchingApi — api mode', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('sendLike posts anonymous:true when requested (api mode)', async () => {
+    vi.mocked(isApiMode).mockReturnValueOnce(true);
+    const postSpy = vi.mocked(apiClient.post).mockResolvedValue({ success: true, data: { isMatch: false }, timestamp: '' });
+
+    await matchingApi.sendLike('u2', true);
+
+    expect(postSpy).toHaveBeenCalledWith('/api/v1/matching/likes', { toUserId: 'u2', anonymous: true });
+  });
+
+  it('sendLike defaults anonymous:false (api mode)', async () => {
+    vi.mocked(isApiMode).mockReturnValueOnce(true);
+    const postSpy = vi.mocked(apiClient.post).mockResolvedValue({ success: true, data: { isMatch: false }, timestamp: '' });
+
+    await matchingApi.sendLike('u2');
+
+    expect(postSpy).toHaveBeenCalledWith('/api/v1/matching/likes', { toUserId: 'u2', anonymous: false });
+  });
+
+  it('getAnonymousReceivedCount maps the {count} envelope to a number (api mode)', async () => {
+    vi.mocked(isApiMode).mockReturnValueOnce(true);
+    vi.mocked(apiClient.get).mockResolvedValue({ success: true, data: { count: 3 }, timestamp: '' });
+
+    const res = await matchingApi.getAnonymousReceivedCount();
+
+    expect(res.success).toBe(true);
+    expect(res.data).toBe(3);
+  });
+
+  it('getAnonymousReceivedCount defaults to 0 in mock mode', async () => {
+    const res = await matchingApi.getAnonymousReceivedCount();
+    expect(res.success).toBe(true);
+    expect(res.data).toBe(0);
   });
 });
 
