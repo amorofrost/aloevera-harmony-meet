@@ -97,14 +97,14 @@ User preferences (age range, gender, location) exist in `UserPreferencesDto` and
 
 ---
 
-### MCF.8. Anonymous Likes
+### MCF.8. Anonymous Likes — ✅ Resolved (2026-07-17)
 **Impact**: Core privacy feature absent from the matching system
 
-Currently all likes are visible to the recipient. A user sending an anonymous like has their identity stored in the system but not surfaced to the recipient. The sender is revealed only when the recipient also sends a like, creating a mutual (non-anonymous) match.
+A user can now send a normal like or an anonymous ("secret") like. Anonymity is a per-like property; the recipient of a pending anonymous like never sees the sender's identity and is shown only a count of secret admirers. A mutual like still becomes a normal, revealed match.
 
-**Resolution**:
-- Backend: Add `isAnonymous: boolean` to `CreateLikeRequestDto` and `LikeEntity`. Update `GET /api/v1/matching/likes/received` to omit sender details when `isAnonymous = true`
-- Frontend: Add an "Anonymous" toggle to the like action in `src/pages/Friends.tsx`
+**Shipped**:
+- Backend: `IsAnonymous` on `LikeEntity` / `LikeDto`, `Anonymous` on `CreateLikeRequestDto`. `CreateLikeAsync` drives the `LikeReceived` notification anonymity from the per-like flag (`actorId = null` when anonymous) — the old global-setting lookup was removed. `GET /api/v1/matching/likes/received` excludes pending anonymous likes; new `GET /api/v1/matching/likes/received/anonymous-count` returns the count. Both Azure + mock implementations, with unit tests covering the privacy exclusion, count, and actor-nulling.
+- Frontend: deck card exposes explicit **Like** and **Secret like** buttons; swipe-right follows the user's Settings default. Received tab shows a "N people liked you secretly" summary card; Sent tab badges anonymous likes. The Settings `anonymousLikes` toggle is enabled and persisted (swipe-right default). See spec `docs/superpowers/specs/2026-07-17-anonymous-likes-design.md`.
 
 ---
 
