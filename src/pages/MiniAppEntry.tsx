@@ -16,6 +16,7 @@ import appIcon from '@/assets/app-icon.jpg';
 import { toast } from '@/components/ui/sonner';
 import { showApiError } from '@/lib/apiError';
 import { navigateAfterAuth } from '@/lib/authNavigation';
+import { sanitizeDest } from '@/lib/miniAppDest';
 import {
   telegramRegisterSchema,
   telegramRegisterSchemaWithInvite,
@@ -77,6 +78,10 @@ const MiniAppEntry: React.FC = () => {
   // Read deep-link invite from start_param synchronously at mount so the registration form
   // can pre-fill it through defaultValues (rather than racing with a setValue after render).
   const inviteFromDeepLink = inviteFromStartParam(getStartParam());
+  // Post-auth navigation target from a Telegram notification's "Open in app" web_app button:
+  // https://aloeve.club/tg?dest=<url-encoded relative path>. URLSearchParams decodes it; we
+  // then bound it to a safe same-app relative path.
+  const destFromQuery = sanitizeDest(new URLSearchParams(window.location.search).get('dest'));
   const registerForm = useForm<TelegramRegisterSchema>({
     resolver: async (values, ctx, opts) => {
       const schema = requireInviteRef.current ? telegramRegisterSchemaWithInvite : telegramRegisterSchema;
@@ -140,10 +145,19 @@ const MiniAppEntry: React.FC = () => {
             }
           }
 
+          // Notification deep link: land on the exact content the notification referenced.
+          if (destFromQuery) {
+            navigate(destFromQuery, { replace: true });
+            return;
+          }
+
           navigateAfterAuth(navigate, res.data.auth.user);
           return;
         }
         // needsRegistration
+        // Note: destFromQuery is intentionally ignored here — a user receiving Telegram
+        // notifications already has a linked account, so this branch is not reached from a
+        // notification deep link. New registrants follow the normal post-auth destination.
         setTelegram(res.data.telegram ?? null);
         if (res.data.telegram) {
           const prefill = [res.data.telegram.firstName, res.data.telegram.lastName].filter(Boolean).join(' ').trim();
