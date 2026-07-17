@@ -100,6 +100,12 @@ describe('matchingApi — mock mode', () => {
     expect(res.success).toBe(true);
     expect(res.data?.isMatch).toBe(false);
   });
+
+  it('getAnonymousReceivedCount defaults to 0 in mock mode', async () => {
+    const res = await matchingApi.getAnonymousReceivedCount();
+    expect(res.success).toBe(true);
+    expect(res.data).toBe(0);
+  });
 });
 
 describe('matchingApi — api mode', () => {
@@ -131,12 +137,7 @@ describe('matchingApi — api mode', () => {
 
     expect(res.success).toBe(true);
     expect(res.data).toBe(3);
-  });
-
-  it('getAnonymousReceivedCount defaults to 0 in mock mode', async () => {
-    const res = await matchingApi.getAnonymousReceivedCount();
-    expect(res.success).toBe(true);
-    expect(res.data).toBe(0);
+    expect(apiClient.get).toHaveBeenCalledWith('/api/v1/matching/likes/received/anonymous-count');
   });
 });
 

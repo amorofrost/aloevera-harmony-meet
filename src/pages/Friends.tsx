@@ -373,15 +373,21 @@ const Friends = () => {
   }, [viewingUserId]);
   const currentUser = searchProfiles[currentUserIndex];
 
-  const handleLike = async () => {
+  const handleNormalLike = async () => {
     if (currentUser) {
-      await matchingApi.sendLike(currentUser.id, viewer?.settings.anonymousLikes ?? false);
+      await matchingApi.sendLike(currentUser.id, false);
     }
     nextUser();
   };
   const handleSecretLike = async () => {
     if (currentUser) {
       await matchingApi.sendLike(currentUser.id, true);
+    }
+    nextUser();
+  };
+  const handleSwipeRightLike = async () => {
+    if (currentUser) {
+      await matchingApi.sendLike(currentUser.id, viewer?.settings.anonymousLikes ?? false);
     }
     nextUser();
   };
@@ -936,11 +942,11 @@ const Friends = () => {
     </Card>
   );
 
-  const renderUserDeckCard = (target: User, onPass: () => void, onLike: () => void, onSecretLike: () => void) => (
+  const renderUserDeckCard = (target: User, onPass: () => void, onNormalLike: () => void, onSecretLike: () => void, onSwipeRight: () => void) => (
     <div>
       <SwipeCard
         onSwipeLeft={onPass}
-        onSwipeRight={onLike}
+        onSwipeRight={onSwipeRight}
         onSwipeUp={() => setShowDeckDetails(true)}
         onSwipeDown={() => setShowDeckDetails(false)}
         className="w-full max-w-sm mx-auto"
@@ -1064,7 +1070,7 @@ const Friends = () => {
         >
           {showDeckDetails ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
         </Button>
-        <Button size="lg" onClick={onLike} aria-label={t('search.like')} className="rounded-full w-14 h-14 btn-like"><Heart className="w-7 h-7" /></Button>
+        <Button size="lg" onClick={onNormalLike} aria-label={t('search.like')} className="rounded-full w-14 h-14 btn-like"><Heart className="w-7 h-7" /></Button>
         <Button size="lg" onClick={onSecretLike} aria-label={t('search.secretLike')} className="rounded-full w-14 h-14 btn-like relative">
           <Heart className="w-7 h-7" />
           <Lock className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 bg-background rounded-full p-0.5" />
@@ -1094,11 +1100,15 @@ const Friends = () => {
             viewingUser,
             () => navigate(-1),
             async () => {
-              await matchingApi.sendLike(viewingUser.id, viewer?.settings.anonymousLikes ?? false);
+              await matchingApi.sendLike(viewingUser.id, false);
               navigate(-1);
             },
             async () => {
               await matchingApi.sendLike(viewingUser.id, true);
+              navigate(-1);
+            },
+            async () => {
+              await matchingApi.sendLike(viewingUser.id, viewer?.settings.anonymousLikes ?? false);
               navigate(-1);
             }
           )}
@@ -1183,7 +1193,7 @@ const Friends = () => {
               </div>
             ) : currentUser ? (
               <div>
-                {renderUserDeckCard(currentUser, handlePass, handleLike, handleSecretLike)}
+                {renderUserDeckCard(currentUser, handlePass, handleNormalLike, handleSecretLike, handleSwipeRightLike)}
                 <p className="text-center text-sm text-muted-foreground mt-4">{t('search.swipeInstructions')}</p>
               </div>
             ) : null}
