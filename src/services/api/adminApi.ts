@@ -61,6 +61,40 @@ export interface EventAttendeeAdminDto {
   displayName: string;
 }
 
+export interface PreRegisterAttendeeInput {
+  telegramUsername: string;
+  name: string;
+  gender?: string;
+  photoUrl?: string;
+}
+
+export type PreRegisterRowStatus =
+  | 'created'
+  | 'skippedExists'
+  | 'invalidUsername'
+  | 'invalidName'
+  | 'error';
+
+export interface PreRegisterRowResult {
+  telegramUsername: string;
+  status: PreRegisterRowStatus;
+  userId?: string;
+  message?: string;
+}
+
+export interface PreRegisterSummary {
+  created: number;
+  skippedExists: number;
+  invalidUsername: number;
+  invalidName: number;
+  error: number;
+}
+
+export interface PreRegisterResult {
+  summary: PreRegisterSummary;
+  results: PreRegisterRowResult[];
+}
+
 export type EventTopicVisibilityApi = 'public' | 'attendeesOnly' | 'specificUsers';
 
 export interface ForumTopicAdminDto {
@@ -863,6 +897,23 @@ export const adminApi = {
       };
     }
     return apiClient.delete<boolean>(`/api/v1/admin/events/${eventId}/attendees/${userId}`);
+  },
+
+  async preRegisterAttendees(
+    eventId: string,
+    attendees: PreRegisterAttendeeInput[],
+  ): Promise<ApiResponse<PreRegisterResult | null>> {
+    if (!isApiMode()) {
+      return {
+        success: false,
+        error: { code: 'ADMIN_REQUIRES_API', message: 'Admin panel requires VITE_API_MODE=api' },
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return apiClient.post<PreRegisterResult>(
+      `/api/v1/admin/events/${eventId}/preregister`,
+      { attendees },
+    );
   },
 
   async createInvite(
