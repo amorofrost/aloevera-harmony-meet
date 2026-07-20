@@ -34,6 +34,8 @@
 | File | Responsibility |
 |---|---|
 | `Lovecraft.Common/DTOs/Admin/PreRegisterDtos.cs` | **Create** — request/result DTOs for the import |
+| `Lovecraft.Backend/Helpers/PreRegistrationRowValidator.cs` | **Create** — storage-agnostic per-row validation + status constants, shared by both `IAuthService` impls |
+| `Lovecraft.UnitTests/PreRegistrationRowValidatorTests.cs` | **Create** — pure unit tests for the validator |
 | `Lovecraft.Backend/Storage/Entities/UserEntity.cs` | **Modify** — add `PreRegistered` column |
 | `Lovecraft.Backend/Services/IAuthService.cs` | **Modify** — add `PreRegisterAttendeesAsync` |
 | `Lovecraft.Backend/Services/MockAuthService.cs` | **Modify** — `MockUser.PreRegistered`, import impl, claim helper, wire into 2 login flows |
@@ -170,17 +172,181 @@ git commit -m "feat(preregister): add DTOs, PreRegistered column, and IAuthServi
 
 ---
 
-### Task 2: Mock import implementation (TDD)
+### Task 2: Shared row validator + mock import implementation (TDD)
 
 **Files:**
+- Create: `Lovecraft.Backend/Helpers/PreRegistrationRowValidator.cs`
+- Create: `Lovecraft.UnitTests/PreRegistrationRowValidatorTests.cs`
 - Create: `Lovecraft.UnitTests/PreRegistrationTests.cs`
 - Modify: `Lovecraft.Backend/Services/MockAuthService.cs`
 
 **Interfaces:**
 - Consumes: `PreRegisterAttendeeDto`, `PreRegisterResultDto`, `MockUser.PreRegistered` (Task 1).
-- Produces: working `MockAuthService.PreRegisterAttendeesAsync`; shells stored in `_users` keyed by synthetic email `prereg_{userId}@telegram.local`, discoverable by `u.Id == userId`.
+- Produces:
+  - `PreRegistrationRowValidator` with `NormalizeUsername(string?) → string`, `Validate(PreRegisterAttendeeDto) → ValidatedRow`, and the status constants `StatusCreated` / `StatusSkippedExists` / `StatusInvalidUsername` / `StatusInvalidName` / `StatusError`. `ValidatedRow` is a `readonly record struct (string Username, string UserId, string Name, string? Status, string? Message)` where a non-null `Status` means rejected. **Task 3 (Azure) and Tasks 4–5 (claim) consume this — do not re-implement the rules.**
+  - working `MockAuthService.PreRegisterAttendeesAsync`; shells stored in `_users` keyed by synthetic email `prereg_{userId}@telegram.local`, discoverable by `u.Id == userId`.
 
-- [ ] **Step 1: Write the failing tests**
+- [ ] **Step 1: Write the failing validator tests**
+
+Create `Lovecraft.UnitTests/PreRegistrationRowValidatorTests.cs`:
+
+```csharp
+using Lovecraft.Backend.Helpers;
+using Lovecraft.Common.DTOs.Admin;
+using Xunit;
+
+namespace Lovecraft.UnitTests;
+
+public class PreRegistrationRowValidatorTests
+{
+    private static PreRegisterAttendeeDto Row(string username, string name = "Test Person") =>
+        new() { TelegramUsername = username, Name = name };
+
+    [Theory]
+    [InlineData("Anna_Petrova", "anna_petrova")]
+    [InlineData("@Anna_Petrova", "anna_petrova")]
+    [InlineData("  @Anna_Petrova  ", "anna_petrova")]
+    public void NormalizeUsername_StripsAtAndWhitespace_AndLowercases(string raw, string expected)
+    {
+        Assert.Equal(expected, PreRegistrationRowValidator.NormalizeUsername(raw));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void NormalizeUsername_EmptyInput_ReturnsEmpty(string? raw)
+    {
+        Assert.Equal(string.Empty, PreRegistrationRowValidator.NormalizeUsername(raw));
+    }
+
+    [Fact]
+    public void Validate_GoodRow_ReturnsNoStatusAndNormalizedUserId()
+    {
+        var v = PreRegistrationRowValidator.Validate(Row("@Anna_Petrova", "Anna Petrova"));
+
+        Assert.Null(v.Status);
+        Assert.Equal("Anna_Petrova", v.Username);
+        Assert.Equal("anna_petrova", v.UserId);
+        Assert.Equal("Anna Petrova", v.Name);
+    }
+
+    [Theory]
+    [InlineData("abc")]        // too short (min 5)
+    [InlineData("1nvalid")]    // must start with a letter
+    [InlineData("bad-name")]   // hyphen not allowed
+    public void Validate_MalformedUsername_ReturnsInvalidUsernameWithFormatMessage(string username)
+    {
+        var v = PreRegistrationRowValidator.Validate(Row(username));
+
+        Assert.Equal(PreRegistrationRowValidator.StatusInvalidUsername, v.Status);
+        Assert.Equal("invalidFormat", v.Message);
+    }
+
+    [Fact]
+    public void Validate_ReservedUsername_ReturnsInvalidUsernameWithReservedMessage()
+    {
+        var v = PreRegistrationRowValidator.Validate(Row("official"));
+
+        Assert.Equal(PreRegistrationRowValidator.StatusInvalidUsername, v.Status);
+        Assert.Equal("reserved", v.Message);
+    }
+
+    [Theory]
+    [InlineData("<b>bold</b>")]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_MissingOrHtmlName_ReturnsInvalidName(string name)
+    {
+        var v = PreRegistrationRowValidator.Validate(Row("Good_User", name));
+
+        Assert.Equal(PreRegistrationRowValidator.StatusInvalidName, v.Status);
+    }
+
+    [Fact]
+    public void Validate_ChecksUsernameBeforeName()
+    {
+        // Both fields are bad — username must win so the caller reports the root cause.
+        var v = PreRegistrationRowValidator.Validate(Row("bad", "<b>x</b>"));
+
+        Assert.Equal(PreRegistrationRowValidator.StatusInvalidUsername, v.Status);
+    }
+}
+```
+
+- [ ] **Step 2: Run the validator tests to verify they fail**
+
+Run: `cd /home/amorofrost/src/lovecraft/Lovecraft && dotnet test --filter FullyQualifiedName~PreRegistrationRowValidatorTests`
+Expected: FAIL — `PreRegistrationRowValidator` does not exist.
+
+- [ ] **Step 3: Implement the shared validator**
+
+Create `Lovecraft.Backend/Helpers/PreRegistrationRowValidator.cs`:
+
+```csharp
+using Lovecraft.Common.DTOs.Admin;
+
+namespace Lovecraft.Backend.Helpers;
+
+/// <summary>
+/// Storage-agnostic validation for a single attendee pre-registration row. Shared by the Mock
+/// and Azure <c>IAuthService</c> implementations so both apply identical rules and emit
+/// identical status strings.
+/// </summary>
+public static class PreRegistrationRowValidator
+{
+    public const string StatusCreated = "created";
+    public const string StatusSkippedExists = "skippedExists";
+    public const string StatusInvalidUsername = "invalidUsername";
+    public const string StatusInvalidName = "invalidName";
+    public const string StatusError = "error";
+
+    /// <summary>Validated row. A non-null <paramref name="Status"/> means the row is rejected,
+    /// in which case <paramref name="UserId"/> and <paramref name="Name"/> are meaningless.</summary>
+    public readonly record struct ValidatedRow(
+        string Username, string UserId, string Name, string? Status, string? Message);
+
+    /// <summary>Strips a leading '@' and surrounding whitespace, then lowercases.
+    /// Returns an empty string when there is nothing usable.</summary>
+    public static string NormalizeUsername(string? rawUsername)
+    {
+        if (string.IsNullOrWhiteSpace(rawUsername)) return string.Empty;
+        return AccountNameValidator.Normalize(rawUsername.Trim().TrimStart('@'));
+    }
+
+    /// <summary>Applies username-format then name rules. Username is checked first so a row
+    /// with two problems reports the root cause.</summary>
+    public static ValidatedRow Validate(PreRegisterAttendeeDto row)
+    {
+        var username = (row.TelegramUsername ?? string.Empty).Trim().TrimStart('@');
+
+        var validation = AccountNameValidator.Validate(username);
+        if (validation != AccountNameValidationResult.Ok)
+        {
+            return new ValidatedRow(
+                username, string.Empty, string.Empty, StatusInvalidUsername,
+                validation == AccountNameValidationResult.Reserved ? "reserved" : "invalidFormat");
+        }
+
+        var name = (row.Name ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name) || HtmlGuard.ContainsHtml(name))
+        {
+            return new ValidatedRow(
+                username, string.Empty, string.Empty, StatusInvalidName,
+                "name is required and must not contain HTML");
+        }
+
+        return new ValidatedRow(username, AccountNameValidator.Normalize(username), name, null, null);
+    }
+}
+```
+
+- [ ] **Step 4: Run the validator tests to verify they pass**
+
+Run: `cd /home/amorofrost/src/lovecraft/Lovecraft && dotnet test --filter FullyQualifiedName~PreRegistrationRowValidatorTests`
+Expected: PASS — all validator tests green.
+
+- [ ] **Step 5: Write the failing import tests**
 
 Create `Lovecraft.UnitTests/PreRegistrationTests.cs`:
 
@@ -312,14 +478,14 @@ public class PreRegistrationTests
 
 > `IAuthService.GetAuthMethodsAsync(string userId)` returns `Task<List<AuthMethodDto>>`, where `AuthMethodDto.Provider` is the `"local"`/`"google"`/`"telegram"` string.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [ ] **Step 6: Run the tests to verify they fail**
 
 Run: `cd /home/amorofrost/src/lovecraft/Lovecraft && dotnet test --filter FullyQualifiedName~PreRegistrationTests`
 Expected: FAIL — `System.NotImplementedException` from the Task 1 stub.
 
-- [ ] **Step 3: Implement in `MockAuthService`**
+- [ ] **Step 7: Implement in `MockAuthService`**
 
-Replace the stub in `Lovecraft.Backend/Services/MockAuthService.cs` with:
+Replace the stub in `Lovecraft.Backend/Services/MockAuthService.cs` with the following. Note it delegates all row rules to `PreRegistrationRowValidator` — do not restate them here:
 
 ```csharp
     public async Task<PreRegisterResultDto> PreRegisterAttendeesAsync(
@@ -329,36 +495,28 @@ Replace the stub in `Lovecraft.Backend/Services/MockAuthService.cs` with:
 
         foreach (var row in attendees ?? new List<PreRegisterAttendeeDto>())
         {
-            var rawUsername = (row.TelegramUsername ?? string.Empty).Trim().TrimStart('@');
-            var rowResult = new PreRegisterRowResultDto { TelegramUsername = rawUsername };
+            var validated = PreRegistrationRowValidator.Validate(row);
+            var rowResult = new PreRegisterRowResultDto { TelegramUsername = validated.Username };
 
-            var validation = AccountNameValidator.Validate(rawUsername);
-            if (validation != AccountNameValidationResult.Ok)
+            if (validated.Status is not null)
             {
-                rowResult.Status = "invalidUsername";
-                rowResult.Message = validation == AccountNameValidationResult.Reserved
-                    ? "reserved" : "invalidFormat";
-                result.Summary.InvalidUsername++;
+                rowResult.Status = validated.Status;
+                rowResult.Message = validated.Message;
+                if (validated.Status == PreRegistrationRowValidator.StatusInvalidUsername)
+                    result.Summary.InvalidUsername++;
+                else
+                    result.Summary.InvalidName++;
                 result.Results.Add(rowResult);
                 continue;
             }
 
-            var name = (row.Name ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(name) || HtmlGuard.ContainsHtml(name))
-            {
-                rowResult.Status = "invalidName";
-                rowResult.Message = "name is required and must not contain HTML";
-                result.Summary.InvalidName++;
-                result.Results.Add(rowResult);
-                continue;
-            }
-
-            var userId = AccountNameValidator.Normalize(rawUsername);
+            var userId = validated.UserId;
+            var name = validated.Name;
             rowResult.UserId = userId;
 
             if (_users.Values.Any(u => string.Equals(u.Id, userId, StringComparison.OrdinalIgnoreCase)))
             {
-                rowResult.Status = "skippedExists";
+                rowResult.Status = PreRegistrationRowValidator.StatusSkippedExists;
                 rowResult.Message = "an account with this username already exists";
                 result.Summary.SkippedExists++;
                 result.Results.Add(rowResult);
@@ -371,7 +529,7 @@ Replace the stub in `Lovecraft.Backend/Services/MockAuthService.cs` with:
                 var user = new MockUser
                 {
                     Id = userId,
-                    AccountNameDisplay = rawUsername,
+                    AccountNameDisplay = validated.Username,
                     Email = syntheticEmail,
                     Name = name,
                     PasswordHash = _passwordHasher.HashPassword(Guid.NewGuid().ToString("N")),
@@ -389,14 +547,14 @@ Replace the stub in `Lovecraft.Backend/Services/MockAuthService.cs` with:
 
                 await _events.RegisterForEventAsync(userId, eventId);
 
-                rowResult.Status = "created";
+                rowResult.Status = PreRegistrationRowValidator.StatusCreated;
                 result.Summary.Created++;
                 _logger.LogInformation("Pre-registered shell account {UserId} for event {EventId}", userId, eventId);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Pre-registration failed for {Username}", rawUsername);
-                rowResult.Status = "error";
+                _logger.LogWarning(ex, "Pre-registration failed for {Username}", validated.Username);
+                rowResult.Status = PreRegistrationRowValidator.StatusError;
                 rowResult.Message = ex.Message;
                 result.Summary.Error++;
             }
@@ -408,19 +566,19 @@ Replace the stub in `Lovecraft.Backend/Services/MockAuthService.cs` with:
     }
 ```
 
-Add `using Lovecraft.Backend.Helpers;` at the top of the file if `AccountNameValidator` / `HtmlGuard` are not already imported.
+Add `using Lovecraft.Backend.Helpers;` at the top of the file if it is not already imported.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [ ] **Step 8: Run the tests to verify they pass**
 
-Run: `cd /home/amorofrost/src/lovecraft/Lovecraft && dotnet test --filter FullyQualifiedName~PreRegistrationTests`
-Expected: PASS — all tests green.
+Run: `cd /home/amorofrost/src/lovecraft/Lovecraft && dotnet test --filter FullyQualifiedName~PreRegistration`
+Expected: PASS — both the validator tests and the import tests are green.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 cd /home/amorofrost/src/lovecraft
-git add Lovecraft/Lovecraft.Backend/Services/MockAuthService.cs Lovecraft/Lovecraft.UnitTests/PreRegistrationTests.cs
-git commit -m "feat(preregister): mock implementation of attendee pre-registration"
+git add Lovecraft/Lovecraft.Backend/Helpers/PreRegistrationRowValidator.cs Lovecraft/Lovecraft.UnitTests/PreRegistrationRowValidatorTests.cs Lovecraft/Lovecraft.Backend/Services/MockAuthService.cs Lovecraft/Lovecraft.UnitTests/PreRegistrationTests.cs
+git commit -m "feat(preregister): shared row validator + mock attendee pre-registration"
 ```
 
 ---
@@ -448,38 +606,30 @@ Replace the stub in `Lovecraft.Backend/Services/Azure/AzureAuthService.cs` with:
 
         foreach (var row in attendees ?? new List<PreRegisterAttendeeDto>())
         {
-            var rawUsername = (row.TelegramUsername ?? string.Empty).Trim().TrimStart('@');
-            var rowResult = new PreRegisterRowResultDto { TelegramUsername = rawUsername };
+            var validated = PreRegistrationRowValidator.Validate(row);
+            var rowResult = new PreRegisterRowResultDto { TelegramUsername = validated.Username };
 
-            var validation = AccountNameValidator.Validate(rawUsername);
-            if (validation != AccountNameValidationResult.Ok)
+            if (validated.Status is not null)
             {
-                rowResult.Status = "invalidUsername";
-                rowResult.Message = validation == AccountNameValidationResult.Reserved
-                    ? "reserved" : "invalidFormat";
-                result.Summary.InvalidUsername++;
+                rowResult.Status = validated.Status;
+                rowResult.Message = validated.Message;
+                if (validated.Status == PreRegistrationRowValidator.StatusInvalidUsername)
+                    result.Summary.InvalidUsername++;
+                else
+                    result.Summary.InvalidName++;
                 result.Results.Add(rowResult);
                 continue;
             }
 
-            var name = (row.Name ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(name) || HtmlGuard.ContainsHtml(name))
-            {
-                rowResult.Status = "invalidName";
-                rowResult.Message = "name is required and must not contain HTML";
-                result.Summary.InvalidName++;
-                result.Results.Add(rowResult);
-                continue;
-            }
-
-            var userId = AccountNameValidator.Normalize(rawUsername);
+            var userId = validated.UserId;
+            var name = validated.Name;
             rowResult.UserId = userId;
 
             // Dedup: any existing account (shell or real) with this userId wins.
             try
             {
                 await _usersTable.GetEntityAsync<UserEntity>(UserEntity.GetPartitionKey(userId), userId);
-                rowResult.Status = "skippedExists";
+                rowResult.Status = PreRegistrationRowValidator.StatusSkippedExists;
                 rowResult.Message = "an account with this username already exists";
                 result.Summary.SkippedExists++;
                 result.Results.Add(rowResult);
@@ -512,7 +662,7 @@ Replace the stub in `Lovecraft.Backend/Services/Azure/AzureAuthService.cs` with:
                 {
                     PartitionKey = UserEntity.GetPartitionKey(userId),
                     RowKey = userId,
-                    AccountNameDisplay = rawUsername,
+                    AccountNameDisplay = validated.Username,
                     Email = syntheticEmail,
                     PasswordHash = _passwordHasher.HashPassword(
                         Convert.ToBase64String(RandomNumberGenerator.GetBytes(48))),
@@ -541,7 +691,7 @@ Replace the stub in `Lovecraft.Backend/Services/Azure/AzureAuthService.cs` with:
                 }
                 catch (RequestFailedException ex) when (ex.Status == 409)
                 {
-                    rowResult.Status = "skippedExists";
+                    rowResult.Status = PreRegistrationRowValidator.StatusSkippedExists;
                     rowResult.Message = "an account with this username already exists";
                     result.Summary.SkippedExists++;
                     result.Results.Add(rowResult);
@@ -565,14 +715,14 @@ Replace the stub in `Lovecraft.Backend/Services/Azure/AzureAuthService.cs` with:
                 _userCache.Set(userEntity);
                 await _events.RegisterForEventAsync(userId, eventId);
 
-                rowResult.Status = "created";
+                rowResult.Status = PreRegistrationRowValidator.StatusCreated;
                 result.Summary.Created++;
                 _logger.LogInformation("Pre-registered shell account {UserId} for event {EventId}", userId, eventId);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Pre-registration failed for {Username}", rawUsername);
-                rowResult.Status = "error";
+                _logger.LogWarning(ex, "Pre-registration failed for {Username}", validated.Username);
+                rowResult.Status = PreRegistrationRowValidator.StatusError;
                 rowResult.Message = ex.Message;
                 result.Summary.Error++;
             }
@@ -802,9 +952,7 @@ Add near `AttachTelegramToUser` (line ~572) in `Lovecraft.Backend/Services/MockA
     /// account whose name merely matches a Telegram username is never taken over.</summary>
     private MockUser? TryClaimPreRegistered(TelegramUserInfoDto tgInfo)
     {
-        if (string.IsNullOrWhiteSpace(tgInfo.Username)) return null;
-
-        var userId = AccountNameValidator.Normalize(tgInfo.Username.Trim().TrimStart('@'));
+        var userId = PreRegistrationRowValidator.NormalizeUsername(tgInfo.Username);
         if (string.IsNullOrEmpty(userId)) return null;
 
         var shell = _users.Values.FirstOrDefault(u =>
@@ -896,9 +1044,7 @@ Add directly above `AttachTelegramToUserAsync` in `Lovecraft.Backend/Services/Az
     /// account whose name merely matches a Telegram username is never taken over.</summary>
     private async Task<UserEntity?> TryClaimPreRegisteredAsync(TelegramUserInfoDto tgInfo)
     {
-        if (string.IsNullOrWhiteSpace(tgInfo.Username)) return null;
-
-        var userId = AccountNameValidator.Normalize(tgInfo.Username.Trim().TrimStart('@'));
+        var userId = PreRegistrationRowValidator.NormalizeUsername(tgInfo.Username);
         if (string.IsNullOrEmpty(userId)) return null;
 
         UserEntity shell;
