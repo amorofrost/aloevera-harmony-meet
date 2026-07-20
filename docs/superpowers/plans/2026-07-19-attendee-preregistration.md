@@ -1128,8 +1128,10 @@ git commit -m "feat(preregister): claim shell account on first telegram sign-in 
 - Modify: `Lovecraft.Backend/Controllers/V1/AdminController.cs`
 
 **Interfaces:**
-- Consumes: `IAuthService.PreRegisterAttendeesAsync` (Tasks 2–3), `PreRegisterAttendeesRequestDto`, `PreRegisterResultDto`.
+- Consumes: `IAuthService.PreRegisterAttendeesAsync` (Tasks 2–3), `PreRegisterAttendeesRequestDto`, `PreRegisterResultDto`, the already-injected `IEventService _events` (field at `AdminController.cs:26`) — `GetEventByIdAdminAsync(string) → Task<EventDto?>`, and `EventDto.Archived` (bool).
 - Produces: `POST /api/v1/admin/events/{eventId}/preregister` → `ApiResponse<PreRegisterResultDto>`.
+
+> **Amendment (adjudicated during Task 2 review):** the Task 2/3 import calls `_events.RegisterForEventAsync(userId, eventId)` and discards its `bool`. That call returns `false` when the event is missing or archived, so importing against a stale event id would report every row `created` while registering nobody. The agreed fix lives **here**: validate the event once, up front, and return `400 EVENT_NOT_FOUND` before any account is created. Do not change the per-row behavior in the services.
 
 - [ ] **Step 1: Inject `IAuthService`**
 
@@ -1160,6 +1162,16 @@ Add to `Lovecraft.Backend/Controllers/V1/AdminController.cs`, near the other `ev
             return BadRequest(ApiResponse<PreRegisterResultDto>.ErrorResponse(
                 "TOO_MANY_ATTENDEES", "At most 500 attendees per request"));
 
+        // Pre-flight: attendee registration silently no-ops for a missing or archived event,
+        // which would report every row as "created" while registering nobody. Fail fast instead.
+        var target = await _events.GetEventByIdAdminAsync(eventId);
+        if (target is null)
+            return BadRequest(ApiResponse<PreRegisterResultDto>.ErrorResponse(
+                "EVENT_NOT_FOUND", "No such event"));
+        if (target.Archived)
+            return BadRequest(ApiResponse<PreRegisterResultDto>.ErrorResponse(
+                "EVENT_ARCHIVED", "Cannot pre-register attendees for an archived event"));
+
         var result = await _auth.PreRegisterAttendeesAsync(eventId, request.Attendees);
         return Ok(ApiResponse<PreRegisterResultDto>.SuccessResponse(result));
     }
@@ -1187,6 +1199,17 @@ curl -X POST http://localhost:5000/api/v1/admin/events/1/preregister \
 ```
 
 Expected: HTTP 200 with `summary.created == 1`, `summary.invalidUsername == 1`, and two entries in `results`.
+
+Then verify the pre-flight guard — this is the Task 2 review amendment, so it must actually be observed, not assumed:
+
+```bash
+curl -i -X POST http://localhost:5000/api/v1/admin/events/no-such-event/preregister \
+  -H "Authorization: Bearer $ADMIN_JWT" -H "Content-Type: application/json" \
+  -d '{"attendees":[{"telegramUsername":"ghost_user","name":"Ghost"}]}'
+```
+
+Expected: HTTP 400 with error code `EVENT_NOT_FOUND`, and **no** `ghost_user` account created (re-running the valid import for `ghost_user` afterwards must still report `created`, not `skippedExists`).
+
 Also confirm a non-admin token returns 403.
 
 - [ ] **Step 5: Commit**
