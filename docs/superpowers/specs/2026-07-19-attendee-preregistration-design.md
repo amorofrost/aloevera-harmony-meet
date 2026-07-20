@@ -88,7 +88,9 @@ The **only** storage change is the one new `bool PreRegistered` column on `UserE
 
 `telegramUsername` and `name` are required per row; `gender` and `photoUrl` optional.
 
-**New service:** `IUserPreRegistrationService` (`AzureUserPreRegistrationService` + `MockUserPreRegistrationService`) — keeps this out of the already-large auth service. Depends on the users table + email index, `IEventService` (attendee registration), and `IImageService` (photo download). Registered in `Program.cs` under the same `USE_AZURE_STORAGE` mode switch as sibling services.
+**New service:** ~~`IUserPreRegistrationService` (`AzureUserPreRegistrationService` + `MockUserPreRegistrationService`)~~ — **as implemented**, `PreRegisterAttendeesAsync(eventId, attendees)` lives directly on `IAuthService` (both `AzureAuthService` and `MockAuthService`), not a separate service. Both auth services already own the user-creation machinery (email index writes, synthetic-email allocation, `UserEntity`/`MockUser` construction) plus a reference to `IEventService` for attendee registration, so a standalone service would duplicate that machinery rather than reuse it. Concretely, `MockAuthService._users` is a **private static** dictionary — an external `MockUserPreRegistrationService` could not reach it without either making the field non-private (weakening the encapsulation the mock intentionally has) or re-deriving state through public methods, so hosting the method on `MockAuthService` itself was the only clean option; `AzureAuthService` follows suit for symmetry. No new service interface, no new `Program.cs` registration.
+
+Also adjudicated during implementation: the **pre-flight event validation** (`EVENT_NOT_FOUND` / `EVENT_ARCHIVED`) happens in `AdminController` itself, before `IAuthService.PreRegisterAttendeesAsync` is ever called — rather than having the auth service call `IEventService.RegisterForEventAsync` per row and inspect its return value to detect a bad event. This guarantees zero accounts are created for a request against a nonexistent or archived event, instead of leaving partially-created shells behind a bad `eventId`.
 
 **Per-row algorithm:**
 
