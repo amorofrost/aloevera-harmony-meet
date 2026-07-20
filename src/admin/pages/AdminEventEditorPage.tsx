@@ -52,6 +52,7 @@ import { toast } from "sonner";
 import { uploadImage } from "@/services/api/imagesApi";
 import InviteLinkDialog from '../components/InviteLinkDialog';
 import TelegramInviteLinkDialog from '../components/TelegramInviteLinkDialog';
+import PreRegisterAttendeesCard from '../components/PreRegisterAttendeesCard';
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -775,6 +776,13 @@ export default function AdminEventEditorPage() {
               )}
             </CardContent>
           </Card>
+
+          <PreRegisterAttendeesCard
+            eventId={eventId!}
+            onImported={() => {
+              void loadExtras(eventId!);
+            }}
+          />
 
           <Card>
             <CardHeader>
