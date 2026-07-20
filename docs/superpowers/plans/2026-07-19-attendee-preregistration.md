@@ -783,7 +783,13 @@ namespace Lovecraft.UnitTests;
 public class PreRegistrationClaimTests
 {
     private const string BotToken = "1234567:TEST-BOT-TOKEN-FOR-CLAIM-TESTS";
-    private const string EventId = "1";
+
+    // MUST NOT be a shared seeded event id. Registering pre-registered attendees into the
+    // seeded event "1" inflates its attendee count and breaks
+    // AdminNotificationsControllerTests' exact-count assertion (this actually happened in
+    // Task 2 and had to be fixed). Reuse the dedicated fixture event that
+    // PreRegistrationTests already seeds.
+    private const string EventId = "preregistration-test-event";
 
     private readonly MockAuthService _auth;
 
@@ -809,6 +815,28 @@ public class PreRegistrationClaimTests
             events,
             Options.Create(new TelegramAuthOptions { BotToken = BotToken, BotUsername = "testbot" }),
             Options.Create(new GoogleAuthOptions()));
+
+        // Seed the dedicated fixture event idempotently (the constructor runs per test).
+        // Mirror the block already present in PreRegistrationTests — read that file and copy
+        // its seeding block verbatim so the two fixtures stay identical.
+        if (!MockDataStore.Events.Any(e => e.Id == EventId))
+        {
+            MockDataStore.Events.Add(new EventDto
+            {
+                Id = EventId,
+                Title = "Pre-registration test event",
+                Description = "Fixture event owned by PreRegistrationTests",
+                Date = new DateTime(2026, 1, 1, 18, 0, 0),
+                EndDate = new DateTime(2026, 1, 1, 22, 0, 0),
+                Location = "Test",
+                Capacity = 1000,
+                Attendees = new List<string>(),
+                Category = EventCategory.Concert,
+                Price = "0",
+                Organizer = "Test",
+                Visibility = EventVisibility.Public,
+            });
+        }
     }
 
     private static TelegramLoginRequestDto SignedWidgetPayload(long id, string? username)
