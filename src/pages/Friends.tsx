@@ -28,6 +28,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { findLiveAttendedEvent } from '@/lib/liveEvent';
 import type { User } from '@/types/user';
 import type { MessageDto } from '@/types/chat';
 import { matchingApi, usersApi, getCurrentUserIdFromToken, eventsApi } from '@/services/api';
@@ -52,6 +53,12 @@ function composePhotos(user: { profileImage: string; images: string[] }): string
   return out.slice(0, 6);
 }
 
+// Auto-event-filter is applied at most once per app load. A module-level flag
+// (not component state / sessionStorage) is exactly "per app load": it survives
+// in-SPA remounts (navigating away from /friends and back) but resets on a full
+// page reload / new tab / Telegram Mini App reopen.
+let sessionAutoFilterDone = false;
+
 const Friends = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [showDeckDetails, setShowDeckDetails] = useState(false);
@@ -70,6 +77,10 @@ const Friends = () => {
   const goBackFromChat = useSmartBack('/friends?tab=chats');
 
   const [filter, setFilter] = useState<SearchFilters>(EMPTY_FILTERS);
+  // Gates the deck-load effect until the once-per-app-load live-event auto-filter
+  // decision has been made, so the deck fetches exactly once with the resolved
+  // filter (no random-deck flash before the attendee deck loads).
+  const [autoFilterResolved, setAutoFilterResolved] = useState(false);
   // The events the viewer has attended power the event picker in the filter sheet
   // AND validate any incoming ?eventId= deep link (you can't filter by an event you
   // didn't attend).
@@ -228,6 +239,22 @@ const Friends = () => {
     load();
   }, []);
 
+  // On the first /friends mount of an app load, if the viewer attends an event
+  // that is currently live (by dates), default the deck to that event's
+  // attendees by seeding the existing eventId filter. Runs at most once per app
+  // load (module-level sessionAutoFilterDone). An explicit ?eventId= deep link or
+  // an already-set filter takes precedence and suppresses the auto-apply.
+  useEffect(() => {
+    if (viewerLoading) return;        // wait for the viewer profile to load
+    if (autoFilterResolved) return;   // resolved for this mount already
+    if (!sessionAutoFilterDone && !urlEventId && !filter.eventId) {
+      const live = findLiveAttendedEvent(viewer?.eventsAttended ?? [], new Date());
+      if (live) setFilter(prev => ({ ...prev, eventId: live.id }));
+    }
+    sessionAutoFilterDone = true;
+    setAutoFilterResolved(true);
+  }, [viewerLoading, viewer, urlEventId, filter.eventId, autoFilterResolved]);
+
   // Seed filter.eventId from a ?eventId= deep link (e.g. clicked from EventDetails).
   // Guard: only honor the param if the viewer actually attended that event, otherwise
   // the picker would silently disagree with the active filter.
@@ -254,6 +281,7 @@ const Friends = () => {
   //      the newer attendees result.
   useEffect(() => {
     if (urlEventId && filter.eventId !== urlEventId && viewerLoading) return;
+    if (!autoFilterResolved) return; // wait for the live-event auto-filter decision
 
     let cancelled = false;
     const myId = getCurrentUserIdFromToken();
@@ -328,7 +356,7 @@ const Friends = () => {
   }, [
     filter.country, filter.region, filter.accountName, filter.name,
     filter.minAge, filter.maxAge, filter.gender, filter.eventId,
-    urlEventId, viewerLoading,
+    urlEventId, viewerLoading, autoFilterResolved,
   ]);
 
   // Sync activeChatId with URL and load messages when selectedChat changes
