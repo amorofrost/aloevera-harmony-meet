@@ -1,8 +1,33 @@
 # Live-event default deck — design
 
 **Date:** 2026-07-22
-**Status:** Approved (design)
+**Status:** Approved (design) — amended 2026-07-22 (see Update below)
 **Repo:** `aloevera-harmony-meet` (frontend only — no backend changes)
+
+## Update (2026-07-22): per-mount re-apply, dropping the once-per-app-load guard
+
+**Symptom:** in the Telegram Mini App (opened from `/tg`), the initial deck showed
+the random list, not the live-event deck; a Mini App refresh then showed the correct
+event deck. Browser fresh login showed the correct deck. Both paths call the identical
+`navigateAfterAuth → /friends` and the identical `getCurrentUser` endpoints, so the
+viewer's `eventsAttended` data is the same in both — the difference is client-side.
+
+**Root cause:** the Telegram WebView **remounts** the `Friends` page after the initial
+`/tg → /friends` navigation (theme/viewport re-renders). The original design applied the
+filter "once per app load" via a **module-level** `sessionAutoFilterDone` flag. That flag
+survived the remount, but the component's `filter` state reset to `EMPTY_FILTERS` on the
+remount — so the remount saw the guard already `true`, skipped re-applying, and the deck
+fell back to the random list until a full reload reset the module.
+
+**Fix:** drop the module-level `sessionAutoFilterDone` guard entirely. The auto-apply is
+now gated only by the per-mount `autoFilterResolved` state, so it re-evaluates and
+re-applies the live-event filter on **every mount** (including Telegram remounts),
+guaranteeing the event deck. Within a single mount the user can still clear the chip and
+browse the random deck (`autoFilterResolved` prevents re-apply until the next mount).
+
+This supersedes decision #3 below ("once per app load"). Trade-off accepted by the product
+owner: if the user clears the chip and the page then remounts, the event filter snaps back
+— which is the intended "always show the event deck while it's live" behavior.
 
 ## Problem
 

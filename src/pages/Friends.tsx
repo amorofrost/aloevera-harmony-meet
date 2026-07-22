@@ -53,12 +53,6 @@ function composePhotos(user: { profileImage: string; images: string[] }): string
   return out.slice(0, 6);
 }
 
-// Auto-event-filter is applied at most once per app load. A module-level flag
-// (not component state / sessionStorage) is exactly "per app load": it survives
-// in-SPA remounts (navigating away from /friends and back) but resets on a full
-// page reload / new tab / Telegram Mini App reopen.
-let sessionAutoFilterDone = false;
-
 const Friends = () => {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [showDeckDetails, setShowDeckDetails] = useState(false);
@@ -77,9 +71,9 @@ const Friends = () => {
   const goBackFromChat = useSmartBack('/friends?tab=chats');
 
   const [filter, setFilter] = useState<SearchFilters>(EMPTY_FILTERS);
-  // Gates the deck-load effect until the once-per-app-load live-event auto-filter
-  // decision has been made, so the deck fetches exactly once with the resolved
-  // filter (no random-deck flash before the attendee deck loads).
+  // Gates the deck-load effect until this mount's live-event auto-filter decision
+  // has been made, so the deck fetches exactly once with the resolved filter (no
+  // random-deck flash before the attendee deck loads).
   const [autoFilterResolved, setAutoFilterResolved] = useState(false);
   // The events the viewer has attended power the event picker in the filter sheet
   // AND validate any incoming ?eventId= deep link (you can't filter by an event you
@@ -239,19 +233,25 @@ const Friends = () => {
     load();
   }, []);
 
-  // On the first /friends mount of an app load, if the viewer attends an event
-  // that is currently live (by dates), default the deck to that event's
-  // attendees by seeding the existing eventId filter. Runs at most once per app
-  // load (module-level sessionAutoFilterDone). An explicit ?eventId= deep link or
-  // an already-set filter takes precedence and suppresses the auto-apply.
+  // On each /friends mount, if the viewer attends an event that is currently live
+  // (by dates), default the deck to that event's attendees by seeding the existing
+  // eventId filter. Applied once per mount (guarded by autoFilterResolved), so the
+  // user can still clear the chip and browse the random deck within a session.
+  //
+  // Applying per mount — rather than once per app load — is deliberate: the Telegram
+  // Mini App WebView remounts this page (theme/viewport re-renders) after the initial
+  // /tg → /friends navigation. A module-level "already applied" flag survived those
+  // remounts while the component's filter state reset, so the deck fell back to the
+  // random list until a full reload. Re-evaluating on every mount guarantees the event
+  // deck in that path too. An explicit ?eventId= deep link or an already-set filter
+  // still takes precedence and suppresses the auto-apply.
   useEffect(() => {
     if (viewerLoading) return;        // wait for the viewer profile to load
     if (autoFilterResolved) return;   // resolved for this mount already
-    if (!sessionAutoFilterDone && !urlEventId && !filter.eventId) {
+    if (!urlEventId && !filter.eventId) {
       const live = findLiveAttendedEvent(viewer?.eventsAttended ?? [], new Date());
       if (live) setFilter(prev => ({ ...prev, eventId: live.id }));
     }
-    sessionAutoFilterDone = true;
     setAutoFilterResolved(true);
   }, [viewerLoading, viewer, urlEventId, filter.eventId, autoFilterResolved]);
 
